@@ -1,0 +1,41 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.sln.user
+*.csproj.user
+*.DotSettings.user
+*.swp
+*.swo
+*~
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+
+# Test Results
+TestResults/
+*.trx
+
+# Build
+.build/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# User-specific
+.env
+*.log
+appsettings.Development.json
