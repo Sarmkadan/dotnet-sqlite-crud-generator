@@ -60,11 +60,27 @@ public class DatabaseConnection : IAsyncDisposable, IDisposable
     /// <summary>
     /// Ensures the database is initialized with required tables.
     /// </summary>
-    public async Task InitializeDatabaseAsync(CancellationToken cancellationToken = default)
+    public async Task InitializeDatabaseAsync(bool dropExistingTables = false, CancellationToken cancellationToken = default)
     {
         await OpenAsync(cancellationToken);
 
         using var command = Connection.CreateCommand();
+
+        if (dropExistingTables)
+        {
+            // Drop all tables in reverse order of creation to respect foreign key constraints
+            command.CommandText = @"
+                PRAGMA foreign_keys = OFF;
+                DROP TABLE IF EXISTS AuditLogs;
+                DROP TABLE IF EXISTS Orders;
+                DROP TABLE IF EXISTS Products;
+                DROP TABLE IF EXISTS Categories;
+                DROP TABLE IF EXISTS Users;
+                PRAGMA foreign_keys = ON;
+            ";
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
         command.CommandText = @"
             CREATE TABLE IF NOT EXISTS Users (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,7 +124,7 @@ public class DatabaseConnection : IAsyncDisposable, IDisposable
                 IsActive INTEGER NOT NULL DEFAULT 1,
                 CreatedAt TEXT NOT NULL,
                 UpdatedAt TEXT NOT NULL,
-                FOREIGN KEY (CategoryId) REFERENCES Categories(Id)
+                FOREIGN KEY (CategoryId) REFERENCES Categories(Id) ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS Orders (
@@ -127,7 +143,7 @@ public class DatabaseConnection : IAsyncDisposable, IDisposable
                 UpdatedAt TEXT NOT NULL,
                 ShippedAt TEXT,
                 DeliveredAt TEXT,
-                FOREIGN KEY (UserId) REFERENCES Users(Id)
+                FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS AuditLogs (

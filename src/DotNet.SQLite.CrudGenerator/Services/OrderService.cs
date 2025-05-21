@@ -65,7 +65,7 @@ public class OrderService : IService<Order, int>
         return created;
     }
 
-    public async Task<Order> UpdateAsync(Order entity, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(Order entity, CancellationToken cancellationToken = default)
     {
         if (entity == null)
             throw new ArgumentNullException(nameof(entity));
@@ -81,11 +81,13 @@ public class OrderService : IService<Order, int>
             throw RepositoryException.EntityNotFound(nameof(Order), entity.Id);
 
         entity.UpdatedAt = DateTime.UtcNow;
-        var updated = await _orderRepository.UpdateAsync(entity, cancellationToken);
+        var result = await _orderRepository.UpdateAsync(entity, cancellationToken);
 
-        await RecordAuditLogAsync(nameof(Order), entity.Id, OperationType.Update, existing.ToString(), updated.ToString(), "Order updated", cancellationToken);
-
-        return updated;
+        if (result)
+        {
+            await RecordAuditLogAsync(nameof(Order), entity.Id, OperationType.Update, existing.ToString(), entity.ToString(), "Order updated", cancellationToken);
+        }
+        return result;
     }
 
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)

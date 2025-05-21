@@ -145,7 +145,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return results;
     }
 
-    public virtual async Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         if (entity == null)
             throw new ArgumentNullException(nameof(entity));
@@ -175,7 +175,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         if (cachedIndex >= 0)
             _cache[cachedIndex] = entity;
 
-        return entity;
+        return affected > 0; // Return true if at least one row was affected
     }
 
     public virtual async Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default)
