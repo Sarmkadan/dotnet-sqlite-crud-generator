@@ -1,19 +1,11 @@
-# =============================================================================
-# Author: Vladyslav Zaiets | https://sarmkadan.com
-# CTO & Software Architect
-# =============================================================================
-
 version: '3.8'
-
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: dotnet-crud-generator
     environment:
-      DATABASE_PATH: /data/app.db
-      LOG_LEVEL: Information
+      - DATABASE_PATH=/data/app.db
+      - LOG_LEVEL=Information
     volumes:
       - crud-data:/data
     ports:
@@ -22,7 +14,7 @@ services:
     networks:
       - crud-network
     healthcheck:
-      test: ["CMD", "dotnet", "--version"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health/ready"]
       interval: 30s
       timeout: 10s
       retries: 3
