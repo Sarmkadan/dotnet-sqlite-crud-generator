@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.Utilities;
 /// Records operation execution times, memory usage, and throughput.
 /// Provides real-time and historical statistics.
 /// </summary>
-public class PerformanceMonitor
+public sealed class PerformanceMonitor
 {
     private readonly Dictionary<string, OperationMetrics> _metrics = new();
     private readonly object _lockObject = new();
@@ -118,7 +119,7 @@ public class PerformanceMonitor
     }
 }
 
-public class PerformanceScope : IDisposable
+public sealed class PerformanceScope : IDisposable
 {
     private readonly PerformanceMonitor _monitor;
     private readonly string _operationName;
@@ -144,7 +145,7 @@ public class PerformanceScope : IDisposable
     }
 }
 
-public class OperationMetrics
+public sealed class OperationMetrics
 {
     public string OperationName { get; set; } = string.Empty;
     public long ExecutionCount { get; set; }
@@ -159,7 +160,7 @@ public class OperationMetrics
     public double SuccessRate => ExecutionCount > 0 ? (SuccessCount / (double)ExecutionCount) * 100 : 0;
 }
 
-public class PerformanceReport
+public sealed class PerformanceReport
 {
     public double UptimeSeconds { get; set; }
     public long TotalOperations { get; set; }
@@ -177,17 +178,17 @@ public class PerformanceReport
         report += $"Total Operations: {TotalOperations} ({TotalSuccessful} success, {TotalFailed} failed)\n";
         report += $"Average Response Time: {AverageResponseTime:F2}ms\n";
 
-        if (SlowestOperation != null)
+        if (SlowestOperation is not null)
             report += $"Slowest: {SlowestOperation.OperationName} ({SlowestOperation.AverageTime:F2}ms avg)\n";
 
-        if (FastestOperation != null)
+        if (FastestOperation is not null)
             report += $"Fastest: {FastestOperation.OperationName} ({FastestOperation.AverageTime:F2}ms avg)\n";
 
         return report;
     }
 }
 
-public class MemoryInfo
+public sealed class MemoryInfo
 {
     public long WorkingSetMB { get; set; }
     public long PrivateMemoryMB { get; set; }

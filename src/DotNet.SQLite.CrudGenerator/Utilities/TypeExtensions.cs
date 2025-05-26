@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -19,7 +20,7 @@ public static class TypeExtensions
     public static IEnumerable<PropertyInfo> GetProperties<TAttribute>(this Type type) where TAttribute : Attribute
     {
         return type.GetProperties()
-            .Where(p => p.GetCustomAttribute<TAttribute>() != null);
+            .Where(p => p.GetCustomAttribute<TAttribute>() is not null);
     }
 
     /// <summary>
@@ -91,7 +92,7 @@ public static class TypeExtensions
     /// </summary>
     public static object? GetDefaultValue(this Type type)
     {
-        if (type == null)
+        if (type is null)
             return null;
 
         if (type.IsValueType)
@@ -170,7 +171,7 @@ public static class TypeExtensions
         var interfaces = new HashSet<Type>(type.GetInterfaces());
         var baseType = type.BaseType;
 
-        while (baseType != null)
+        while (baseType is not null)
         {
             foreach (var iface in baseType.GetInterfaces())
                 interfaces.Add(iface);

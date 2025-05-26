@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace DotNet.SQLite.CrudGenerator.Exceptions;
 /// <summary>
 /// Exception thrown when code generation fails.
 /// </summary>
-public class GenerationException : Exception
+public sealed class GenerationException : Exception
 {
     public GenerationException(string message) : base(message) { }
 

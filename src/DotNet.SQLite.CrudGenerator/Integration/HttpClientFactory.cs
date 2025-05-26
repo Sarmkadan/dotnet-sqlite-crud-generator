@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace DotNet.SQLite.CrudGenerator.Integration;
 /// Implements a connection pool pattern and provides retry policies.
 /// Supports custom headers, authentication, and timeout configuration.
 /// </summary>
-public class HttpClientFactory
+public sealed class HttpClientFactory
 {
     private readonly Dictionary<string, HttpClient> _clients = new();
     private readonly HttpClientHandler _defaultHandler;
@@ -40,7 +41,7 @@ public class HttpClientFactory
             if (!string.IsNullOrEmpty(options?.BaseAddress))
                 client.BaseAddress = new Uri(options.BaseAddress);
 
-            if (options?.DefaultHeaders != null)
+            if (options?.DefaultHeaders is not null)
             {
                 foreach (var header in options.DefaultHeaders)
                     client.DefaultRequestHeaders.Add(header.Key, header.Value);
@@ -87,7 +88,7 @@ public class HttpClientFactory
     }
 }
 
-public class HttpClientOptions
+public sealed class HttpClientOptions
 {
     public string? BaseAddress { get; set; }
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
@@ -99,7 +100,7 @@ public class HttpClientOptions
 /// <summary>
 /// Wrapper for making HTTP requests with retry and error handling.
 /// </summary>
-public class HttpRequestExecutor
+public sealed class HttpRequestExecutor
 {
     private readonly HttpClient _httpClient;
     private readonly int _maxRetries;
@@ -201,7 +202,7 @@ public class HttpRequestExecutor
             }
         }
 
-        if (lastException != null)
+        if (lastException is not null)
             throw lastException;
 
         return lastResponse ?? throw new HttpRequestException("Request failed and no response was returned");

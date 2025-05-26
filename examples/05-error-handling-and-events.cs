@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace DotNet.SQLite.CrudGenerator.Examples;
 
 /// <summary>Demonstrates error handling and event-driven architecture</summary>
-public class ErrorHandlingAndEventsExample
+public sealed class ErrorHandlingAndEventsExample
 {
     public static async Task RunAsync()
     {
@@ -81,7 +82,7 @@ public class ErrorHandlingAndEventsExample
                 try
                 {
                     var nonExistent = await userService.GetByIdAsync(999999);
-                    if (nonExistent == null)
+                    if (nonExistent is null)
                     {
                         Console.WriteLine($"   ℹ️  User not found (returns null instead of exception)");
                     }

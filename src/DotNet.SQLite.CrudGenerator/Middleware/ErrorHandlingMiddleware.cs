@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Middleware;
 /// Catches exceptions and converts them to structured error responses.
 /// Tracks error statistics for monitoring and alerting.
 /// </summary>
-public class ErrorHandlingMiddleware : IMiddleware
+public sealed class ErrorHandlingMiddleware : IMiddleware
 {
     private readonly ConcurrentDictionary<string, int> _errorCounts = new();
 

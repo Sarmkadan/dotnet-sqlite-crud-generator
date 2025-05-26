@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -96,7 +97,7 @@ public static class NamingConventionHelper
         return _columnNameCache.GetOrAdd(property, static p =>
         {
             var columnAttr = p.GetCustomAttribute<ColumnAttribute>();
-            if (columnAttr != null && !string.IsNullOrEmpty(columnAttr.Name))
+            if (columnAttr is not null && !string.IsNullOrEmpty(columnAttr.Name))
                 return columnAttr.Name;
             return p.Name.ToSnakeCase();
         });
@@ -178,7 +179,7 @@ public static class NamingConventionHelper
     }
 }
 
-public class ColumnAttribute : Attribute
+public sealed class ColumnAttribute : Attribute
 {
     public string? Name { get; set; }
 
@@ -189,7 +190,7 @@ public class ColumnAttribute : Attribute
     }
 }
 
-public class NamingConventionInfo
+public sealed class NamingConventionInfo
 {
     public string EntityName { get; set; } = string.Empty;
     public string TableName { get; set; } = string.Empty;
@@ -198,7 +199,7 @@ public class NamingConventionInfo
     public List<PropertyConventionInfo> Properties { get; set; } = new();
 }
 
-public class PropertyConventionInfo
+public sealed class PropertyConventionInfo
 {
     public string PropertyName { get; set; } = string.Empty;
     public string ColumnName { get; set; } = string.Empty;

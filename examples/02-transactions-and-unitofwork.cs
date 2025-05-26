@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace DotNet.SQLite.CrudGenerator.Examples;
 
 /// <summary>Demonstrates transaction handling and Unit of Work pattern</summary>
-public class TransactionExample
+public sealed class TransactionExample
 {
     public static async Task RunAsync()
     {

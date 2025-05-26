@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.Events;
 /// Supports multiple subscribers per event type with async handler execution.
 /// Tracks event history and provides statistics.
 /// </summary>
-public class EventBus : IEventBus
+public sealed class EventBus : IEventBus
 {
     private readonly ConcurrentDictionary<Type, List<Delegate>> _subscribers = new();
     private readonly List<EventEnvelope> _eventHistory = new();
@@ -21,7 +22,7 @@ public class EventBus : IEventBus
 
     public async Task PublishAsync<TEvent>(TEvent @event) where TEvent : class, IEvent
     {
-        if (@event == null)
+        if (@event is null)
             throw new ArgumentNullException(nameof(@event));
 
         var eventType = typeof(TEvent);
@@ -61,7 +62,7 @@ public class EventBus : IEventBus
 
     public void Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : class, IEvent
     {
-        if (handler == null)
+        if (handler is null)
             throw new ArgumentNullException(nameof(handler));
 
         var eventType = typeof(TEvent);
@@ -76,7 +77,7 @@ public class EventBus : IEventBus
 
     public void Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class, IEvent
     {
-        if (handler == null)
+        if (handler is null)
             throw new ArgumentNullException(nameof(handler));
 
         var eventType = typeof(TEvent);
@@ -91,7 +92,7 @@ public class EventBus : IEventBus
 
     public bool Unsubscribe<TEvent>(Delegate handler) where TEvent : class, IEvent
     {
-        if (handler == null)
+        if (handler is null)
             return false;
 
         var eventType = typeof(TEvent);
@@ -188,7 +189,7 @@ public interface IEvent
     string GetEventName();
 }
 
-public class EventEnvelope
+public sealed class EventEnvelope
 {
     public Guid EventId { get; set; }
     public string EventTypeName { get; set; } = string.Empty;
@@ -196,7 +197,7 @@ public class EventEnvelope
     public object? Data { get; set; }
 }
 
-public class EventBusStatistics
+public sealed class EventBusStatistics
 {
     public int RegisteredEventTypes { get; set; }
     public int TotalSubscriptions { get; set; }

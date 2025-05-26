@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -45,7 +46,7 @@ public static class ReflectionHelper
     public static void SetProperty<T>(T obj, string propertyName, object? value) where T : class
     {
         var property = typeof(T).GetProperty(propertyName, BindingFlags.Public | BindingFlags.IgnoreCase);
-        if (property == null || !property.CanWrite)
+        if (property is null || !property.CanWrite)
             throw new InvalidOperationException($"Property '{propertyName}' not found or is read-only");
 
         property.SetValue(obj, value);
@@ -57,7 +58,7 @@ public static class ReflectionHelper
     public static object? GetProperty<T>(T obj, string propertyName) where T : class
     {
         var property = typeof(T).GetProperty(propertyName, BindingFlags.Public | BindingFlags.IgnoreCase);
-        if (property == null || !property.CanRead)
+        if (property is null || !property.CanRead)
             throw new InvalidOperationException($"Property '{propertyName}' not found or is write-only");
 
         return property.GetValue(obj);
@@ -84,8 +85,8 @@ public static class ReflectionHelper
     /// </summary>
     public static void CopyProperties<T>(T source, T destination) where T : class
     {
-        if (source == null || destination == null)
-            throw new ArgumentNullException(source == null ? nameof(source) : nameof(destination));
+        if (source is null || destination is null)
+            throw new ArgumentNullException(source is null ? nameof(source) : nameof(destination));
 
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -114,7 +115,7 @@ public static class ReflectionHelper
     public static object? InvokeMethod<T>(T obj, string methodName, params object[] args) where T : class
     {
         var method = typeof(T).GetMethod(methodName, BindingFlags.Public | BindingFlags.IgnoreCase);
-        if (method == null)
+        if (method is null)
             throw new InvalidOperationException($"Method '{methodName}' not found");
 
         return method.Invoke(obj, args);
@@ -153,7 +154,7 @@ public static class ReflectionHelper
     /// </summary>
     public static T ShallowCopy<T>(T obj) where T : class
     {
-        if (obj == null)
+        if (obj is null)
             throw new ArgumentNullException(nameof(obj));
 
         var copy = (T)Activator.CreateInstance(typeof(T))!;
@@ -174,6 +175,6 @@ public static class ReflectionHelper
     /// </summary>
     public static bool HasAttribute<TAttribute>(PropertyInfo property) where TAttribute : Attribute
     {
-        return property.GetCustomAttribute<TAttribute>() != null;
+        return property.GetCustomAttribute<TAttribute>() is not null;
     }
 }
