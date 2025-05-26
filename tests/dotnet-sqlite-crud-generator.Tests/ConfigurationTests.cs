@@ -14,6 +14,34 @@ namespace DotNet.SQLite.CrudGenerator.Tests;
 public sealed class ConfigurationTests
 {
     [Fact]
+    public void DatabaseSettings_WithFilePathContainingSpaces_GeneratesQuotedConnectionString()
+    {
+        // Arrange
+        var expectedFilePath = "path with spaces/test database.db";
+        var settings = new DatabaseSettings { FilePath = expectedFilePath };
+
+        // Act
+        var connectionString = settings.ConnectionString;
+
+        // Assert
+        connectionString.Should().Contain($"Data Source=\"{expectedFilePath}\";");
+    }
+
+    [Fact]
+    public void DatabaseSettings_WithFilePathContainingUnicode_GeneratesQuotedConnectionString()
+    {
+        // Arrange
+        var expectedFilePath = "path/with/unicode/データベース.db";
+        var settings = new DatabaseSettings { FilePath = expectedFilePath };
+
+        // Act
+        var connectionString = settings.ConnectionString;
+
+        // Assert
+        connectionString.Should().Contain($"Data Source=\"{expectedFilePath}\";");
+    }
+
+    [Fact]
     public void DatabaseSettings_WithValidConnectionString_IsValid()
     {
         // Arrange
