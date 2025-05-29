@@ -1,3 +1,7 @@
+[![Build](https://github.com/sarmkadan/dotnet-sqlite-crud-generator/actions/workflows/build.yml/badge.svg)](https://github.com/sarmkadan/dotnet-sqlite-crud-generator/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
+
 # SQLite CRUD Generator
 
 A comprehensive .NET 10 source generator and CRUD framework for SQLite databases that automates the creation of CRUD operations, migrations, and gRPC services from C# models. This project provides a production-ready architecture with repository pattern, unit of work, dependency injection, audit logging, and comprehensive code generation capabilities.
