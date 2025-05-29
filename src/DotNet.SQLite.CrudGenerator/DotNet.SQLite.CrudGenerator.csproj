@@ -12,7 +12,8 @@
     <Authors>Vladyslav Zaiets</Authors>
     <Description>Source generator that creates CRUD operations, migrations, and gRPC services from C# models</Description>
     <PackageProjectUrl>https://github.com/sarmkadan/dotnet-sqlite-crud-generator</PackageProjectUrl>
-    <License>https://github.com/sarmkadan/dotnet-sqlite-crud-generator/blob/master/LICENSE</License>
+    <RepositoryUrl>https://github.com/sarmkadan/dotnet-sqlite-crud-generator</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
