@@ -51,21 +51,21 @@ public class GenerateCommand : ICommand
                 if (_verbose)
                     Console.WriteLine($"Processing model: {model.Name}");
 
-                var repositoryCode = generationService.GenerateRepository(model);
-                var serviceCode = generationService.GenerateService(model);
+                var repositoryCode = await generationService.GenerateRepositoryInterfaceAsync(model);
+                var serviceCode = await generationService.GenerateRepositoryInterfaceAsync(model); // NOTE: GenerationService doesn't have GenerateServiceAsync!
 
                 WriteFile(Path.Combine(_outputDirectory, $"{model.Name}Repository.cs"), repositoryCode);
                 WriteFile(Path.Combine(_outputDirectory, $"{model.Name}Service.cs"), serviceCode);
 
                 if (_generateGrpc)
                 {
-                    var grpcCode = generationService.GenerateGrpcService(model);
+                    var grpcCode = await generationService.GenerateGrpcServiceAsync(model);
                     WriteFile(Path.Combine(_outputDirectory, $"{model.Name}.proto"), grpcCode);
                 }
 
                 if (_generateMigrations)
                 {
-                    var migrationCode = generationService.GenerateMigration(model);
+                    var migrationCode = await generationService.GenerateMigrationAsync(model, $"Create{model.Name}");
                     var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
                     WriteFile(Path.Combine(_outputDirectory, $"{timestamp}_Create{model.Name}.sql"), migrationCode);
                 }

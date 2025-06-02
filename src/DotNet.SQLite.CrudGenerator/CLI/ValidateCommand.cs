@@ -98,7 +98,7 @@ public class ValidateCommand : ICommand
     private void ValidateModel(Type modelType, List<ValidationResult> results)
     {
         // Check class name
-        if (!modelType.Name[0].IsUpper())
+        if (!char.IsUpper(modelType.Name[0]))
         {
             results.Add(new ValidationResult
             {
@@ -113,7 +113,7 @@ public class ValidateCommand : ICommand
         foreach (var property in properties)
         {
             // Check property name
-            if (!property.Name[0].IsUpper())
+            if (!char.IsUpper(property.Name[0]))
             {
                 results.Add(new ValidationResult
                 {

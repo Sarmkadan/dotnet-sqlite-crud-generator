@@ -44,7 +44,8 @@ public class EventBus : IEventBus
                     }
                     else if (handler is Action<TEvent> syncHandler)
                     {
-                        tasks.Add(Task.FromResult(syncHandler(@event)));
+                        syncHandler(@event);
+                        tasks.Add(Task.CompletedTask);
                     }
                 }
                 catch (Exception ex)

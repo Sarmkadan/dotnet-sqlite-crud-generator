@@ -6,6 +6,7 @@
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Utilities;
 using FluentAssertions;
+using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
@@ -103,7 +104,7 @@ public class ProductModelTests
 
         // Assert
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Insufficient stock");
+            .WithMessage("Insufficient stock. Available: 50, Requested: 100");
     }
 }
 

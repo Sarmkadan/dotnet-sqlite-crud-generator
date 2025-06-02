@@ -53,7 +53,11 @@ public class BackgroundWorkerService
 
         try
         {
-            await Task.WaitAll(_workerTasks.ToArray(), actualTimeout);
+            var allTasks = Task.WhenAll(_workerTasks);
+            if (await Task.WhenAny(allTasks, Task.Delay(actualTimeout)) != allTasks)
+            {
+                Console.WriteLine("Background worker tasks did not complete within timeout");
+            }
         }
         catch (OperationCanceledException)
         {

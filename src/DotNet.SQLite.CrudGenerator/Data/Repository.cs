@@ -161,7 +161,8 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected == 0)
-            throw RepositoryException.EntityNotFound(typeof(T).Name, (int)(object)id);
+            // Fix: Safe casting of potentially null id value
+            throw RepositoryException.EntityNotFound(typeof(T).Name, id == null ? 0 : Convert.ToInt32(id));
 
         var cachedIndex = _cache.FindIndex(e => GetId(e)?.Equals(id) == true);
         if (cachedIndex >= 0)

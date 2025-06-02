@@ -126,13 +126,19 @@ public class XmlFormatter : IFormatter
             var items = new List<T>();
             var serializer = new XmlSerializer(typeof(T));
 
-            foreach (XmlElement element in doc.DocumentElement?.ChildNodes ?? new XmlNodeList())
+            if (doc.DocumentElement?.ChildNodes != null)
             {
-                using (var reader = new StringReader(element.OuterXml))
+                foreach (XmlNode node in doc.DocumentElement.ChildNodes)
                 {
-                    var item = (T?)serializer.Deserialize(reader);
-                    if (item != null)
-                        items.Add(item);
+                    if (node is XmlElement element)
+                    {
+                        using (var reader = new StringReader(element.OuterXml))
+                        {
+                            var item = (T?)serializer.Deserialize(reader);
+                            if (item != null)
+                                items.Add(item);
+                        }
+                    }
                 }
             }
 
