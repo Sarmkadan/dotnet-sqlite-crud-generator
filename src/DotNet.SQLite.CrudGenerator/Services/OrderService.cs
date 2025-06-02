@@ -7,6 +7,7 @@ using DotNet.SQLite.CrudGenerator.Enums;
 using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Data;
 
 namespace DotNet.SQLite.CrudGenerator.Services;
 
@@ -180,8 +181,8 @@ public class OrderService : IService<Order, int>
             PendingOrders = pending.Count(),
             DeliveredOrders = delivered.Count,
             TotalRevenue = orders.Sum(o => o.CalculateFinalTotal()),
-            AverageOrderValue = orders.Any() ? orders.Average(o => o.TotalAmount) : 0,
-            AverageTaxAmount = orders.Any() ? orders.Average(o => o.TaxAmount) : 0,
+            AverageOrderValue = orders.Any() ? orders.Average(o => (double)o.TotalAmount) : 0,
+            AverageTaxAmount = orders.Any() ? orders.Average(o => (double)o.TaxAmount) : 0,
             TotalDiscounts = orders.Sum(o => o.DiscountAmount)
         };
     }

@@ -93,16 +93,16 @@ public class ApplicationConfiguration
             },
             Cache = new CacheConfiguration
             {
-                Enabled = bool.TryParse(Environment.GetEnvironmentVariable("CACHE_ENABLED"), out var enabled) ? enabled : true,
+                Enabled = bool.TryParse(Environment.GetEnvironmentVariable("CACHE_ENABLED"), out var cacheEnabled) ? cacheEnabled : true,
                 MaxSizeBytes = long.TryParse(Environment.GetEnvironmentVariable("CACHE_MAX_SIZE"), out var size) ? size : 10_000_000
             },
             EventBus = new EventBusConfiguration
             {
-                Enabled = bool.TryParse(Environment.GetEnvironmentVariable("EVENTBUS_ENABLED"), out var enabled) ? enabled : true
+                Enabled = bool.TryParse(Environment.GetEnvironmentVariable("EVENTBUS_ENABLED"), out var eventBusEnabled) ? eventBusEnabled : true
             },
             BackgroundWorker = new BackgroundWorkerConfiguration
             {
-                Enabled = bool.TryParse(Environment.GetEnvironmentVariable("WORKER_ENABLED"), out var enabled) ? enabled : true,
+                Enabled = bool.TryParse(Environment.GetEnvironmentVariable("WORKER_ENABLED"), out var workerEnabled) ? workerEnabled : true,
                 WorkerCount = int.TryParse(Environment.GetEnvironmentVariable("WORKER_COUNT"), out var count) ? count : 2
             }
         };

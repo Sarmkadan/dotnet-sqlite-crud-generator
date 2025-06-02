@@ -62,8 +62,10 @@ public class HttpClientFactory
     {
         lock (_lockObject)
         {
-            if (_clients.TryRemove(name, out var client))
+            // Fix: Replaced invalid TryRemove with TryGetValue and Remove for thread safety under lock
+            if (_clients.TryGetValue(name, out var client))
             {
+                _clients.Remove(name);
                 client?.Dispose();
                 return true;
             }

@@ -118,7 +118,7 @@ public class WebhookHandler
 
     public IEnumerable<DeliveryAttempt> GetDeliveryHistory(string? webhookName = null)
     {
-        var history = _deliveryHistory.Values;
+        IEnumerable<DeliveryAttempt> history = _deliveryHistory.Values;
 
         if (!string.IsNullOrEmpty(webhookName))
             history = history.Where(h => h.WebhookName == webhookName);

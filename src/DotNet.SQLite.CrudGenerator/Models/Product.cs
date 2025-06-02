@@ -101,7 +101,8 @@ public class Product
     public void AddStock(int quantity)
     {
         if (quantity < 0)
-            throw new ArgumentException("Quantity cannot be negative");
+            // Fix: Replaced generic ArgumentException with specific ArgumentOutOfRangeException
+            throw new ArgumentOutOfRangeException(nameof(quantity), quantity, "Quantity cannot be negative.");
 
         StockQuantity += quantity;
         UpdatedAt = DateTime.UtcNow;
@@ -113,10 +114,12 @@ public class Product
     public void RemoveStock(int quantity)
     {
         if (quantity < 0)
-            throw new ArgumentException("Quantity cannot be negative");
+            // Fix: Replaced generic ArgumentException with specific ArgumentOutOfRangeException
+            throw new ArgumentOutOfRangeException(nameof(quantity), quantity, "Quantity cannot be negative.");
 
         if (StockQuantity < quantity)
-            throw new InvalidOperationException("Insufficient stock");
+            // Fix: Added specific details to InvalidOperationException for better debugging
+            throw new InvalidOperationException($"Insufficient stock. Available: {StockQuantity}, Requested: {quantity}");
 
         StockQuantity -= quantity;
         UpdatedAt = DateTime.UtcNow;
