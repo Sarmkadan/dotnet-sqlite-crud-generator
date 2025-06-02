@@ -16,15 +16,15 @@ public class MemoryCacheProvider : ICacheProvider
 {
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
     private readonly object _lockObject = new();
-    private long _maxSize = 10_000_000; // 10 MB default
-    private long _currentSize = 0;
+    private readonly long _maxSize;
+    private long _currentSize;
 
     public MemoryCacheProvider(long maxSizeBytes = 10_000_000)
     {
         _maxSize = maxSizeBytes;
     }
 
-    public async Task<T?> GetAsync<T>(string key) where T : class
+    public ValueTask<T?> GetAsync<T>(string key) where T : class
     {
         if (string.IsNullOrEmpty(key))
             throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
@@ -34,20 +34,20 @@ public class MemoryCacheProvider : ICacheProvider
             if (entry.IsExpired)
             {
                 _cache.TryRemove(key, out _);
-                _currentSize -= entry.Size;
-                return null;
+                Interlocked.Add(ref _currentSize, -entry.Size);
+                return ValueTask.FromResult<T?>(null);
             }
 
             entry.LastAccessed = DateTime.UtcNow;
             entry.AccessCount++;
 
-            return await Task.FromResult((T?)entry.Value);
+            return ValueTask.FromResult((T?)entry.Value);
         }
 
-        return null;
+        return ValueTask.FromResult<T?>(null);
     }
 
-    public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
+    public ValueTask SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
     {
         if (string.IsNullOrEmpty(key))
             throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
@@ -57,11 +57,8 @@ public class MemoryCacheProvider : ICacheProvider
 
         var size = EstimateSize(value);
 
-        // Evict if necessary
-        if (_currentSize + size > _maxSize)
-        {
+        if (Volatile.Read(ref _currentSize) + size > _maxSize)
             EvictLRUItems(size);
-        }
 
         var entry = new CacheEntry
         {
@@ -73,57 +70,54 @@ public class MemoryCacheProvider : ICacheProvider
         };
 
         if (_cache.TryGetValue(key, out var oldEntry))
-        {
-            _currentSize -= oldEntry.Size;
-        }
+            Interlocked.Add(ref _currentSize, -oldEntry.Size);
 
         _cache[key] = entry;
-        _currentSize += size;
+        Interlocked.Add(ref _currentSize, size);
 
-        await Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public async Task<bool> RemoveAsync(string key)
+    public ValueTask<bool> RemoveAsync(string key)
     {
         if (string.IsNullOrEmpty(key))
-            return false;
+            return ValueTask.FromResult(false);
 
         if (_cache.TryRemove(key, out var entry))
         {
-            _currentSize -= entry.Size;
-            return true;
+            Interlocked.Add(ref _currentSize, -entry.Size);
+            return ValueTask.FromResult(true);
         }
 
-        await Task.CompletedTask;
-        return false;
+        return ValueTask.FromResult(false);
     }
 
-    public async Task ClearAsync()
+    public ValueTask ClearAsync()
     {
         _cache.Clear();
-        _currentSize = 0;
-        await Task.CompletedTask;
+        Volatile.Write(ref _currentSize, 0);
+        return ValueTask.CompletedTask;
     }
 
-    public async Task<bool> ExistsAsync(string key)
+    public ValueTask<bool> ExistsAsync(string key)
     {
         if (string.IsNullOrEmpty(key))
-            return false;
+            return ValueTask.FromResult(false);
 
         if (_cache.TryGetValue(key, out var entry))
         {
             if (entry.IsExpired)
             {
                 _cache.TryRemove(key, out _);
-                return false;
+                return ValueTask.FromResult(false);
             }
-            return true;
+            return ValueTask.FromResult(true);
         }
 
-        return await Task.FromResult(false);
+        return ValueTask.FromResult(false);
     }
 
-    public async Task<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class
+    public async ValueTask<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class
     {
         var cached = await GetAsync<T>(key);
         if (cached != null)
@@ -141,7 +135,7 @@ public class MemoryCacheProvider : ICacheProvider
         var stats = new CacheStatistics
         {
             TotalItems = _cache.Count,
-            TotalSizeBytes = _currentSize,
+            TotalSizeBytes = Volatile.Read(ref _currentSize),
             MaxSizeBytes = _maxSize,
             Entries = _cache.Select(kvp => new CacheEntryInfo
             {
@@ -167,9 +161,8 @@ public class MemoryCacheProvider : ICacheProvider
 
         foreach (var key in expiredKeys)
         {
-            _cache.TryRemove(key, out var entry);
-            if (entry != null)
-                _currentSize -= entry.Size;
+            if (_cache.TryRemove(key, out var entry))
+                Interlocked.Add(ref _currentSize, -entry.Size);
         }
     }
 
@@ -191,20 +184,19 @@ public class MemoryCacheProvider : ICacheProvider
                 if (_cache.TryRemove(item.Key, out var entry))
                 {
                     freedSpace += entry.Size;
-                    _currentSize -= entry.Size;
+                    Interlocked.Add(ref _currentSize, -entry.Size);
                 }
             }
         }
     }
 
-    private long EstimateSize(object obj)
+    // Type-based estimation: avoids Marshal.SizeOf which throws for non-blittable types.
+    private static long EstimateSize(object obj) => obj switch
     {
-        if (obj == null)
-            return 0;
-
-        // Rough estimation: 50 bytes base + object size
-        return 50 + System.Runtime.InteropServices.Marshal.SizeOf(obj);
-    }
+        string s  => 50L + (long)s.Length * 2,
+        byte[] b  => 50L + b.Length,
+        _         => 178L,
+    };
 
     private class CacheEntry
     {
@@ -220,12 +212,12 @@ public class MemoryCacheProvider : ICacheProvider
 
 public interface ICacheProvider
 {
-    Task<T?> GetAsync<T>(string key) where T : class;
-    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class;
-    Task<bool> RemoveAsync(string key);
-    Task ClearAsync();
-    Task<bool> ExistsAsync(string key);
-    Task<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class;
+    ValueTask<T?> GetAsync<T>(string key) where T : class;
+    ValueTask SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class;
+    ValueTask<bool> RemoveAsync(string key);
+    ValueTask ClearAsync();
+    ValueTask<bool> ExistsAsync(string key);
+    ValueTask<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class;
 }
 
 public class CacheStatistics

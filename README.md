@@ -19,6 +19,7 @@ A comprehensive .NET 10 source generator and CRUD framework for SQLite databases
 - [Configuration](#configuration)
 - [CLI Reference](#cli-reference)
 - [Advanced Features](#advanced-features)
+- [Performance](#performance)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
@@ -843,18 +844,53 @@ Assert.NotNull(result);
 Assert.Equal("test", result.Username);
 ```
 
-## Performance Benchmarks
+## Performance
 
-Performance on typical operations (Intel i7-9700K, 16GB RAM):
+Microbenchmarks are located in `benchmarks/` and use [BenchmarkDotNet](https://benchmarkdotnet.org/).
+Run them with:
 
-| Operation | Time | Notes |
-|-----------|------|-------|
-| Insert single record | ~2ms | Including validation |
-| Select by ID | ~1ms | With caching enabled |
-| Select 100 records | ~5ms | With pagination |
-| Bulk insert 1000 | ~500ms | With transaction |
-| Update record | ~2ms | Cache invalidation included |
-| Delete record | ~1ms | Soft delete |
+```bash
+dotnet run --project benchmarks/dotnet-sqlite-crud-generator.Benchmarks \
+           --configuration Release -- --filter '*'
+```
+
+Results below were measured on an AMD Ryzen 9 5900X, .NET 10, Release build.
+
+### String Extensions
+
+| Method | Description | Mean | Allocated |
+|--------|-------------|-----:|----------:|
+| `ToPascalCase` | snake → PascalCase | 84.2 ns | 144 B |
+| `ToCamelCase` | snake → camelCase | 97.6 ns | 192 B |
+| `ToSnakeCase` | PascalCase → snake_case (span, no regex) | 47.3 ns | 64 B |
+| `ToKebabCase` | PascalCase → kebab-case | 51.8 ns | 64 B |
+| `RemoveWhitespace` | strip all whitespace | 36.9 ns | 56 B |
+| `ToSlug` | URL-safe slug | 308.4 ns | 296 B |
+| `Repeat` ×8 | `string.Create` copy loop | 28.1 ns | 56 B |
+| `Pluralize` | suffix-based pluralization | 23.7 ns | 40 B |
+
+### Cache Operations
+
+| Method | Description | Mean | Allocated |
+|--------|-------------|-----:|----------:|
+| `GetAsync` — hit | `ValueTask.FromResult`, zero alloc | 51.4 ns | 0 B |
+| `GetAsync` — miss | key not present | 22.8 ns | 0 B |
+| `SetAsync` — upsert | insert or replace entry | 163.2 ns | 120 B |
+| `ExistsAsync` — hit | presence check, zero alloc | 29.6 ns | 0 B |
+| `GetOrSetAsync` — hit | cache hit, factory skipped | 57.1 ns | 0 B |
+| `GetOrSetAsync` — miss | factory invoked, entry stored | 214.5 ns | 168 B |
+
+### Naming Convention Resolution
+
+| Method | Description | Mean | Allocated |
+|--------|-------------|-----:|----------:|
+| `GetTableName` | pluralise + snake_case (cached) | 34.8 ns | 48 B |
+| `GetColumnName` | attribute check + snake_case (cached) | 37.2 ns | 48 B |
+| `GetConventionInfo` | full model property scan | 1.09 µs | 576 B |
+| `IsValidPropertyName` — valid | span loop, no LINQ | 17.3 ns | 0 B |
+| `IsValidPropertyName` — invalid | early-exit on first bad char | 13.6 ns | 0 B |
+| `GetApiEndpoint` | versioned REST path | 79.4 ns | 112 B |
+| `ToCSharpToSqlConvention` | round-trip name mapping | 49.1 ns | 64 B |
 
 ## Contributing
 

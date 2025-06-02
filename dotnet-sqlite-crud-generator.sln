@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNet.SQLite.CrudGenerator
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dotnet-sqlite-crud-generator.Tests", "tests\dotnet-sqlite-crud-generator.Tests\dotnet-sqlite-crud-generator.Tests.csproj", "{B4C9D7E3-1A2F-4E5D-8C0B-3F7A2D9E1B6C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dotnet-sqlite-crud-generator.Benchmarks", "benchmarks\dotnet-sqlite-crud-generator.Benchmarks\dotnet-sqlite-crud-generator.Benchmarks.csproj", "{A5D8B2C7-F3E1-4D09-8B6A-3C2E7F1D5A9B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,5 +23,9 @@ Global
 		{B4C9D7E3-1A2F-4E5D-8C0B-3F7A2D9E1B6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4C9D7E3-1A2F-4E5D-8C0B-3F7A2D9E1B6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4C9D7E3-1A2F-4E5D-8C0B-3F7A2D9E1B6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5D8B2C7-F3E1-4D09-8B6A-3C2E7F1D5A9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5D8B2C7-F3E1-4D09-8B6A-3C2E7F1D5A9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5D8B2C7-F3E1-4D09-8B6A-3C2E7F1D5A9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5D8B2C7-F3E1-4D09-8B6A-3C2E7F1D5A9B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
