@@ -3,9 +3,9 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Runtime.CompilerServices;
 
 namespace DotNet.SQLite.CrudGenerator.Utilities;
 
@@ -15,6 +15,12 @@ namespace DotNet.SQLite.CrudGenerator.Utilities;
 /// </summary>
 public static class StringExtensions
 {
+    // Compiled at startup — avoids per-call regex construction overhead in hot paths.
+    private static readonly Regex _slugSpecialCharsRegex =
+        new(@"[^a-z0-9\-]", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+    private static readonly Regex _slugDoubleHyphensRegex =
+        new("-{2,}", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+
     /// <summary>
     /// Converts a string to PascalCase (e.g., "user_id" -> "UserId").
     /// Useful for C# property naming conventions.
@@ -24,16 +30,31 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(input))
             return input;
 
-        var words = input.Split(new[] { '_', '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        var sb = new StringBuilder();
+        var span = input.AsSpan();
 
-        foreach (var word in words)
+        // First pass: count non-separator characters for exact allocation.
+        int outputLen = 0;
+        foreach (char c in span)
+            if (c != '_' && c != '-' && c != ' ') outputLen++;
+
+        if (outputLen == 0)
+            return string.Empty;
+
+        return string.Create(outputLen, input, static (chars, src) =>
         {
-            if (word.Length > 0)
-                sb.Append(char.ToUpper(word[0]) + word.Substring(1).ToLower());
-        }
-
-        return sb.ToString();
+            int pos = 0;
+            bool capitalizeNext = true;
+            foreach (char c in src.AsSpan())
+            {
+                if (c == '_' || c == '-' || c == ' ')
+                {
+                    capitalizeNext = true;
+                    continue;
+                }
+                chars[pos++] = capitalizeNext ? char.ToUpperInvariant(c) : char.ToLowerInvariant(c);
+                capitalizeNext = false;
+            }
+        });
     }
 
     /// <summary>
@@ -45,8 +66,16 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(input))
             return input;
 
-        var pascalCase = input.ToPascalCase();
-        return char.ToLower(pascalCase[0]) + pascalCase.Substring(1);
+        var pascal = input.ToPascalCase();
+        if (pascal.Length == 0) return string.Empty;
+        if (pascal.Length == 1) return char.ToLowerInvariant(pascal[0]).ToString();
+
+        // Lowercase only the first character, copy the rest via Span — one allocation.
+        return string.Create(pascal.Length, pascal, static (chars, src) =>
+        {
+            chars[0] = char.ToLowerInvariant(src[0]);
+            src.AsSpan(1).CopyTo(chars[1..]);
+        });
     }
 
     /// <summary>
@@ -58,8 +87,29 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(input))
             return input;
 
-        var result = Regex.Replace(input, "([a-z])([A-Z])", "$1_$2");
-        return result.ToLower();
+        var span = input.AsSpan();
+
+        // Count lowercase→uppercase transitions; each needs an inserted underscore.
+        int extra = 0;
+        for (int i = 1; i < span.Length; i++)
+            if (char.IsLower(span[i - 1]) && char.IsUpper(span[i]))
+                extra++;
+
+        if (extra == 0)
+            return input.ToLowerInvariant();
+
+        // One allocation: exact-sized buffer with underscores inserted inline.
+        return string.Create(span.Length + extra, input, static (buf, src) =>
+        {
+            int pos = 0;
+            var s = src.AsSpan();
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (i > 0 && char.IsLower(s[i - 1]) && char.IsUpper(s[i]))
+                    buf[pos++] = '_';
+                buf[pos++] = char.ToLowerInvariant(s[i]);
+            }
+        });
     }
 
     /// <summary>
@@ -71,7 +121,7 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(input))
             return input;
 
-        return input.ToSnakeCase().Replace("_", "-");
+        return input.ToSnakeCase().Replace('_', '-');
     }
 
     /// <summary>
@@ -83,9 +133,13 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(word))
             return word;
 
-        return word.EndsWith("y")
-            ? word.Substring(0, word.Length - 1) + "ies"
-            : word.EndsWith("s") || word.EndsWith("x") || word.EndsWith("z") ? word + "es" : word + "s";
+        if (word.EndsWith('y'))
+            return string.Concat(word.AsSpan(0, word.Length - 1), "ies");
+
+        if (word.EndsWith('s') || word.EndsWith('x') || word.EndsWith('z'))
+            return word + "es";
+
+        return word + "s";
     }
 
     /// <summary>
@@ -96,8 +150,10 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
             return input;
 
-        var truncated = input.Substring(0, maxLength);
-        return addEllipsis ? truncated + "..." : truncated;
+        // Span slice avoids an intermediate Substring allocation when appending ellipsis.
+        return addEllipsis
+            ? string.Concat(input.AsSpan(0, maxLength), "...")
+            : input[..maxLength];
     }
 
     /// <summary>
@@ -114,7 +170,25 @@ public static class StringExtensions
     /// </summary>
     public static string RemoveWhitespace(this string input)
     {
-        return new string(input.Where(c => !char.IsWhiteSpace(c)).ToArray());
+        if (string.IsNullOrEmpty(input))
+            return input;
+
+        var span = input.AsSpan();
+
+        // Count non-whitespace chars so we allocate exactly once.
+        int count = 0;
+        foreach (char c in span)
+            if (!char.IsWhiteSpace(c)) count++;
+
+        if (count == input.Length) return input;
+        if (count == 0) return string.Empty;
+
+        return string.Create(count, input, static (chars, src) =>
+        {
+            int pos = 0;
+            foreach (char c in src.AsSpan())
+                if (!char.IsWhiteSpace(c)) chars[pos++] = c;
+        });
     }
 
     /// <summary>
@@ -125,14 +199,13 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(input))
             return input;
 
-        var slug = input
-            .ToLower()
-            .Replace(" ", "-")
-            .Replace("_", "-")
+        var slug = input.ToLowerInvariant()
+            .Replace(' ', '-')
+            .Replace('_', '-')
             .Trim('-');
 
-        return Regex.Replace(slug, @"[^a-z0-9\-]", "")
-            .Replace("--", "-");
+        return _slugDoubleHyphensRegex.Replace(
+            _slugSpecialCharsRegex.Replace(slug, string.Empty), "-");
     }
 
     /// <summary>
@@ -143,11 +216,17 @@ public static class StringExtensions
         if (count <= 0 || string.IsNullOrEmpty(input))
             return string.Empty;
 
-        var sb = new StringBuilder();
-        for (int i = 0; i < count; i++)
-            sb.Append(input);
-
-        return sb.ToString();
+        return string.Create(input.Length * count, (input, count), static (chars, state) =>
+        {
+            var (src, cnt) = state;
+            var srcSpan = src.AsSpan();
+            int pos = 0;
+            for (int i = 0; i < cnt; i++)
+            {
+                srcSpan.CopyTo(chars[pos..]);
+                pos += src.Length;
+            }
+        });
     }
 
     /// <summary>
@@ -176,7 +255,11 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(input))
             return string.Empty;
 
-        var words = input.Split(new[] { ' ', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        return words.Length > 0 ? words[0] : string.Empty;
+        // IndexOfAny on a Span avoids the array allocation from Split.
+        var span = input.AsSpan().TrimStart();
+        if (span.IsEmpty) return string.Empty;
+
+        int end = span.IndexOfAny(' ', '\t', '\n');
+        return (end < 0 ? span : span[..end]).ToString();
     }
 }
