@@ -19,6 +19,7 @@ A comprehensive .NET 10 source generator and CRUD framework for SQLite databases
 - [Configuration](#configuration)
 - [CLI Reference](#cli-reference)
 - [Advanced Features](#advanced-features)
+- [Testing](#testing)
 - [Performance](#performance)
 - [Troubleshooting](#troubleshooting)
 - [Related Projects](#related-projects)
@@ -978,7 +979,7 @@ of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
-furnished in doubt, subject to the following conditions:
+furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
