@@ -21,6 +21,7 @@ A comprehensive .NET 10 source generator and CRUD framework for SQLite databases
 - [Advanced Features](#advanced-features)
 - [Performance](#performance)
 - [Troubleshooting](#troubleshooting)
+- [Related Projects](#related-projects)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -891,6 +892,55 @@ Results below were measured on an AMD Ryzen 9 5900X, .NET 10, Release build.
 | `IsValidPropertyName` — invalid | early-exit on first bad char | 13.6 ns | 0 B |
 | `GetApiEndpoint` | versioned REST path | 79.4 ns | 112 B |
 | `ToCSharpToSqlConvention` | round-trip name mapping | 49.1 ns | 64 B |
+
+## Related Projects
+
+### Ecosystem
+
+Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
+
+### Integration Examples
+
+The snippets below show two common patterns for using this library alongside other components in a larger application.
+
+**Combining generated repositories with a custom domain service:**
+
+```csharp
+// Register the generator's services alongside your own
+services.AddApplicationServices(connectionString);
+services.AddScoped<IOrderFulfillmentService, OrderFulfillmentService>();
+
+// Inject generated repositories directly into a domain service
+public class OrderFulfillmentService(IRepository<Order> orders, IRepository<Product> products)
+{
+    public async Task<Order> FulfillAsync(int orderId)
+    {
+        var order   = await orders.GetByIdAsync(orderId);
+        var product = await products.GetByIdAsync(order.ProductId);
+        product.StockQuantity--;
+        await products.UpdateAsync(product);
+        order.Status = "Fulfilled";
+        return await orders.UpdateAsync(order);
+    }
+}
+```
+
+**Exporting data and forwarding it via webhook:**
+
+```csharp
+var exportService  = scope.ServiceProvider.GetRequiredService<DataExportService>();
+var webhookHandler = scope.ServiceProvider.GetRequiredService<WebhookHandler>();
+
+var products = await exportService.GetAllProductsAsync();
+var json     = exportService.ExportToJson(products);
+
+await webhookHandler.PublishAsync(new WebhookPayload
+{
+    Event     = "products.exported",
+    Data      = json,
+    Timestamp = DateTime.UtcNow
+});
+```
 
 ## Contributing
 
