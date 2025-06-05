@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Services;
 /// <summary>
 /// Service for generating CRUD operations, migrations, and gRPC services from C# models.
 /// </summary>
-public class GenerationService
+public sealed class GenerationService
 {
     private readonly string _outputPath;
 
@@ -28,7 +29,7 @@ public class GenerationService
     /// </summary>
     public async Task<string> GenerateRepositoryInterfaceAsync(Type entityType, CancellationToken cancellationToken = default)
     {
-        if (entityType == null)
+        if (entityType is null)
             throw new ArgumentNullException(nameof(entityType));
 
         ValidateEntityType(entityType);
@@ -64,7 +65,7 @@ public class GenerationService
     /// </summary>
     public async Task<string> GenerateMigrationAsync(Type entityType, string migrationName, CancellationToken cancellationToken = default)
     {
-        if (entityType == null)
+        if (entityType is null)
             throw new ArgumentNullException(nameof(entityType));
 
         ValidateEntityType(entityType);
@@ -93,7 +94,7 @@ public class GenerationService
     /// </summary>
     public async Task<string> GenerateGrpcServiceAsync(Type entityType, CancellationToken cancellationToken = default)
     {
-        if (entityType == null)
+        if (entityType is null)
             throw new ArgumentNullException(nameof(entityType));
 
         ValidateEntityType(entityType);

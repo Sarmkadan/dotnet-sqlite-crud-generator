@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ namespace DotNet.SQLite.CrudGenerator.Services;
 /// <summary>
 /// Service for managing order operations and order lifecycle.
 /// </summary>
-public class OrderService : IService<Order, int>
+public sealed class OrderService : IService<Order, int>
 {
     private readonly IRepository<Order, int> _orderRepository;
     private readonly IRepository<User, int> _userRepository;
@@ -45,14 +46,14 @@ public class OrderService : IService<Order, int>
 
     public async Task<Order> CreateAsync(Order entity, CancellationToken cancellationToken = default)
     {
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         if (!Validate(entity))
             throw new ValidationException("Order validation failed. Check required fields.");
 
         var user = await _userRepository.GetByIdAsync(entity.UserId, cancellationToken);
-        if (user == null)
+        if (user is null)
             throw new ValidationException($"User with ID {entity.UserId} does not exist.");
 
         entity.CreatedAt = DateTime.UtcNow;
@@ -67,7 +68,7 @@ public class OrderService : IService<Order, int>
 
     public async Task<bool> UpdateAsync(Order entity, CancellationToken cancellationToken = default)
     {
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         if (entity.Id <= 0)
@@ -77,7 +78,7 @@ public class OrderService : IService<Order, int>
             throw new ValidationException("Order validation failed. Check required fields.");
 
         var existing = await GetAsync(entity.Id, cancellationToken);
-        if (existing == null)
+        if (existing is null)
             throw RepositoryException.EntityNotFound(nameof(Order), entity.Id);
 
         entity.UpdatedAt = DateTime.UtcNow;
@@ -96,7 +97,7 @@ public class OrderService : IService<Order, int>
             throw new ArgumentException("Order ID must be greater than 0", nameof(id));
 
         var order = await GetAsync(id, cancellationToken);
-        if (order == null)
+        if (order is null)
             throw RepositoryException.EntityNotFound(nameof(Order), id);
 
         var result = await _orderRepository.DeleteAsync(id, cancellationToken);
@@ -109,7 +110,7 @@ public class OrderService : IService<Order, int>
 
     public bool Validate(Order entity)
     {
-        if (entity == null) return false;
+        if (entity is null) return false;
         return entity.Validate();
     }
 
@@ -140,7 +141,7 @@ public class OrderService : IService<Order, int>
     public async Task<bool> ShipOrderAsync(int orderId, string trackingNumber, CancellationToken cancellationToken = default)
     {
         var order = await GetAsync(orderId, cancellationToken);
-        if (order == null)
+        if (order is null)
             return false;
 
         if (!order.CanShip())
@@ -157,7 +158,7 @@ public class OrderService : IService<Order, int>
     public async Task<bool> MarkDeliveredAsync(int orderId, CancellationToken cancellationToken = default)
     {
         var order = await GetAsync(orderId, cancellationToken);
-        if (order == null)
+        if (order is null)
             return false;
 
         if (order.Status != EntityStatus.Shipped)
@@ -211,7 +212,7 @@ public class OrderService : IService<Order, int>
 /// <summary>
 /// Metrics about order operations.
 /// </summary>
-public class OrderMetrics
+public sealed class OrderMetrics
 {
     public int TotalOrders { get; set; }
     public int PendingOrders { get; set; }

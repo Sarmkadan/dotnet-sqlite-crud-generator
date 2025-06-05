@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>DotNet.SQLite.CrudGenerator.Tests</RootNamespace>
+    <NoWarn>8618;8620;8602;8625;0246;$(NoWarn)</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

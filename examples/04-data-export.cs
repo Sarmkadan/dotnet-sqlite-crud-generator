@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ using System.Text.Json;
 namespace DotNet.SQLite.CrudGenerator.Examples;
 
 /// <summary>Demonstrates data export to multiple formats (JSON, CSV, XML)</summary>
-public class DataExportExample
+public sealed class DataExportExample
 {
     public static async Task RunAsync()
     {

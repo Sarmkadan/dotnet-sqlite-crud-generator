@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.Caching;
 /// Supports TTL expiration, statistics tracking, and size management.
 /// Thread-safe and suitable for high-concurrency scenarios.
 /// </summary>
-public class MemoryCacheProvider : ICacheProvider
+public sealed class MemoryCacheProvider : ICacheProvider
 {
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
     private readonly object _lockObject = new();
@@ -52,7 +53,7 @@ public class MemoryCacheProvider : ICacheProvider
         if (string.IsNullOrEmpty(key))
             throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
 
-        if (value == null)
+        if (value is null)
             throw new ArgumentNullException(nameof(value));
 
         var size = EstimateSize(value);
@@ -120,11 +121,11 @@ public class MemoryCacheProvider : ICacheProvider
     public async ValueTask<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class
     {
         var cached = await GetAsync<T>(key);
-        if (cached != null)
+        if (cached is not null)
             return cached;
 
         var value = await factory();
-        if (value != null)
+        if (value is not null)
             await SetAsync(key, value, expiration);
 
         return value;
@@ -220,7 +221,7 @@ public interface ICacheProvider
     ValueTask<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class;
 }
 
-public class CacheStatistics
+public sealed class CacheStatistics
 {
     public int TotalItems { get; set; }
     public long TotalSizeBytes { get; set; }
@@ -228,7 +229,7 @@ public class CacheStatistics
     public List<CacheEntryInfo> Entries { get; set; } = new();
 }
 
-public class CacheEntryInfo
+public sealed class CacheEntryInfo
 {
     public string Key { get; set; } = string.Empty;
     public long Size { get; set; }

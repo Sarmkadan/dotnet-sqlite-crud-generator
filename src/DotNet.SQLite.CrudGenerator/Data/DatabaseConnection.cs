@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace DotNet.SQLite.CrudGenerator.Data;
 /// <summary>
 /// Manages SQLite database connections with connection pooling support.
 /// </summary>
-public class DatabaseConnection : IAsyncDisposable, IDisposable
+public sealed class DatabaseConnection : IAsyncDisposable, IDisposable
 {
     private readonly string _connectionString;
     private SqliteConnection? _connection;
@@ -193,7 +194,7 @@ public class DatabaseConnection : IAsyncDisposable, IDisposable
         if (_disposed) return;
 
         Close();
-        if (_connection != null)
+        if (_connection is not null)
             await _connection.DisposeAsync();
 
         _disposed = true;

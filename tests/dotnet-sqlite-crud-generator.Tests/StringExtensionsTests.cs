@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -9,7 +10,7 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
-public class StringExtensionsTests
+public sealed class StringExtensionsTests
 {
     [Fact]
     public void ToPascalCase_WithUnderscoreSeparatedWords_CapitalizesEachWordSegment()

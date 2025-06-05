@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.Data;
 /// <summary>
 /// Unit of work implementation managing multiple repositories and database transactions.
 /// </summary>
-public class DbContextProvider : IUnitOfWork
+public sealed class DbContextProvider : IUnitOfWork
 {
     private readonly DatabaseConnection _database;
     private UserRepository? _userRepository;
@@ -35,11 +36,11 @@ public class DbContextProvider : IUnitOfWork
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         int changeCount = 0;
-        if (_userRepository != null) changeCount += await _userRepository.SaveChangesAsync(cancellationToken);
-        if (_productRepository != null) changeCount += await _productRepository.SaveChangesAsync(cancellationToken);
-        if (_orderRepository != null) changeCount += await _orderRepository.SaveChangesAsync(cancellationToken);
-        if (_categoryRepository != null) changeCount += await _categoryRepository.SaveChangesAsync(cancellationToken);
-        if (_auditLogRepository != null) changeCount += await _auditLogRepository.SaveChangesAsync(cancellationToken);
+        if (_userRepository is not null) changeCount += await _userRepository.SaveChangesAsync(cancellationToken);
+        if (_productRepository is not null) changeCount += await _productRepository.SaveChangesAsync(cancellationToken);
+        if (_orderRepository is not null) changeCount += await _orderRepository.SaveChangesAsync(cancellationToken);
+        if (_categoryRepository is not null) changeCount += await _categoryRepository.SaveChangesAsync(cancellationToken);
+        if (_auditLogRepository is not null) changeCount += await _auditLogRepository.SaveChangesAsync(cancellationToken);
         return changeCount;
     }
 
@@ -75,7 +76,7 @@ public class DbContextProvider : IUnitOfWork
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
-        if (_database != null)
+        if (_database is not null)
             await _database.DisposeAsync();
         _disposed = true;
     }
@@ -84,7 +85,7 @@ public class DbContextProvider : IUnitOfWork
 /// <summary>
 /// Repository for User entities.
 /// </summary>
-public class UserRepository : Repository<User, int>
+public sealed class UserRepository : Repository<User, int>
 {
     public UserRepository(DatabaseConnection database) : base(database) { }
 
@@ -102,7 +103,7 @@ public class UserRepository : Repository<User, int>
 /// <summary>
 /// Repository for Product entities.
 /// </summary>
-public class ProductRepository : Repository<Product, int>
+public sealed class ProductRepository : Repository<Product, int>
 {
     public ProductRepository(DatabaseConnection database) : base(database) { }
 
@@ -125,7 +126,7 @@ public class ProductRepository : Repository<Product, int>
 /// <summary>
 /// Repository for Order entities.
 /// </summary>
-public class OrderRepository : Repository<Order, int>
+public sealed class OrderRepository : Repository<Order, int>
 {
     public OrderRepository(DatabaseConnection database) : base(database) { }
 
@@ -148,7 +149,7 @@ public class OrderRepository : Repository<Order, int>
 /// <summary>
 /// Repository for Category entities.
 /// </summary>
-public class CategoryRepository : Repository<Category, int>
+public sealed class CategoryRepository : Repository<Category, int>
 {
     public CategoryRepository(DatabaseConnection database) : base(database) { }
 
@@ -166,7 +167,7 @@ public class CategoryRepository : Repository<Category, int>
 /// <summary>
 /// Repository for AuditLog entities.
 /// </summary>
-public class AuditLogRepository : Repository<AuditLog, int>
+public sealed class AuditLogRepository : Repository<AuditLog, int>
 {
     public AuditLogRepository(DatabaseConnection database) : base(database) { }
 
