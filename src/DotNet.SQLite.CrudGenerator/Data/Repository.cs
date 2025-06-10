@@ -14,8 +14,12 @@ using Microsoft.Data.Sqlite;
 namespace DotNet.SQLite.CrudGenerator.Data;
 
 /// <summary>
-/// Generic repository implementation for SQLite with CRUD operations and caching.
+/// Generic repository implementation for SQLite with full CRUD operations and in-memory caching.
+/// Uses reflection-based property mapping to automatically generate SQL statements.
+/// Table name defaults to "{TypeName}s" and primary key column defaults to "Id".
 /// </summary>
+/// <typeparam name="T">The entity type. Must have a parameterless constructor and public read/write properties.</typeparam>
+/// <typeparam name="TKey">The type of the primary key (e.g., int, string, Guid).</typeparam>
 public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 {
     // Static caches shared across all instances of the same generic instantiation.
@@ -37,6 +41,10 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         _primaryKeyColumn = "Id";
     }
 
+    /// <summary>
+    /// Retrieves an entity by its primary key. Returns from cache if available,
+    /// otherwise queries the database and caches the result.
+    /// </summary>
     public virtual async Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
         var cached = _cache.FirstOrDefault(e => GetId(e)?.Equals(id) == true);
@@ -60,6 +68,10 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return null;
     }
 
+    /// <summary>
+    /// Returns all entities from the table. Results are cached after the first call;
+    /// subsequent calls return the cached collection without hitting the database.
+    /// </summary>
     public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         if (_cacheLoaded) return _cache.AsReadOnly();
@@ -100,6 +112,10 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return all.Count(predicate);
     }
 
+    /// <summary>
+    /// Inserts a new entity into the database and adds it to the cache.
+    /// Throws <see cref="RepositoryException"/> with DuplicateKey details on unique constraint violations.
+    /// </summary>
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
         if (entity is null)
@@ -146,6 +162,10 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return results;
     }
 
+    /// <summary>
+    /// Updates an existing entity in the database by primary key.
+    /// Throws <see cref="RepositoryException"/> if the entity is not found (zero rows affected).
+    /// </summary>
     public virtual async Task<bool> UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         if (entity is null)
@@ -179,6 +199,10 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return affected > 0; // Return true if at least one row was affected
     }
 
+    /// <summary>
+    /// Deletes an entity by primary key from both the database and cache.
+    /// Returns <c>false</c> if the entity was not found.
+    /// </summary>
     public virtual async Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default)
     {
         await _database.OpenAsync(cancellationToken);
@@ -237,6 +261,11 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return prop is not null ? (TKey?)prop.GetValue(entity) : default;
     }
 
+    /// <summary>
+    /// Maps a database row to an entity instance using reflection.
+    /// Property names are matched case-insensitively to column names.
+    /// DateTime values are parsed from their string representation.
+    /// </summary>
     protected virtual T MapFromReader(SqliteDataReader reader)
     {
         var entity = Activator.CreateInstance<T>();
