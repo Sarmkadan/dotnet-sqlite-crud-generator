@@ -259,14 +259,25 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             var fieldName = reader.GetName(i);
             var property = typeof(T).GetProperty(fieldName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
-            if (property is not null && !reader.IsDBNull(i))
-            {
-                var value = reader.GetValue(i);
-                if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
-                    value = DateTime.Parse(value.ToString() ?? "");
+            if (property is null || !property.CanWrite)
+                continue;
 
-                property.SetValue(entity, Convert.ChangeType(value, property.PropertyType));
+            if (reader.IsDBNull(i))
+            {
+                // For nullable properties assign null; non-nullable properties keep their default.
+                var underlying = Nullable.GetUnderlyingType(property.PropertyType);
+                if (underlying is not null || !property.PropertyType.IsValueType)
+                    property.SetValue(entity, null);
+                continue;
             }
+
+            var value = reader.GetValue(i);
+            var targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+
+            if (targetType == typeof(DateTime))
+                value = DateTime.Parse(value.ToString() ?? "");
+
+            property.SetValue(entity, Convert.ChangeType(value, targetType));
         }
         return entity;
     }
