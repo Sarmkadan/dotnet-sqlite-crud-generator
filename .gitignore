@@ -20,22 +20,33 @@ obj/
 
 # NuGet
 *.nupkg
+*.snupkg
 packages/
 .nuget/
+nuget.config.local
 
 # Test Results
 TestResults/
 *.trx
+coverage*/
+lcov.info
 
-# Build
+# Build outputs
 .build/
 dist/
+publish/
+nupkgs/
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # User-specific
 .env
 *.log
 appsettings.Development.json
+launchSettings.json
+
+# Benchmarks output
+BenchmarkDotNet.Artifacts/
