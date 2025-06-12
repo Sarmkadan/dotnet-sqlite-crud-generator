@@ -5,6 +5,7 @@
 
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
 
 namespace DotNet.SQLite.CrudGenerator.Utilities;
 
@@ -102,6 +103,7 @@ public static class StringExtensions
     /// <summary>
     /// Checks if a string is null, empty, or consists only of whitespace.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsNullOrWhiteSpace(this string? input)
     {
         return string.IsNullOrWhiteSpace(input);

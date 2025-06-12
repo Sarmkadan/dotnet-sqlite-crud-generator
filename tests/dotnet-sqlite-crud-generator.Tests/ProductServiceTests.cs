@@ -9,6 +9,7 @@ using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
 using FluentAssertions;
 using Moq;
+using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 

@@ -6,6 +6,7 @@
 using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Data;
 
 namespace DotNet.SQLite.CrudGenerator.Services;
 

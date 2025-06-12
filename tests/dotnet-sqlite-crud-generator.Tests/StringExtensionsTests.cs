@@ -5,6 +5,7 @@
 
 using DotNet.SQLite.CrudGenerator.Utilities;
 using FluentAssertions;
+using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
@@ -55,7 +56,7 @@ public class StringExtensionsTests
         var result = input.Truncate(20, addEllipsis: true);
 
         // Assert
-        result.Should().Be("This is a long produc...");
+        result.Should().Be("This is a long produ...");
     }
 
     [Fact]
