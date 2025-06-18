@@ -85,4 +85,33 @@ public sealed class StringExtensionsTests
         // Assert
         result.Should().Be("stock_quantity");
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void ToPascalCase_WithNullOrEmpty_ReturnsOriginal(string? input)
+    {
+        input.ToPascalCase().Should().Be(input);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void ToSnakeCase_WithNullOrEmpty_ReturnsOriginal(string? input)
+    {
+        input.ToSnakeCase().Should().Be(input);
+    }
+
+    [Fact]
+    public void ToCamelCase_WithSingleWord_ReturnsLowercase()
+    {
+        // Arrange
+        const string input = "User";
+
+        // Act
+        var result = input.ToCamelCase();
+
+        // Assert
+        result.Should().Be("user");
+    }
 }
