@@ -211,6 +211,12 @@ dotnet --list-sdks     # Verify .NET 10 is installed
 
 ## Installation
 
+### Method 0: NuGet Package
+
+```bash
+dotnet add package Zaiets.dotnet.sqlite.crud.generator
+```
+
 ### Method 1: Clone from GitHub
 
 ```bash
