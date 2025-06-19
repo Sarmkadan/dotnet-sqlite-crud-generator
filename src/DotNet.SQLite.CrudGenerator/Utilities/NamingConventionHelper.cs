@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Collections.Concurrent;
+using System.Collections.Frozen;
 using System.Reflection;
 
 namespace DotNet.SQLite.CrudGenerator.Utilities;
@@ -13,6 +15,41 @@ namespace DotNet.SQLite.CrudGenerator.Utilities;
 /// </summary>
 public static class NamingConventionHelper
 {
+    // Reflection results are stable per type — cache once, reuse forever.
+    private static readonly ConcurrentDictionary<Type, string> _tableNameCache = new();
+    private static readonly ConcurrentDictionary<Type, string> _tableNameSingularCache = new();
+    private static readonly ConcurrentDictionary<PropertyInfo, string> _columnNameCache = new();
+
+    // FrozenDictionary: immutable after construction, 30-40 % faster lookup than Dictionary.
+    private static readonly FrozenDictionary<Type, string> _sqlTypeMappings =
+        new Dictionary<Type, string>
+        {
+            [typeof(bool)]           = "INTEGER",
+            [typeof(byte)]           = "INTEGER",
+            [typeof(short)]          = "INTEGER",
+            [typeof(int)]            = "INTEGER",
+            [typeof(long)]           = "INTEGER",
+            [typeof(float)]          = "REAL",
+            [typeof(double)]         = "REAL",
+            [typeof(decimal)]        = "REAL",
+            [typeof(string)]         = "TEXT",
+            [typeof(char)]           = "TEXT",
+            [typeof(DateTime)]       = "TEXT",
+            [typeof(DateTimeOffset)] = "TEXT",
+            [typeof(Guid)]           = "TEXT",
+            [typeof(byte[])]         = "BLOB",
+        }.ToFrozenDictionary();
+
+    /// <summary>
+    /// Returns the SQLite column type for a given CLR type.
+    /// Nullable&lt;T&gt; unwraps to its underlying type before lookup.
+    /// </summary>
+    public static string GetSqlType(Type propertyType)
+    {
+        var underlying = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+        return _sqlTypeMappings.TryGetValue(underlying, out var sqlType) ? sqlType : "TEXT";
+    }
+
     /// <summary>
     /// Converts C# property names to SQL table/column names.
     /// Example: UserId -> user_id, FirstName -> first_name
@@ -40,27 +77,29 @@ public static class NamingConventionHelper
     /// <summary>
     /// Gets the database table name for a type.
     /// Pluralizes class name and applies naming convention.
+    /// Results are cached per type after the first call.
     /// </summary>
     public static string GetTableName(Type entityType, bool pluralize = true)
     {
-        var tableName = entityType.Name;
         if (pluralize)
-            tableName = tableName.Pluralize();
+            return _tableNameCache.GetOrAdd(entityType, static t => t.Name.Pluralize().ToSnakeCase());
 
-        return tableName.ToSnakeCase();
+        return _tableNameSingularCache.GetOrAdd(entityType, static t => t.Name.ToSnakeCase());
     }
 
     /// <summary>
     /// Gets the database column name for a property.
+    /// Results are cached per PropertyInfo after the first call.
     /// </summary>
     public static string GetColumnName(PropertyInfo property)
     {
-        // Check for [Column] attribute if available
-        var columnAttr = property.GetCustomAttribute<ColumnAttribute>();
-        if (columnAttr != null && !string.IsNullOrEmpty(columnAttr.Name))
-            return columnAttr.Name;
-
-        return property.Name.ToSnakeCase();
+        return _columnNameCache.GetOrAdd(property, static p =>
+        {
+            var columnAttr = p.GetCustomAttribute<ColumnAttribute>();
+            if (columnAttr != null && !string.IsNullOrEmpty(columnAttr.Name))
+                return columnAttr.Name;
+            return p.Name.ToSnakeCase();
+        });
     }
 
     /// <summary>
@@ -104,10 +143,16 @@ public static class NamingConventionHelper
         if (string.IsNullOrEmpty(propertyName))
             return false;
 
-        if (!char.IsLetter(propertyName[0]) && propertyName[0] != '_')
+        var span = propertyName.AsSpan();
+        if (!char.IsLetter(span[0]) && span[0] != '_')
             return false;
 
-        return propertyName.All(c => char.IsLetterOrDigit(c) || c == '_');
+        // Span loop avoids the LINQ delegate allocation per character.
+        foreach (char c in span)
+            if (!char.IsLetterOrDigit(c) && c != '_')
+                return false;
+
+        return true;
     }
 
     /// <summary>

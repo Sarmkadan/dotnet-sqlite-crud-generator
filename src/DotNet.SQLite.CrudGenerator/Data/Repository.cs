@@ -3,6 +3,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
 using DotNet.SQLite.CrudGenerator.Exceptions;
@@ -16,6 +17,12 @@ namespace DotNet.SQLite.CrudGenerator.Data;
 /// </summary>
 public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 {
+    // Static caches shared across all instances of the same generic instantiation.
+    // GetProperties() and GetId() are called on every CRUD operation; caching
+    // eliminates repeated Type.GetProperties / Type.GetProperty invocations.
+    private static readonly ConcurrentDictionary<Type, List<PropertyInfo>> _propertiesCache = new();
+    private static readonly ConcurrentDictionary<Type, PropertyInfo?> _idPropertyCache = new();
+
     protected readonly DatabaseConnection _database;
     protected readonly string _tableName;
     protected readonly string _primaryKeyColumn;
@@ -215,16 +222,17 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     }
 
     protected virtual List<PropertyInfo> GetProperties() =>
-        typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.CanWrite && p.Name != _primaryKeyColumn)
-            .ToList();
+        _propertiesCache.GetOrAdd(typeof(T), static t =>
+            t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+             .Where(p => p.CanRead && p.CanWrite && p.Name != "Id")
+             .ToList());
 
     protected virtual object? GetPropertyValue(T entity, PropertyInfo property) =>
         property.PropertyType == typeof(DateTime) ? property.GetValue(entity)?.ToString() : property.GetValue(entity);
 
     protected virtual TKey? GetId(T entity)
     {
-        var prop = typeof(T).GetProperty(_primaryKeyColumn);
+        var prop = _idPropertyCache.GetOrAdd(typeof(T), static t => t.GetProperty("Id"));
         return prop != null ? (TKey?)prop.GetValue(entity) : default;
     }
 
