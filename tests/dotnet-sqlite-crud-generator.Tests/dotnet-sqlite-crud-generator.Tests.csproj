@@ -4,10 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>NU1903;1591;1574;1573;1587;1572;1581;1584;8618;8620;8602;8625;0246;8604;$(NoWarn)</NoWarn>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>DotNet.SQLite.CrudGenerator.Tests</RootNamespace>
-    <NoWarn>8618;8620;8602;8625;0246;$(NoWarn)</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +19,7 @@
     </PackageReference>
     <PackageReference Include="FluentAssertions" Version="7.0.0" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.1" />
   </ItemGroup>
 
   <ItemGroup>
