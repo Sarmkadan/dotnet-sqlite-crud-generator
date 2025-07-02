@@ -84,7 +84,7 @@ public static class DependencyInjection
     {
         using var scope = serviceProvider.CreateScope();
         var database = scope.ServiceProvider.GetRequiredService<DatabaseConnection>();
-        await database.InitializeDatabaseAsync(cancellationToken);
+        await database.InitializeDatabaseAsync(false, cancellationToken);
         return serviceProvider;
     }
 }
