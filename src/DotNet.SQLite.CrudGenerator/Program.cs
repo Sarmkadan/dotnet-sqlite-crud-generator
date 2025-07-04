@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -64,7 +65,7 @@ class Program
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Error: {ex.Message}");
-            if (ex.InnerException != null)
+            if (ex.InnerException is not null)
                 Console.WriteLine($"   Details: {ex.InnerException.Message}");
             Environment.Exit(1);
         }
@@ -180,7 +181,7 @@ class Program
         // User authentication
         Console.WriteLine("  8️⃣  Testing user authentication...");
         var authenticated = await userService.AuthenticateAsync(createdUser.Email, createdUser.PasswordHash);
-        if (authenticated != null)
+        if (authenticated is not null)
         {
             Console.WriteLine($"     ✓ User authenticated successfully");
             Console.WriteLine($"     ✓ Last login: {authenticated.LastLoginAt:O}");

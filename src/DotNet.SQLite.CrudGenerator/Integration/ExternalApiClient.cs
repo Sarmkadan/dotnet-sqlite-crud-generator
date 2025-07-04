@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.Integration;
 /// Provides type-safe methods for CRUD operations with built-in error handling.
 /// Supports pagination, filtering, and custom headers.
 /// </summary>
-public class ExternalApiClient
+public sealed class ExternalApiClient
 {
     private readonly HttpRequestExecutor _executor;
     private readonly string _baseUrl;
@@ -175,13 +176,13 @@ public class ExternalApiClient
     }
 }
 
-public class ApiClientException : Exception
+public sealed class ApiClientException : Exception
 {
     public ApiClientException(string message) : base(message) { }
     public ApiClientException(string message, Exception innerException) : base(message, innerException) { }
 }
 
-public class ApiResponse<T>
+public sealed class ApiResponse<T>
 {
     public bool Success { get; set; }
     public int StatusCode { get; set; }
@@ -189,7 +190,7 @@ public class ApiResponse<T>
     public T? Data { get; set; }
 }
 
-public class PaginatedResponse<T>
+public sealed class PaginatedResponse<T>
 {
     public List<T>? Items { get; set; }
     public int Total { get; set; }

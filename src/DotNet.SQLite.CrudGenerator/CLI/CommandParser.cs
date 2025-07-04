@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.CLI;
 /// Parses command-line arguments into structured command objects.
 /// Supports global options, subcommands, and argument validation.
 /// </summary>
-public class CommandParser
+public sealed class CommandParser
 {
     private readonly Dictionary<string, Type> _commands = new(StringComparer.OrdinalIgnoreCase);
 

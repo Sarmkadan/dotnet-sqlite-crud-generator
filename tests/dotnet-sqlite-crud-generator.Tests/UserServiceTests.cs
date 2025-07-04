@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
-public class UserServiceTests
+public sealed class UserServiceTests
 {
     private readonly IRepository<User, int> _userRepoMock = Substitute.For<IRepository<User, int>>();
     private readonly UserService _userService;

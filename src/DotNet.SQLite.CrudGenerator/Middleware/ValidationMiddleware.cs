@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Middleware;
 /// Uses reflection and data annotations to validate entity properties.
 /// Accumulates all validation errors for comprehensive feedback.
 /// </summary>
-public class ValidationMiddleware : IMiddleware
+public sealed class ValidationMiddleware : IMiddleware
 {
     public async Task<MiddlewareResult> ExecuteAsync<TRequest, TResponse>(
         TRequest request,
@@ -44,7 +45,7 @@ public class ValidationMiddleware : IMiddleware
     {
         var errors = new List<ValidationError>();
 
-        if (request == null)
+        if (request is null)
         {
             errors.Add(new ValidationError
             {
@@ -83,7 +84,7 @@ public class ValidationMiddleware : IMiddleware
             // Check for null reference types without [Required]
             if (property.PropertyType.IsClass &&
                 property.PropertyType != typeof(string) &&
-                value == null &&
+                value is null &&
                 !validationAttributes.OfType<RequiredAttribute>().Any())
             {
                 // Allow null on non-required reference types
@@ -95,7 +96,7 @@ public class ValidationMiddleware : IMiddleware
     }
 }
 
-public class ValidationError
+public sealed class ValidationError
 {
     public string Field { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;

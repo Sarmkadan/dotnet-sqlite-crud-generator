@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace DotNet.SQLite.CrudGenerator.Examples;
 
 /// <summary>Demonstrates real-world business logic patterns and operations</summary>
-public class BusinessLogicPatternExample
+public sealed class BusinessLogicPatternExample
 {
     public static async Task RunAsync()
     {
@@ -171,7 +172,7 @@ public class BusinessLogicPatternExample
                 Console.WriteLine("6️⃣  Business Logic: Data Quality Validation");
                 var allUsers = await userService.GetAllAsync();
                 var inactiveUsers = allUsers.Where(u => !u.IsActive).ToList();
-                var neverLoggedIn = allUsers.Where(u => u.LastLoginAt == null).ToList();
+                var neverLoggedIn = allUsers.Where(u => u.LastLoginAt is null).ToList();
 
                 Console.WriteLine($"   ✓ Total users: {allUsers.Count}");
                 Console.WriteLine($"   ✓ Active users: {allUsers.Count - inactiveUsers.Count}");

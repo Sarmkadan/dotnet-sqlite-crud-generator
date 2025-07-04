@@ -14,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.BackgroundWorkers;
 /// Supports async task execution with priority and scheduling.
 /// Tracks task execution history and provides statistics.
 /// </summary>
-public class BackgroundTaskQueue
+public sealed class BackgroundTaskQueue
 {
     private readonly PriorityQueue<BackgroundTask, int> _taskQueue = new();
     private readonly ConcurrentDictionary<string, TaskExecutionRecord> _executionHistory = new();
@@ -23,7 +23,7 @@ public class BackgroundTaskQueue
 
     public async Task EnqueueAsync(BackgroundTask task, TaskPriority priority = TaskPriority.Normal)
     {
-        if (task == null)
+        if (task is null)
             throw new ArgumentNullException(nameof(task));
 
         task.Id = Guid.NewGuid();
@@ -118,7 +118,7 @@ public class BackgroundTaskQueue
     }
 }
 
-public class BackgroundTask
+public sealed class BackgroundTask
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -139,7 +139,7 @@ public enum TaskPriority
     Critical = 0
 }
 
-public class TaskExecutionRecord
+public sealed class TaskExecutionRecord
 {
     public string TaskId { get; set; } = string.Empty;
     public DateTime ExecutedAt { get; set; }
@@ -147,7 +147,7 @@ public class TaskExecutionRecord
     public string? Error { get; set; }
 }
 
-public class TaskStatistics
+public sealed class TaskStatistics
 {
     public int PendingTasks { get; set; }
     public int TotalExecuted { get; set; }

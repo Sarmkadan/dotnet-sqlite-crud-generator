@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -202,7 +203,7 @@ public sealed class BulkTransferPipeline<T> where T : class
         Stream destination,
         ExportFormat format,
         CancellationToken cancellationToken = default) =>
-        _filter != null
+        _filter is not null
             ? _service.ExportFilteredAsync(_filter, destination, format, _progress, cancellationToken)
             : _service.ExportToStreamAsync(destination, format, _progress, cancellationToken);
 
@@ -276,7 +277,7 @@ public sealed class BulkTransferPipeline<T> where T : class
 
     private void NotifyErrors(List<BulkTransferError> errors)
     {
-        if (_errorHandler == null || errors.Count == 0) return;
+        if (_errorHandler is null || errors.Count == 0) return;
         foreach (var error in errors)
             _errorHandler(error);
     }

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -180,7 +181,7 @@ public static class AuditHelper
     }
 }
 
-public class AuditLogEntry
+public sealed class AuditLogEntry
 {
     public Guid Id { get; set; }
     public DateTime Timestamp { get; set; }
@@ -192,7 +193,7 @@ public class AuditLogEntry
     public string? Details { get; set; }
 }
 
-public class AuditStatistics
+public sealed class AuditStatistics
 {
     public int TotalEntries { get; set; }
     public int EntryCount { get; set; }

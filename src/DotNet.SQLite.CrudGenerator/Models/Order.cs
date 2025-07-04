@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.Models;
 /// <summary>
 /// Represents an order entity with items and transaction details.
 /// </summary>
-public class Order
+public sealed class Order
 {
     [Key]
     [JsonPropertyName("id")]

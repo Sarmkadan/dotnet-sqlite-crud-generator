@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace DotNet.SQLite.CrudGenerator.Exceptions;
 /// <summary>
 /// Exception thrown when entity validation fails.
 /// </summary>
-public class ValidationException : Exception
+public sealed class ValidationException : Exception
 {
     public ValidationException(string message) : base(message) { }
 
@@ -39,7 +40,7 @@ public class ValidationException : Exception
     /// <summary>
     /// Represents a single validation error.
     /// </summary>
-    public class ValidationError
+    public sealed class ValidationError
     {
         public string? Property { get; set; }
         public string? Message { get; set; }

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.CLI;
 /// Command for displaying system and application statistics.
 /// Shows performance metrics, memory usage, cache stats, and other diagnostics.
 /// </summary>
-public class StatsCommand : ICommand
+public sealed class StatsCommand : ICommand
 {
     private readonly PerformanceMonitor _performanceMonitor = new();
     private bool _verbose = false;
@@ -109,10 +110,10 @@ public class StatsCommand : ICommand
         Console.WriteLine($"  Failed:           {report.TotalFailed}");
         Console.WriteLine($"  Avg Response:     {report.AverageResponseTime:F2} ms");
 
-        if (report.SlowestOperation != null)
+        if (report.SlowestOperation is not null)
             Console.WriteLine($"  Slowest:          {report.SlowestOperation.OperationName} ({report.SlowestOperation.AverageTime:F2} ms)");
 
-        if (report.FastestOperation != null)
+        if (report.FastestOperation is not null)
             Console.WriteLine($"  Fastest:          {report.FastestOperation.OperationName} ({report.FastestOperation.AverageTime:F2} ms)");
     }
 

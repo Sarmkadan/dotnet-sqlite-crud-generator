@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ using System.Text.Json;
 namespace DotNet.SQLite.CrudGenerator.Examples;
 
 /// <summary>Demonstrates advanced patterns and integration scenarios</summary>
-public class AdvancedPatternsExample
+public sealed class AdvancedPatternsExample
 {
     public static async Task RunAsync()
     {
