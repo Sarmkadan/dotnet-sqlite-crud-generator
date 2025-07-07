@@ -15,16 +15,22 @@ public sealed class DatabaseSettings
 
     /// <summary>
     /// Gets or sets the SQLite database file path.
+    /// When set, the connection string is derived from this path automatically.
+    /// Supports absolute paths, relative paths, and paths with spaces or Unicode characters.
     /// </summary>
     public string? FilePath { get; set; } = "crudgenerator.db";
 
+    private string? _customConnectionString;
+
     /// <summary>
     /// Gets or sets the connection string.
+    /// When set explicitly, this value takes precedence over <see cref="FilePath"/>.
+    /// Setting an empty string clears the custom connection string and falls back to <see cref="FilePath"/>.
     /// </summary>
     public string ConnectionString
     {
-        get => $"Data Source=\"{FilePath}\";Version=3;"; // Hotfix: Quote FilePath to handle spaces and special characters.
-        set { }
+        get => _customConnectionString ?? $"Data Source=\"{FilePath}\";Version=3;";
+        set => _customConnectionString = value;
     }
 
     /// <summary>
@@ -44,9 +50,13 @@ public sealed class DatabaseSettings
 
     /// <summary>
     /// Validates the database settings.
+    /// Returns <see langword="true"/> when a valid connection string or file path is configured.
     /// </summary>
     public bool Validate()
     {
+        if (_customConnectionString is not null)
+            return !string.IsNullOrWhiteSpace(_customConnectionString) && ConnectionTimeout > 0;
+
         return !string.IsNullOrWhiteSpace(FilePath) && ConnectionTimeout > 0;
     }
 }
