@@ -123,6 +123,20 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         try
         {
             await command.ExecuteNonQueryAsync(cancellationToken);
+
+            // Retrieve the last inserted row ID
+            using var lastIdCommand = _database.Connection.CreateCommand();
+            lastIdCommand.CommandText = "SELECT last_insert_rowid();";
+            var lastId = await lastIdCommand.ExecuteScalarAsync(cancellationToken);
+
+            // Set the Id property of the entity
+            var idProperty = typeof(T).GetProperty(_primaryKeyColumn);
+            if (idProperty is not null && idProperty.CanWrite)
+            {
+                var convertedId = Convert.ChangeType(lastId, typeof(TKey));
+                idProperty.SetValue(entity, convertedId);
+            }
+
             _cache.Add(entity);
             return entity;
         }
