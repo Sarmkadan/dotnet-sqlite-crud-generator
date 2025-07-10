@@ -44,6 +44,9 @@ A comprehensive .NET 10 source generator and CRUD framework for SQLite databases
 - **Streaming Support**: Process large datasets efficiently without memory overload
 - **Progress Reporting**: Real-time progress tracking for long-running bulk operations
 - **Enhanced CLI**: New commands and improved user experience
+- **Migration Diffing**: Compare entity models against live DB schema and generate ALTER TABLE scripts
+- **Query Builder Generation**: Generate fluent, type-safe query builder classes from entity types
+- **Audit Trail Service**: Persist and query a full audit trail of entity mutations in SQLite
 
 ### Advanced Features
 - **Source Generation**: Generate boilerplate code at compile-time
@@ -742,6 +745,32 @@ Apply database migrations:
 dotnet run -- migrate --target "202401010000_InitialCreate"
 ```
 
+### Diff Command
+
+Compare entity models against the live SQLite schema and produce an ALTER TABLE script for any differences:
+
+```bash
+# Show diff for all registered entities
+dotnet run -- diff
+
+# Show per-column details
+dotnet run -- diff --verbose
+
+# Write generated ALTER script to a file
+dotnet run -- diff --output ./Migrations/pending.sql
+
+# Use a custom connection string
+dotnet run -- diff --connection "Data Source=/path/to/my.db"
+```
+
+The diff command reports three kinds of change:
+
+| Symbol | Meaning |
+|--------|---------|
+| `+ ADDED` | Column exists in the model but is absent from the database; a safe `ALTER TABLE … ADD COLUMN` is generated |
+| `- REMOVED` | Column exists in the database but is missing from the model; manual review comment is emitted |
+| `~ CHANGED` | Column type differs between model and database; a table-recreation comment is emitted |
+
 ### Validate Command
 
 Validate database schema:
@@ -767,6 +796,112 @@ dotnet run -- stats
 ```
 
 ## Advanced Features
+
+### Migration Diffing
+
+`MigrationDiffService` compares a C# entity type against its live SQLite table using `PRAGMA table_info` and returns a structured `MigrationDiff` record.
+
+```csharp
+var db = new DatabaseConnection("Data Source=mydb.db");
+var svc = new MigrationDiffService(db);
+
+var diff = await svc.ComputeDiffAsync(typeof(Product));
+
+if (!diff.IsUpToDate)
+{
+    Console.WriteLine(diff.AlterScript);    // ALTER TABLE … ADD COLUMN …
+    Console.WriteLine($"{diff.TableDiff.ColumnDiffs.Count} column(s) changed");
+}
+```
+
+The service exposes two lower-level methods for custom workflows:
+
+```csharp
+// Current schema from the live database
+var actual = await svc.GetActualSchemaAsync("Products");
+
+// Expected schema derived from the entity type via reflection
+var expected = svc.GetExpectedSchema(typeof(Product));
+```
+
+### Query Builder Generation
+
+`QueryBuilderGenerationService` generates a fluent query builder .cs file for any entity type. The generated class can be dropped into any project and used immediately without additional dependencies.
+
+```csharp
+var svc = new QueryBuilderGenerationService("./Generated");
+var filePath = await svc.GenerateQueryBuilderAsync(typeof(Product));
+// Writes ./Generated/ProductQueryBuilder.cs
+```
+
+The generated builder supports:
+
+```csharp
+var (sql, parameters) = new ProductQueryBuilder()
+    .Select("Id", "Name", "Price")
+    .WhereName("LIKE", "%widget%")
+    .WhereIsActive("=", true)
+    .OrderByDescending("Price")
+    .Limit(20)
+    .Offset(40)
+    .Build();
+
+// sql  → SELECT Id, Name, Price FROM Products WHERE Name LIKE @p0 AND IsActive = @p1 ORDER BY Price DESC LIMIT 20 OFFSET 40
+// parameters → { "@p0": "%widget%", "@p1": true }
+```
+
+You can also generate the source as a string without writing to disk using `BuildQueryBuilderSource(Type)`, which is useful for preview or testing.
+
+### Audit Trail Service
+
+`AuditTrailService` persists structured change records to the `AuditLogs` SQLite table and provides rich querying without loading data into memory.
+
+#### Recording changes
+
+```csharp
+var audit = new AuditTrailService(db);
+
+// Record a create
+await audit.RecordAsync("Product", product.Id, OperationType.Create, currentUserId,
+    newValues: JsonSerializer.Serialize(product));
+
+// Convenience generic overload — serialises objects automatically
+await audit.RecordAsync(product.Id, OperationType.Update, currentUserId,
+    before: previousProduct, after: updatedProduct, reason: "Price adjustment");
+```
+
+#### Querying the trail
+
+```csharp
+// Full history for a single entity
+var history = await audit.GetEntityTrailAsync("Product", productId);
+
+// Everything a user has done
+var userActivity = await audit.GetUserTrailAsync(userId, limit: 50);
+
+// Latest 20 events across all entities
+var recent = await audit.GetRecentAsync(20);
+
+// Flexible filter
+var results = await audit.QueryAsync(new AuditTrailFilter
+{
+    EntityType = "Order",
+    OperationType = OperationType.Delete,
+    From = DateTime.UtcNow.AddDays(-7),
+    Limit = 100
+});
+```
+
+#### Statistics and maintenance
+
+```csharp
+var summary = await audit.GetSummaryAsync();
+Console.WriteLine($"Total events: {summary.TotalEntries}");
+Console.WriteLine($"By entity: {string.Join(", ", summary.ByEntityType.Select(kv => $"{kv.Key}={kv.Value}"))}");
+
+// Remove records older than 90 days
+int purged = await audit.PurgeAsync(DateTime.UtcNow.AddDays(-90));
+```
 
 ### Background Task Processing
 

@@ -132,9 +132,11 @@ Usage: dotnet run <command> [options]
 Commands:
   generate      Generate CRUD operations, migrations, and gRPC services
   migrate       Execute database migrations
+  diff          Compare entity models against the live database schema
   grpc          Generate gRPC service definitions
   list          List all available models for generation
   validate      Validate model definitions
+  stats         Show database statistics
 
 Global Options:
   -h, --help        Show this help message
@@ -145,6 +147,7 @@ Global Options:
 Examples:
   dotnet run generate --model User --output ./Generated
   dotnet run migrate --direction up
+  dotnet run diff --verbose
   dotnet run grpc --service ProductService
 
 For more information, visit: https://github.com/sarmkadan/dotnet-sqlite-crud-generator
