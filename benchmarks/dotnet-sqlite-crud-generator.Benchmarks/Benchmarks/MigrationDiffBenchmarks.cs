@@ -6,6 +6,7 @@
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
+using DotNet.SQLite.CrudGenerator.Data;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
 
@@ -70,7 +71,7 @@ public sealed class MigrationDiffBenchmarks : IDisposable
 
     [Benchmark(Description = "MigrationDiff: GetTableInfoAsync")]
     public async Task GetTableInfoAsync()
-        => await _migrationDiffService.GetTableInfoAsync("Products");
+        => await _migrationDiffService.GetActualSchemaAsync("Products");
 
     [GlobalCleanup]
     public async Task Cleanup()

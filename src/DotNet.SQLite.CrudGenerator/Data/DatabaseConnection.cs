@@ -175,6 +175,24 @@ public sealed class DatabaseConnection : IAsyncDisposable, IDisposable
     }
 
     /// <summary>
+    /// Convenience alias for <see cref="InitializeDatabaseAsync"/> matching the naming
+    /// convention used by callers that treat the connection as a lightweight unit of work.
+    /// </summary>
+    public Task InitializeAsync(bool dropExistingTables = false, CancellationToken cancellationToken = default)
+        => InitializeDatabaseAsync(dropExistingTables, cancellationToken);
+
+    /// <summary>
+    /// Compatibility method for callers using a unit-of-work style pattern. Repository
+    /// operations on this connection are committed immediately, so there are no pending
+    /// changes to flush; this simply ensures the connection is open.
+    /// </summary>
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        await OpenAsync(cancellationToken);
+        return 0;
+    }
+
+    /// <summary>
     /// Disposes the database connection.
     /// </summary>
     public void Dispose()
