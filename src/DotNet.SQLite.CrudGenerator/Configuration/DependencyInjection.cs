@@ -1,4 +1,5 @@
 #nullable enable
+
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,6 +12,7 @@ using DotNet.SQLite.CrudGenerator.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DotNet.SQLite.CrudGenerator.Configuration;
 
@@ -28,9 +30,9 @@ public static class DependencyInjection
     /// In appsettings.json:
     /// <code>
     /// {
-    ///   "Database": {
-    ///     "FilePath": "/var/data/myapp.db"
-    ///   }
+    /// "Database": {
+    /// "FilePath": "/var/data/myapp.db"
+    /// }
     /// }
     /// </code>
     /// In Program.cs:
@@ -43,10 +45,26 @@ public static class DependencyInjection
     {
         if (settings is null)
             throw new ArgumentNullException(nameof(settings));
-        if (!settings.Validate())
-            throw new ArgumentException("Database settings are invalid. Ensure FilePath or ConnectionString is set and ConnectionTimeout is positive.", nameof(settings));
+
+        settings.Validate();
 
         return AddApplicationServices(services, settings.ConnectionString);
+    }
+
+    /// <summary>
+    /// Registers all application services and repositories using <see cref="DotnetSqliteCrudGeneratorOptions"/>.
+    /// This is the recommended overload when using the IOptions pattern for configuration.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="options">The application options.</param>
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, DotnetSqliteCrudGeneratorOptions options)
+    {
+        if (options is null)
+            throw new ArgumentNullException(nameof(options));
+
+        options.Validate();
+
+        return AddApplicationServices(services, options.Database.ConnectionString);
     }
 
     /// <summary>
@@ -58,8 +76,35 @@ public static class DependencyInjection
         if (configuration is null)
             throw new ArgumentNullException(nameof(configuration));
 
-        var settings = configuration.GetSection(DatabaseSettings.SectionName).Get<DatabaseSettings>() ?? new DatabaseSettings();
-        return AddApplicationServices(services, settings);
+        // Bind the root configuration to options
+        var options = configuration.Get<DotnetSqliteCrudGeneratorOptions>() ?? DotnetSqliteCrudGeneratorOptions.CreateDefault();
+        options.Validate();
+
+        // Register options for IOptions pattern
+        services.Configure<DotnetSqliteCrudGeneratorOptions>(configuration);
+
+        return AddApplicationServices(services, options.Database.ConnectionString);
+    }
+
+    /// <summary>
+    /// Registers all application services and repositories with IOptions support.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configureOptions">Action to configure the options.</param>
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, Action<DotnetSqliteCrudGeneratorOptions> configureOptions)
+    {
+        if (configureOptions is null)
+            throw new ArgumentNullException(nameof(configureOptions));
+
+        // Configure options
+        services.Configure(configureOptions);
+
+        // Get the configured options to extract the connection string
+        var options = new DotnetSqliteCrudGeneratorOptions();
+        configureOptions(options);
+        options.Validate();
+
+        return AddApplicationServices(services, options.Database.ConnectionString);
     }
 
     /// <summary>
@@ -72,7 +117,7 @@ public static class DependencyInjection
 
         // Register database connection
         services.AddSingleton(new DatabaseConnection(connectionString));
-        
+
         // Register logging
         services.AddLogging(logging => logging.AddConsole());
 

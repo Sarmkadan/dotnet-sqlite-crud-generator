@@ -26,14 +26,9 @@ class Program
 
         try
         {
-            // Setup dependency injection
+            // Setup dependency injection with default configuration
             var services = new ServiceCollection();
-            var settings = new DatabaseSettings { FilePath = "crudgenerator.db" };
-
-            if (!settings.Validate())
-                throw new InvalidOperationException("Database settings validation failed");
-
-            services.AddApplicationServices(settings.ConnectionString);
+            services.AddApplicationServices(DotnetSqliteCrudGeneratorOptions.CreateDefault());
 
             var serviceProvider = services.BuildServiceProvider();
 
