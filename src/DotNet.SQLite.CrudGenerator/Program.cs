@@ -8,6 +8,7 @@ using DotNet.SQLite.CrudGenerator.Configuration;
 using DotNet.SQLite.CrudGenerator.Data;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DotNet.SQLite.CrudGenerator;

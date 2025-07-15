@@ -5,6 +5,7 @@
 // =============================================================================
 
 using DotNet.SQLite.CrudGenerator.Exceptions;
+using Microsoft.Extensions.Logging;
 using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Data;
@@ -17,10 +18,13 @@ namespace DotNet.SQLite.CrudGenerator.Services;
 public sealed class UserService : IService<User, int>
 {
     private readonly IRepository<User, int> _userRepository;
+    private readonly ILogger<UserService>? _logger;
 
-    public UserService(IRepository<User, int> userRepository)
+
+    public UserService(IRepository<User, int> userRepository, ILogger<UserService>? logger = null)
     {
         _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _logger = logger;
     }
 
     public async Task<User?> GetAsync(int id, CancellationToken cancellationToken = default)
@@ -41,17 +45,27 @@ public sealed class UserService : IService<User, int>
         if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
+        _logger?.LogDebug("Creating new user with email {UserEmail}", entity.Email);
+
         if (!Validate(entity))
+        {
+            _logger?.LogWarning("User validation failed for user with email {UserEmail}", entity.Email);
             throw new ValidationException("User validation failed. Check required fields.");
+        }
 
         var existingUser = await ((UserRepository)_userRepository).GetByEmailAsync(entity.Email, cancellationToken);
         if (existingUser is not null)
+        {
+            _logger?.LogWarning("Duplicate email detected for user with email {UserEmail}", entity.Email);
             throw RepositoryException.DuplicateKey(nameof(User), nameof(User.Email), entity.Email);
+        }
 
         entity.CreatedAt = DateTime.UtcNow;
         entity.UpdatedAt = DateTime.UtcNow;
 
-        return await _userRepository.AddAsync(entity, cancellationToken);
+        var createdUser = await _userRepository.AddAsync(entity, cancellationToken);
+        _logger?.LogInformation("Successfully created user with ID {UserId} and email {UserEmail}", createdUser.Id, createdUser.Email);
+        return createdUser;
     }
 
     public async Task<bool> UpdateAsync(User entity, CancellationToken cancellationToken = default)
@@ -59,18 +73,29 @@ public sealed class UserService : IService<User, int>
         if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
+        _logger?.LogDebug("Updating user with ID {UserId}", entity.Id);
+
         if (entity.Id <= 0)
             throw new ArgumentException("Invalid user ID", nameof(entity));
 
         if (!Validate(entity))
+        {
+            _logger?.LogWarning("User validation failed for user with ID {UserId}", entity.Id);
             throw new ValidationException("User validation failed. Check required fields.");
+        }
 
         var existing = await GetAsync(entity.Id, cancellationToken);
         if (existing is null)
+        {
+            _logger?.LogWarning("User with ID {UserId} not found for update", entity.Id);
             throw RepositoryException.EntityNotFound(nameof(User), entity.Id);
+        }
 
         entity.UpdatedAt = DateTime.UtcNow;
-        return await _userRepository.UpdateAsync(entity, cancellationToken);
+        var success = await _userRepository.UpdateAsync(entity, cancellationToken);
+        if (success)
+            _logger?.LogInformation("Successfully updated user with ID {UserId}", entity.Id);
+        return success;
     }
 
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
@@ -78,11 +103,19 @@ public sealed class UserService : IService<User, int>
         if (id <= 0)
             throw new ArgumentException("User ID must be greater than 0", nameof(id));
 
+        _logger?.LogDebug("Deleting user with ID {UserId}", id);
+
         var user = await GetAsync(id, cancellationToken);
         if (user is null)
+        {
+            _logger?.LogWarning("User with ID {UserId} not found for deletion", id);
             throw RepositoryException.EntityNotFound(nameof(User), id);
+        }
 
-        return await _userRepository.DeleteAsync(id, cancellationToken);
+        var success = await _userRepository.DeleteAsync(id, cancellationToken);
+        if (success)
+            _logger?.LogInformation("Successfully deleted user with ID {UserId}", id);
+        return success;
     }
 
     public bool Validate(User entity)
@@ -113,15 +146,36 @@ public sealed class UserService : IService<User, int>
     /// </summary>
     public async Task<User?> AuthenticateAsync(string email, string passwordHash, CancellationToken cancellationToken = default)
     {
+        _logger?.LogDebug("Attempting to authenticate user with email {UserEmail}", email);
+
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(passwordHash))
+        {
+            _logger?.LogWarning("Authentication attempt with empty email or password hash");
             return null;
+        }
 
         var user = await ((UserRepository)_userRepository).GetByEmailAsync(email, cancellationToken);
-        if (user is null || user.PasswordHash != passwordHash || !user.IsActive)
+        if (user is null)
+        {
+            _logger?.LogDebug("User with email {UserEmail} not found", email);
             return null;
+        }
+
+        if (user.PasswordHash != passwordHash)
+        {
+            _logger?.LogWarning("Invalid password for user with email {UserEmail}", email);
+            return null;
+        }
+
+        if (!user.IsActive)
+        {
+            _logger?.LogWarning("Inactive user with email {UserEmail} attempted to authenticate", email);
+            return null;
+        }
 
         user.RecordLogin();
         await _userRepository.UpdateAsync(user, cancellationToken);
+        _logger?.LogInformation("Successfully authenticated user with email {UserEmail}", email);
         return user;
     }
 

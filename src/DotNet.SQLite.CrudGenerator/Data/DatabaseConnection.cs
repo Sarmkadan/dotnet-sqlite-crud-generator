@@ -5,6 +5,7 @@
 // =============================================================================
 
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 namespace DotNet.SQLite.CrudGenerator.Data;
 
@@ -16,13 +17,15 @@ public sealed class DatabaseConnection : IAsyncDisposable, IDisposable
     private readonly string _connectionString;
     private SqliteConnection? _connection;
     private bool _disposed;
+    private readonly ILogger<DatabaseConnection>? _logger;
 
-    public DatabaseConnection(string connectionString)
+    public DatabaseConnection(string connectionString, ILogger<DatabaseConnection>? logger = null)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty", nameof(connectionString));
 
         _connectionString = connectionString;
+        _logger = logger;
     }
 
     /// <summary>
@@ -46,7 +49,11 @@ public sealed class DatabaseConnection : IAsyncDisposable, IDisposable
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         if (Connection.State != System.Data.ConnectionState.Open)
+        {
+            _logger?.LogInformation("Opening database connection to {DatabasePath}", _connectionString);
             await Connection.OpenAsync(cancellationToken);
+            _logger?.LogDebug("Database connection opened successfully");
+        }
     }
 
     /// <summary>
@@ -63,12 +70,14 @@ public sealed class DatabaseConnection : IAsyncDisposable, IDisposable
     /// </summary>
     public async Task InitializeDatabaseAsync(bool dropExistingTables = false, CancellationToken cancellationToken = default)
     {
+        _logger?.LogInformation("Initializing database with tables");
         await OpenAsync(cancellationToken);
 
         using var command = Connection.CreateCommand();
 
         if (dropExistingTables)
         {
+            _logger?.LogWarning("Dropping existing database tables");
             // Drop all tables in reverse order of creation to respect foreign key constraints
             command.CommandText = @"
                 PRAGMA foreign_keys = OFF;
@@ -172,6 +181,7 @@ public sealed class DatabaseConnection : IAsyncDisposable, IDisposable
         ";
 
         await command.ExecuteNonQueryAsync(cancellationToken);
+            _logger?.LogInformation("Database tables created successfully");
     }
 
     /// <summary>
