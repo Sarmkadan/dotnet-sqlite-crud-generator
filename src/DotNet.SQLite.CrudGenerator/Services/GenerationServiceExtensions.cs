@@ -1,0 +1,83 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace DotNet.SQLite.CrudGenerator.Services
+{
+    /// <summary>
+    /// Provides extension methods for <see cref="GenerationService"/> to simplify code generation operations.
+    /// </summary>
+    public static class GenerationServiceExtensions
+    {
+        /// <summary>
+        /// Generates the repository interface code for the specified entity type using a generic type parameter.
+        /// </summary>
+        /// <typeparam name="T">The entity type.</typeparam>
+        /// <param name="service">The generation service instance.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation with the generated code string.</returns>
+        public static Task<string> GenerateRepositoryInterfaceAsync<T>(
+            this GenerationService service,
+            CancellationToken cancellationToken = default)
+            where T : class
+        {
+            return service.GenerateRepositoryInterfaceAsync(typeof(T), cancellationToken);
+        }
+
+        /// <summary>
+        /// Generates the gRPC service code for the specified entity type using a generic type parameter.
+        /// </summary>
+        /// <typeparam name="T">The entity type.</typeparam>
+        /// <param name="service">The generation service instance.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation with the generated code string.</returns>
+        public static Task<string> GenerateGrpcServiceAsync<T>(
+            this GenerationService service,
+            CancellationToken cancellationToken = default)
+            where T : class
+        {
+            return service.GenerateGrpcServiceAsync(typeof(T), cancellationToken);
+        }
+
+        /// <summary>
+        /// Generates the migration code for the specified entity type using a generic type parameter.
+        /// </summary>
+        /// <typeparam name="T">The entity type.</typeparam>
+        /// <param name="service">The generation service instance.</param>
+        /// <param name="migrationName">The name of the migration.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation with the generated code string.</returns>
+        public static Task<string> GenerateMigrationAsync<T>(
+            this GenerationService service,
+            string migrationName,
+            CancellationToken cancellationToken = default)
+            where T : class
+        {
+            return service.GenerateMigrationAsync(typeof(T), migrationName, cancellationToken);
+        }
+
+        /// <summary>
+        /// Generates repository interface code for a collection of entity types.
+        /// </summary>
+        /// <param name="service">The generation service instance.</param>
+        /// <param name="entityTypes">The collection of entity types to generate interfaces for.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A dictionary mapping entity types to their generated code strings.</returns>
+        public static async Task<Dictionary<Type, string>> GenerateRepositoryInterfacesAsync(
+            this GenerationService service,
+            IEnumerable<Type> entityTypes,
+            CancellationToken cancellationToken = default)
+        {
+            var results = new Dictionary<Type, string>();
+            foreach (var entityType in entityTypes)
+            {
+                var code = await service.GenerateRepositoryInterfaceAsync(entityType, cancellationToken)
+                    .ConfigureAwait(false);
+                results[entityType] = code;
+            }
+
+            return results;
+        }
+    }
+}
