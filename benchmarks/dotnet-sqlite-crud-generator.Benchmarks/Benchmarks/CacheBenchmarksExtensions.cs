@@ -24,10 +24,14 @@ public static class CacheBenchmarksExtensions
     /// <param name="benchmarks">The cache benchmarks instance.</param>
     /// <param name="operation">The cache operation to measure.</param>
     /// <returns>A tuple containing the result and elapsed time in milliseconds.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="benchmarks"/> or <paramref name="operation"/> is <see langword="null"/>.</exception>
     public static async Task<(Product? Result, double ElapsedMilliseconds)> MeasureGetHitAsync(
         this CacheBenchmarks benchmarks,
         Func<CacheBenchmarks, ValueTask<Product?>> operation)
     {
+        ArgumentNullException.ThrowIfNull(benchmarks);
+        ArgumentNullException.ThrowIfNull(operation);
+
         var start = DateTime.UtcNow;
         var result = await operation(benchmarks);
         var elapsed = DateTime.UtcNow - start;
@@ -40,10 +44,14 @@ public static class CacheBenchmarksExtensions
     /// <param name="benchmarks">The cache benchmarks instance.</param>
     /// <param name="operation">The cache set operation to measure.</param>
     /// <returns>Elapsed time in milliseconds.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="benchmarks"/> or <paramref name="operation"/> is <see langword="null"/>.</exception>
     public static async Task<double> MeasureSetAsync(
         this CacheBenchmarks benchmarks,
         Func<CacheBenchmarks, ValueTask> operation)
     {
+        ArgumentNullException.ThrowIfNull(benchmarks);
+        ArgumentNullException.ThrowIfNull(operation);
+
         var start = DateTime.UtcNow;
         await operation(benchmarks);
         var elapsed = DateTime.UtcNow - start;
@@ -57,10 +65,13 @@ public static class CacheBenchmarksExtensions
     /// <param name="benchmarks">The cache benchmarks instance.</param>
     /// <param name="expectedCount">The expected number of items in cache.</param>
     /// <returns>True if count matches; otherwise false.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="expectedCount"/> is negative.</exception>
     public static async ValueTask<bool> VerifyCacheCountAsync(
         this CacheBenchmarks benchmarks,
         int expectedCount)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedCount);
+
         // This uses the internal cache instance to verify state
         // In a real scenario, you'd need access to the cache provider
         // For benchmarking purposes, this demonstrates the pattern
@@ -73,10 +84,13 @@ public static class CacheBenchmarksExtensions
     /// <param name="benchmarks">The cache benchmarks instance.</param>
     /// <param name="id">Product ID (default: 42).</param>
     /// <returns>A new Product instance with default values.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="id"/> is negative.</exception>
     public static Product CreateBenchmarkProduct(
         this CacheBenchmarks benchmarks,
         int id = 42)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(id);
+
         return new Product
         {
             Id = id,
