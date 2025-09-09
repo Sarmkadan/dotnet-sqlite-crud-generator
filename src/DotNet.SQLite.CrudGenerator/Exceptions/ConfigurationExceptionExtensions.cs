@@ -13,6 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.Exceptions;
 /// <summary>
 /// Provides extension methods for <see cref="ConfigurationException"/> to enhance error handling and reporting.
 /// </summary>
+/// <exception cref="ArgumentNullException">Thrown when the exception parameter is null.</exception>
 public static class ConfigurationExceptionExtensions
 {
     /// <summary>
@@ -22,17 +23,12 @@ public static class ConfigurationExceptionExtensions
     /// <param name="contextKey">The key identifying the context information.</param>
     /// <param name="contextValue">The context value to add.</param>
     /// <returns>A new ConfigurationException with the additional context.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="contextKey"/> is null or whitespace.</exception>
     public static ConfigurationException WithContext(this ConfigurationException exception, string contextKey, string contextValue)
     {
-        if (exception is null)
-        {
-            throw new ArgumentNullException(nameof(exception));
-        }
-
-        if (string.IsNullOrWhiteSpace(contextKey))
-        {
-            throw new ArgumentException("Context key cannot be null or whitespace.", nameof(contextKey));
-        }
+        ArgumentNullException.ThrowIfNull(exception);
+        ArgumentException.ThrowIfNullOrEmpty(contextKey);
 
         var newMessage = $"{exception.Message} | Context: {contextKey}={contextValue}";
         return new ConfigurationException(newMessage, exception);
@@ -44,12 +40,10 @@ public static class ConfigurationExceptionExtensions
     /// <param name="exception">The configuration exception to enhance.</param>
     /// <param name="context">A dictionary of context key-value pairs.</param>
     /// <returns>A new ConfigurationException with the additional context.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is null.</exception>
     public static ConfigurationException WithContext(this ConfigurationException exception, IReadOnlyDictionary<string, string> context)
     {
-        if (exception is null)
-        {
-            throw new ArgumentNullException(nameof(exception));
-        }
+        ArgumentNullException.ThrowIfNull(exception);
 
         if (context is null || context.Count == 0)
         {
@@ -72,17 +66,12 @@ public static class ConfigurationExceptionExtensions
     /// <param name="exception">The configuration exception to wrap.</param>
     /// <param name="customMessage">The custom message to use for the new exception.</param>
     /// <returns>A new ConfigurationException with the custom message and the original exception as inner exception.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="customMessage"/> is null or whitespace.</exception>
     public static ConfigurationException WithMessage(this ConfigurationException exception, string customMessage)
     {
-        if (exception is null)
-        {
-            throw new ArgumentNullException(nameof(exception));
-        }
-
-        if (string.IsNullOrWhiteSpace(customMessage))
-        {
-            throw new ArgumentException("Custom message cannot be null or whitespace.", nameof(customMessage));
-        }
+        ArgumentNullException.ThrowIfNull(exception);
+        ArgumentException.ThrowIfNullOrEmpty(customMessage);
 
         return new ConfigurationException(customMessage, exception);
     }
@@ -92,8 +81,9 @@ public static class ConfigurationExceptionExtensions
     /// </summary>
     /// <param name="exception">The configuration exception to check.</param>
     /// <returns>True if the exception is a missing configuration error; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is null.</exception>
     public static bool IsMissingConfiguration(this ConfigurationException exception)
     {
-        return exception?.Message.Contains("is missing or invalid", StringComparison.OrdinalIgnoreCase) ?? false;
+        return exception?.Message.Contains("is missing or invalid", StringComparison.Ordinal) ?? false;
     }
 }
