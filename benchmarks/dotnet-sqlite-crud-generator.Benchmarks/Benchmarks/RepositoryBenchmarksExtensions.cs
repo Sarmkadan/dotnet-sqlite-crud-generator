@@ -1,23 +1,31 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 using DotNet.SQLite.CrudGenerator.Models;
 
 namespace DotNet.SQLite.CrudGenerator.Benchmarks
 {
+    /// <summary>
+    /// Provides extension methods for <see cref="RepositoryBenchmarks"/> to facilitate benchmarking operations.
+    /// </summary>
     public static class RepositoryBenchmarksExtensions
     {
         /// <summary>
         /// Creates a batch of test entities and returns their IDs for benchmarking bulk operations.
         /// </summary>
-        /// <param name="benchmarks">The repository benchmarks instance</param>
-        /// <param name="count">Number of entities to create</param>
-        /// <param name="entityType">Type of entity to create ("product" or "user")</param>
-        /// <returns>Collection of created entity IDs</returns>
+        /// <param name="benchmarks">The repository benchmarks instance.</param>
+        /// <param name="count">Number of entities to create.</param>
+        /// <param name="entityType">Type of entity to create ("product" or "user").</param>
+        /// <returns>Collection of created entity IDs.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="benchmarks"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="entityType"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="entityType"/> is not "product" or "user".</exception>
         public static async Task<IReadOnlyList<int>> CreateBatchAsync(this RepositoryBenchmarks benchmarks, int count, string entityType)
         {
+            ArgumentNullException.ThrowIfNull(benchmarks);
+            ArgumentNullException.ThrowIfNull(entityType);
+
             if (count <= 0)
             {
                 return Array.Empty<int>();
@@ -25,9 +33,10 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks
 
             var ids = new List<int>(count);
 
-            switch (entityType.ToLowerInvariant())
+            switch (entityType)
             {
                 case "product":
+                case "Product":
                     for (int i = 0; i < count; i++)
                     {
                         var product = await benchmarks.AddProductAsync();
@@ -48,6 +57,7 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks
                     break;
 
                 case "user":
+                case "User":
                     for (int i = 0; i < count; i++)
                     {
                         var user = await benchmarks.AddUserAsync();
@@ -75,11 +85,16 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks
         /// <summary>
         /// Measures the time to execute a single operation against the repository.
         /// </summary>
-        /// <param name="benchmarks">The repository benchmarks instance</param>
-        /// <param name="operation">The operation to measure</param>
-        /// <returns>TimeSpan representing the operation duration</returns>
+        /// <param name="benchmarks">The repository benchmarks instance.</param>
+        /// <param name="operation">The operation to measure.</param>
+        /// <returns>TimeSpan representing the operation duration.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="benchmarks"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> is <see langword="null"/>.</exception>
         public static async Task<TimeSpan> MeasureOperationAsync(this RepositoryBenchmarks benchmarks, Func<Task> operation)
         {
+            ArgumentNullException.ThrowIfNull(benchmarks);
+            ArgumentNullException.ThrowIfNull(operation);
+
             var start = DateTime.UtcNow;
             await operation();
             var end = DateTime.UtcNow;
@@ -89,12 +104,17 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks
         /// <summary>
         /// Measures the time to execute a single operation with return value against the repository.
         /// </summary>
-        /// <typeparam name="T">Return type of the operation</typeparam>
-        /// <param name="benchmarks">The repository benchmarks instance</param>
-        /// <param name="operation">The operation to measure</param>
-        /// <returns>Tuple of (result, TimeSpan) representing the operation duration</returns>
+        /// <typeparam name="T">Return type of the operation.</typeparam>
+        /// <param name="benchmarks">The repository benchmarks instance.</param>
+        /// <param name="operation">The operation to measure.</param>
+        /// <returns>Tuple of (result, TimeSpan) representing the operation duration.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="benchmarks"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="operation"/> is <see langword="null"/>.</exception>
         public static async Task<(T Result, TimeSpan Duration)> MeasureOperationAsync<T>(this RepositoryBenchmarks benchmarks, Func<Task<T>> operation)
         {
+            ArgumentNullException.ThrowIfNull(benchmarks);
+            ArgumentNullException.ThrowIfNull(operation);
+
             var start = DateTime.UtcNow;
             var result = await operation();
             var end = DateTime.UtcNow;
@@ -104,10 +124,13 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks
         /// <summary>
         /// Clears all test data from the repository and resets the database state.
         /// </summary>
-        /// <param name="benchmarks">The repository benchmarks instance</param>
-        /// <returns>Task representing the async operation</returns>
+        /// <param name="benchmarks">The repository benchmarks instance.</param>
+        /// <returns>Task representing the async operation.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="benchmarks"/> is <see langword="null"/>.</exception>
         public static async Task ResetDatabaseAsync(this RepositoryBenchmarks benchmarks)
         {
+            ArgumentNullException.ThrowIfNull(benchmarks);
+
             await benchmarks.Cleanup();
             await benchmarks.SaveChangesAsync();
         }
