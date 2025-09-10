@@ -27,6 +27,9 @@ public static class BulkImportExportEngineExtensions
     /// <param name="progress">Optional progress reporter.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that represents the bulk import operation with the result.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="engine"/> or <paramref name="json"/> is <see langword="null"/>.
+    /// </exception>
     public static async Task<BulkImportResult> ImportFromJsonAsync<T>(
         this BulkImportExportEngine<T> engine,
         string json,
@@ -47,10 +50,12 @@ public static class BulkImportExportEngineExtensions
     /// </summary>
     /// <typeparam name="T">The entity type.</typeparam>
     /// <param name="engine">The bulk import/export engine.</param>
-    /// <param name="format">The export format (JSON, CSV, or XML).</param>
+    /// <param name="format">The export format (JSON, CSV, or XML). Defaults to <see cref="ExportFormat.Json"/>.</param>
     /// <param name="progress">Optional progress reporter.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that represents the bulk export operation with the result containing the JSON string.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="engine"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="format"/> is not a supported value.</exception>
     public static async Task<(BulkExportResult Result, string Json)> ExportToJsonAsync<T>(
         this BulkImportExportEngine<T> engine,
         ExportFormat format = ExportFormat.Json,
@@ -59,6 +64,9 @@ public static class BulkImportExportEngineExtensions
     {
         if (engine is null)
             throw new ArgumentNullException(nameof(engine));
+
+        if (format is not (ExportFormat.Json or ExportFormat.Csv or ExportFormat.Xml))
+            throw new ArgumentOutOfRangeException(nameof(format));
 
         await using var stream = new MemoryStream();
         var result = await engine.ExportToStreamAsync(stream, format, progress, cancellationToken);
@@ -76,10 +84,14 @@ public static class BulkImportExportEngineExtensions
     /// <typeparam name="T">The entity type.</typeparam>
     /// <param name="engine">The bulk import/export engine.</param>
     /// <param name="predicate">Filter predicate to select which entities to export.</param>
-    /// <param name="format">The export format (JSON, CSV, or XML).</param>
+    /// <param name="format">The export format (JSON, CSV, or XML). Defaults to <see cref="ExportFormat.Json"/>.</param>
     /// <param name="progress">Optional progress reporter.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that represents the bulk export operation with the result containing the JSON string.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="engine"/> or <paramref name="predicate"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="format"/> is not a supported value.</exception>
     public static async Task<(BulkExportResult Result, string Json)> ExportFilteredToJsonAsync<T>(
         this BulkImportExportEngine<T> engine,
         Func<T, bool> predicate,
@@ -91,6 +103,9 @@ public static class BulkImportExportEngineExtensions
             throw new ArgumentNullException(nameof(engine));
         if (predicate is null)
             throw new ArgumentNullException(nameof(predicate));
+
+        if (format is not (ExportFormat.Json or ExportFormat.Csv or ExportFormat.Xml))
+            throw new ArgumentOutOfRangeException(nameof(format));
 
         await using var stream = new MemoryStream();
         var result = await engine.ExportFilteredAsync(predicate, stream, format, progress, cancellationToken);
@@ -112,6 +127,9 @@ public static class BulkImportExportEngineExtensions
     /// <param name="progress">Optional progress reporter.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that represents the bulk transfer operation with combined results.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="sourceEngine"/> or <paramref name="destinationEngine"/> is <see langword="null"/>.
+    /// </exception>
     public static async Task<BulkTransferResult> TransferToAsync<T>(
         this BulkImportExportEngine<T> sourceEngine,
         BulkImportExportEngine<T> destinationEngine,
@@ -140,6 +158,7 @@ public static class BulkImportExportEngineExtensions
     /// <typeparam name="T">The entity type.</typeparam>
     /// <param name="engine">The bulk import/export engine.</param>
     /// <returns>The current statistics object.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="engine"/> is <see langword="null"/>.</exception>
     public static BulkTransferStatistics GetStats<T>(this BulkImportExportEngine<T> engine) where T : class
     {
         if (engine is null)
