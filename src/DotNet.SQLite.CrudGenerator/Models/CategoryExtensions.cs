@@ -23,13 +23,11 @@ public static class CategoryExtensions
     /// <param name="category">The category to get the path for</param>
     /// <param name="allCategories">All available categories to build the hierarchy</param>
     /// <returns>An enumerable representing the path from root to this category</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="category"/> or <paramref name="allCategories"/> is <see langword="null"/></exception>
     public static IEnumerable<Category> GetPath(this Category category, IEnumerable<Category> allCategories)
     {
-        if (category is null)
-            throw new ArgumentNullException(nameof(category));
-
-        if (allCategories is null)
-            throw new ArgumentNullException(nameof(allCategories));
+        ArgumentNullException.ThrowIfNull(category);
+        ArgumentNullException.ThrowIfNull(allCategories);
 
         var path = new List<Category>();
         var current = category;
@@ -54,8 +52,14 @@ public static class CategoryExtensions
     /// <param name="allCategories">All available categories to build the hierarchy</param>
     /// <param name="separator">The separator to use between category names (default: " → ")</param>
     /// <returns>A formatted string representing the full category path</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="category"/> or <paramref name="allCategories"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentException"><paramref name="separator"/> is <see langword="null"/></exception>
     public static string GetPathString(this Category category, IEnumerable<Category> allCategories, string separator = " → ")
     {
+        ArgumentNullException.ThrowIfNull(category);
+        ArgumentNullException.ThrowIfNull(allCategories);
+        ArgumentException.ThrowIfNullOrEmpty(separator);
+
         var path = category.GetPath(allCategories);
         return string.Join(separator, path.Select(c => c.Name));
     }
@@ -66,13 +70,11 @@ public static class CategoryExtensions
     /// <param name="category">The parent category</param>
     /// <param name="allCategories">All available categories to search through</param>
     /// <returns>An enumerable of all descendant categories</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="category"/> or <paramref name="allCategories"/> is <see langword="null"/></exception>
     public static IEnumerable<Category> GetDescendants(this Category category, IEnumerable<Category> allCategories)
     {
-        if (category is null)
-            throw new ArgumentNullException(nameof(category));
-
-        if (allCategories is null)
-            throw new ArgumentNullException(nameof(allCategories));
+        ArgumentNullException.ThrowIfNull(category);
+        ArgumentNullException.ThrowIfNull(allCategories);
 
         var children = allCategories.Where(c => c.ParentCategoryId == category.Id).ToList();
 
@@ -92,13 +94,11 @@ public static class CategoryExtensions
     /// <param name="category">The category to get ancestors for</param>
     /// <param name="allCategories">All available categories to search through</param>
     /// <returns>An enumerable of all ancestor categories</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="category"/> or <paramref name="allCategories"/> is <see langword="null"/></exception>
     public static IEnumerable<Category> GetAncestors(this Category category, IEnumerable<Category> allCategories)
     {
-        if (category is null)
-            throw new ArgumentNullException(nameof(category));
-
-        if (allCategories is null)
-            throw new ArgumentNullException(nameof(allCategories));
+        ArgumentNullException.ThrowIfNull(category);
+        ArgumentNullException.ThrowIfNull(allCategories);
 
         var current = category;
 
