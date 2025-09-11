@@ -19,6 +19,16 @@ public sealed class BackgroundWorkerService
     private List<Task>? _workerTasks;
     private bool _isRunning = false;
 
+    /// <summary>
+    /// Gets the task queue used by this service.
+    /// </summary>
+    public BackgroundTaskQueue TaskQueue => _taskQueue;
+
+    /// <summary>
+    /// Gets the number of worker threads configured for this service.
+    /// </summary>
+    public int WorkerCount => _workerCount;
+
     public BackgroundWorkerService(BackgroundTaskQueue taskQueue, int workerCount = 1)
     {
         _taskQueue = taskQueue ?? throw new ArgumentNullException(nameof(taskQueue));
