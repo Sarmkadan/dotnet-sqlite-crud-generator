@@ -24,16 +24,15 @@ public static class DataExportServiceExtensions
     /// <param name="items">Items to export</param>
     /// <param name="prettyPrint">Whether to format with indentation (default: true)</param>
     /// <returns>JSON formatted string</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> or <paramref name="items"/> is <see langword="null"/></exception>
     public static async Task<string> ExportAsJsonAsync<T>(this DataExportService service, IEnumerable<T> items, bool prettyPrint) where T : class
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
 
         // Note: The underlying service always uses pretty printing, but this extension allows
         // callers to explicitly request compact JSON if needed
-        return await service.ExportAsJsonAsync(items);
+        return await service.ExportAsJsonAsync(items, prettyPrint);
     }
 
     /// <summary>
@@ -44,16 +43,15 @@ public static class DataExportServiceExtensions
     /// <param name="items">Items to export</param>
     /// <param name="delimiter">Field delimiter (default: comma)</param>
     /// <returns>CSV formatted string</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> or <paramref name="items"/> is <see langword="null"/></exception>
     public static async Task<string> ExportAsCsvAsync<T>(this DataExportService service, IEnumerable<T> items, char delimiter = ',') where T : class
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
 
         // The underlying service uses comma delimiter, but this extension allows
         // callers to specify different delimiters like semicolon or tab
-        return await service.ExportAsCsvAsync(items);
+        return await service.ExportAsCsvAsync(items, delimiter);
     }
 
     /// <summary>
@@ -65,23 +63,25 @@ public static class DataExportServiceExtensions
     /// <param name="baseFilePath">Base file path without extension (e.g., "output/data")</param>
     /// <param name="formats">Formats to export to</param>
     /// <returns>Dictionary mapping format to success status</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/>, <paramref name="items"/>, or <paramref name="baseFilePath"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentException"><paramref name="baseFilePath"/> is empty or contains only whitespace, or <paramref name="formats"/> is empty</exception>
     public static async Task<Dictionary<ExportFormat, bool>> ExportToMultipleFilesAsync<T>(
         this DataExportService service,
         IEnumerable<T> items,
         string baseFilePath,
         params ExportFormat[] formats) where T : class
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(baseFilePath);
+        ArgumentNullException.ThrowIfNull(formats);
 
         if (string.IsNullOrWhiteSpace(baseFilePath))
         {
             throw new ArgumentException("Base file path cannot be null or empty", nameof(baseFilePath));
         }
 
-        if (formats == null || formats.Length == 0)
+        if (formats.Length == 0)
         {
             throw new ArgumentException("At least one format must be specified", nameof(formats));
         }
@@ -128,15 +128,14 @@ public static class DataExportServiceExtensions
     /// <param name="items">Items to export</param>
     /// <param name="format">Export format</param>
     /// <returns>Byte array containing the exported data</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/>, <paramref name="items"/>, or <paramref name="format"/> is invalid</exception>
     public static async Task<byte[]> ExportAsByteArrayAsync<T>(
         this DataExportService service,
         IEnumerable<T> items,
         ExportFormat format) where T : class
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
 
         using var memoryStream = new MemoryStream();
         await service.ExportToStreamAsync(items, memoryStream, format);
@@ -151,15 +150,15 @@ public static class DataExportServiceExtensions
     /// <param name="items">Items to analyze</param>
     /// <param name="entityName">Name of the entity being exported</param>
     /// <returns>CSV formatted report with statistics</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/>, <paramref name="items"/>, or <paramref name="entityName"/> is <see langword="null"/></exception>
     public static async Task<string> GenerateCsvReportWithStatisticsAsync<T>(
         this DataExportService service,
         IEnumerable<T> items,
         string entityName) where T : class
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(entityName);
 
         var report = service.GenerateExportReport(items, entityName);
         var itemsList = items.ToList();
@@ -231,15 +230,16 @@ public static class DataExportServiceExtensions
     /// <param name="items">Items to export</param>
     /// <param name="filePath">Target file path with extension (.json, .csv, or .xml)</param>
     /// <returns>True if export succeeded</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/>, <paramref name="items"/>, or <paramref name="filePath"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentException"><paramref name="filePath"/> is empty, contains only whitespace, or has an unsupported extension</exception>
     public static async Task<bool> ExportWithFormatDetectionAsync<T>(
         this DataExportService service,
         IEnumerable<T> items,
         string filePath) where T : class
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(filePath);
 
         if (string.IsNullOrWhiteSpace(filePath))
         {
