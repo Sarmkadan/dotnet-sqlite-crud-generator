@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Diagnostics.CodeAnalysis;
 using DotNet.SQLite.CrudGenerator.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -22,17 +23,19 @@ public static class ConnectionPoolExtensions
     /// <param name="services">The service collection to add to.</param>
     /// <param name="connectionString">SQLite connection string for all pooled connections.</param>
     /// <param name="configure">
-    /// Optional delegate to customise pool settings.  When omitted the defaults defined in
+    /// Optional delegate to customise pool settings. When omitted the defaults defined in
     /// <see cref="ConnectionPoolConfiguration"/> are used.
     /// </param>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentException"><paramref name="connectionString"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     /// <example>
     /// <code>
     /// services.AddConnectionPool("Data Source=app.db", pool =>
     /// {
-    ///     pool.MinPoolSize = 2;
-    ///     pool.MaxPoolSize = 20;
-    ///     pool.IdleTimeout = TimeSpan.FromMinutes(10);
+    /// pool.MinPoolSize = 2;
+    /// pool.MaxPoolSize = 20;
+    /// pool.IdleTimeout = TimeSpan.FromMinutes(10);
     /// });
     /// </code>
     /// </example>
@@ -41,6 +44,8 @@ public static class ConnectionPoolExtensions
         string connectionString,
         Action<ConnectionPoolConfiguration>? configure = null)
     {
+        ArgumentNullException.ThrowIfNull(services);
+
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
 
@@ -57,16 +62,20 @@ public static class ConnectionPoolExtensions
     /// <param name="services">The service collection to add to.</param>
     /// <param name="connectionString">SQLite connection string for all pooled connections.</param>
     /// <param name="config">Fully populated pool configuration.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentNullException"><paramref name="config"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentException"><paramref name="connectionString"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
     /// <returns>The same <see cref="IServiceCollection"/> for chaining.</returns>
     public static IServiceCollection AddConnectionPool(
         this IServiceCollection services,
         string connectionString,
         ConnectionPoolConfiguration config)
     {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(config);
+
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
-
-        ArgumentNullException.ThrowIfNull(config);
 
         services.AddSingleton<IConnectionPool>(provider =>
         {
@@ -79,26 +88,28 @@ public static class ConnectionPoolExtensions
 
     /// <summary>
     /// Warms up the pool by pre-opening <paramref name="connectionCount"/> connections so that
-    /// early requests do not pay the cold-start cost.  Call this once during application startup
+    /// early requests do not pay the cold-start cost. Call this once during application startup
     /// after the DI container is built.
     /// </summary>
     /// <param name="serviceProvider">The built service provider.</param>
     /// <param name="connectionCount">
-    /// Number of connections to open.  Clamped to the pool's configured
+    /// Number of connections to open. Clamped to the pool's configured
     /// <see cref="ConnectionPoolConfiguration.MaxPoolSize"/>.
     /// </param>
     /// <param name="cancellationToken">Token to abort the warm-up.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="serviceProvider"/> is <see langword="null"/></exception>
     public static async Task WarmUpConnectionPoolAsync(
         this IServiceProvider serviceProvider,
         int connectionCount = 1,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
         var pool = serviceProvider.GetService<IConnectionPool>();
         if (pool is null)
             return;
 
-        if (connectionCount < 1)
-            connectionCount = 1;
+        connectionCount = Math.Max(1, connectionCount);
 
         var leases = new List<PooledConnection>(connectionCount);
 
