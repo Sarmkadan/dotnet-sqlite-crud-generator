@@ -9,10 +9,14 @@ using FluentAssertions;
 using FluentAssertions.Primitives; // Added for BeTrue/BeFalse
 using Xunit;
 
-namespace DotNet.SQLite.CrudGenerator.Tests;
-
+/// <summary>
+/// Contains tests for configuration settings.
+/// </summary>
 public sealed class ConfigurationTests
 {
+    /// <summary>
+    /// Tests that the database settings generate a quoted connection string when the file path contains spaces.
+    /// </summary>
     [Fact]
     public void DatabaseSettings_WithFilePathContainingSpaces_GeneratesQuotedConnectionString()
     {
@@ -27,6 +31,9 @@ public sealed class ConfigurationTests
         connectionString.Should().Contain($"Data Source=\"{expectedFilePath}\";");
     }
 
+    /// <summary>
+    /// Tests that the database settings generate a quoted connection string when the file path contains Unicode characters.
+    /// </summary>
     [Fact]
     public void DatabaseSettings_WithFilePathContainingUnicode_GeneratesQuotedConnectionString()
     {
@@ -41,6 +48,9 @@ public sealed class ConfigurationTests
         connectionString.Should().Contain($"Data Source=\"{expectedFilePath}\";");
     }
 
+    /// <summary>
+    /// Tests that the database settings are valid when a valid connection string is provided.
+    /// </summary>
     [Fact]
     public void DatabaseSettings_WithValidConnectionString_IsValid()
     {
@@ -51,6 +61,9 @@ public sealed class ConfigurationTests
         settings.ConnectionString.Should().NotBeNullOrEmpty();
     }
 
+    /// <summary>
+    /// Tests that the database settings throw an exception when an empty connection string is provided.
+    /// </summary>
     [Fact]
     public void DatabaseSettings_WithEmptyConnectionString_ThrowsArgumentException()
     {
@@ -71,6 +84,9 @@ public sealed class ConfigurationTests
             .WithMessage("Connection string cannot be empty.");
     }
 
+    /// <summary>
+    /// Tests that the connection pool configuration is valid when valid settings are provided.
+    /// </summary>
     [Fact]
     public void ConnectionPoolConfiguration_WithValidSettings_IsValid()
     {
@@ -95,6 +111,9 @@ public sealed class ConfigurationTests
         config.AcquireTimeout.Should().Be(TimeSpan.FromSeconds(30));
     }
 
+    /// <summary>
+    /// Tests that the connection pool configuration throws an exception when the maximum pool size is zero.
+    /// </summary>
     [Fact]
     public void ConnectionPoolConfiguration_WithZeroMaxPoolSize_ThrowsInvalidOperationException()
     {
@@ -113,6 +132,9 @@ public sealed class ConfigurationTests
             .WithMessage("*MaxPoolSize must be at least 1.*");
     }
 
+    /// <summary>
+    /// Tests that the connection pool configuration throws an exception when the minimum pool size exceeds the maximum pool size.
+    /// </summary>
     [Fact]
     public void ConnectionPoolConfiguration_WithMinPoolSizeGreaterThanMaxPoolSize_ThrowsInvalidOperationException()
     {
@@ -131,6 +153,9 @@ public sealed class ConfigurationTests
             .WithMessage("*MinPoolSize cannot exceed MaxPoolSize.*");
     }
 
+    /// <summary>
+    /// Tests that the connection pool configuration throws an exception when the idle timeout is zero.
+    /// </summary>
     [Fact]
     public void ConnectionPoolConfiguration_WithZeroIdleTimeout_ThrowsInvalidOperationException()
     {
@@ -150,6 +175,9 @@ public sealed class ConfigurationTests
             .WithMessage("*IdleTimeout must be a positive duration.*");
     }
 
+    /// <summary>
+    /// Tests that the cache configuration is valid when valid settings are provided.
+    /// </summary>
     [Fact]
     public void CacheConfiguration_WithValidSettings_IsValid()
     {
@@ -169,6 +197,9 @@ public sealed class ConfigurationTests
         config.CleanupIntervalSeconds.Should().Be(300);
     }
 
+    /// <summary>
+    /// Tests that the application configuration validation throws an exception when the cache maximum size is zero.
+    /// </summary>
     [Fact]
     public void ApplicationConfiguration_Validate_ThrowsForInvalidCacheMaxSizeBytes()
     {
@@ -187,6 +218,9 @@ public sealed class ConfigurationTests
             .WithMessage("*Cache max size must be greater than 0*");
     }
 
+    /// <summary>
+    /// Tests that the application configuration validation throws an exception when the database connection string is empty.
+    /// </summary>
     [Fact]
     public void ApplicationConfiguration_Validate_ThrowsForMissingDatabaseConnectionString()
     {
@@ -205,6 +239,9 @@ public sealed class ConfigurationTests
             .WithMessage("*Database connection string is required*");
     }
 
+    /// <summary>
+    /// Tests that the application configuration validation throws an exception when the database settings are null.
+    /// </summary>
     [Fact]
     public void ApplicationConfiguration_Validate_ThrowsForNullDatabaseSettings()
     {
@@ -223,6 +260,9 @@ public sealed class ConfigurationTests
             .WithMessage("*Database configuration is required*");
     }
 
+    /// <summary>
+    /// Tests that the application configuration validation throws an exception when the worker count is zero.
+    /// </summary>
     [Fact]
     public void ApplicationConfiguration_Validate_ThrowsForInvalidWorkerCount()
     {
