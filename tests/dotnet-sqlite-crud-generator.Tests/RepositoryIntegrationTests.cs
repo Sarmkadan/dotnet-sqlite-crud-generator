@@ -13,12 +13,19 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
+/// <summary>
+/// Provides integration tests for repository operations against an in-memory SQLite database.
+/// </summary>
 public sealed class RepositoryIntegrationTests : IDisposable
 {
     private DatabaseConnection _databaseConnection;
     private ConcreteProductRepository _productRepository;
     private ConcreteUserRepository _userRepository;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RepositoryIntegrationTests"/> class,
+    /// setting up an in-memory database and repositories for products and users.
+    /// </summary>
     public RepositoryIntegrationTests()
     {
         _databaseConnection = new DatabaseConnection("Data Source=:memory:");
@@ -33,11 +40,17 @@ public sealed class RepositoryIntegrationTests : IDisposable
         // This method can be empty or removed.
     }
 
+    /// <summary>
+    /// Disposes the in-memory database connection.
+    /// </summary>
     public void Dispose()
     {
         _databaseConnection.DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
+    /// <summary>
+    /// Verifies that adding a product persists it in the database and that the returned entity contains a generated Id.
+    /// </summary>
     [Fact]
     public async Task AddAsync_AddsProductToDatabase()
     {
@@ -66,6 +79,9 @@ public sealed class RepositoryIntegrationTests : IDisposable
         retrievedProduct.Should().BeEquivalentTo(addedProduct, options => options.Excluding(p => p.CreatedAt).Excluding(p => p.UpdatedAt));
     }
 
+    /// <summary>
+    /// Verifies that retrieving a product by its Id returns the correct entity.
+    /// </summary>
     [Fact]
     public async Task GetByIdAsync_RetrievesCorrectProduct()
     {
@@ -94,6 +110,9 @@ public sealed class RepositoryIntegrationTests : IDisposable
         retrievedProduct.Name.Should().Be("Another Product");
     }
 
+    /// <summary>
+    /// Verifies that updating a product modifies its fields in the database.
+    /// </summary>
     [Fact]
     public async Task UpdateAsync_UpdatesProductInDatabase()
     {
@@ -125,6 +144,9 @@ public sealed class RepositoryIntegrationTests : IDisposable
         updatedProduct.Price.Should().Be(25.00m);
     }
 
+    /// <summary>
+    /// Verifies that deleting a product removes it from the database.
+    /// </summary>
     [Fact]
     public async Task DeleteAsync_RemovesProductFromDatabase()
     {
@@ -153,6 +175,9 @@ public sealed class RepositoryIntegrationTests : IDisposable
         retrievedProduct.Should().BeNull();
     }
 
+    /// <summary>
+    /// Verifies that retrieving all products returns the correct number of entities.
+    /// </summary>
     [Fact]
     public async Task GetAllAsync_ReturnsAllProducts()
     {
