@@ -17,12 +17,17 @@ using System.Collections.Generic;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
+/// <summary>
+/// Tests for the GenerationService class.
+/// </summary>
 public sealed class GenerationServiceTests : IDisposable
 {
     private readonly GenerationService _sut; // System Under Test
     private readonly string _testOutputPath;
 
-    // Define simple models for testing purposes
+    /// <summary>
+    /// A simple model for testing purposes, representing a product.
+    /// </summary>
     public sealed class TestProduct
     {
         public int Id { get; set; }
@@ -30,6 +35,9 @@ public sealed class GenerationServiceTests : IDisposable
         public decimal Price { get; set; }
     }
 
+    /// <summary>
+    /// A simple model for testing purposes, representing a user.
+    /// </summary>
     public sealed class TestUser
     {
         public int Id { get; set; }
@@ -37,23 +45,34 @@ public sealed class GenerationServiceTests : IDisposable
         public string Email { get; set; }
     }
 
+    /// <summary>
+    /// An invalid model for testing purposes, missing an 'Id' property.
+    /// </summary>
     public sealed class InvalidModelMissingId
     {
         public string Name { get; set; }
     }
 
+    /// <summary>
+    /// An invalid model for testing purposes, with too few properties.
+    /// </summary>
     public sealed class InvalidModelTooFewProperties
     {
         public int Id { get; set; }
     }
 
-
+    /// <summary>
+    /// Initializes a new instance of the GenerationServiceTests class.
+    /// </summary>
     public GenerationServiceTests()
     {
         _testOutputPath = Path.Combine(Path.GetTempPath(), "GeneratedTests", Guid.NewGuid().ToString());
         _sut = new GenerationService(_testOutputPath);
     }
 
+    /// <summary>
+    /// Disposes of the test resources.
+    /// </summary>
     public void Dispose()
     {
         if (Directory.Exists(_testOutputPath))
@@ -62,6 +81,10 @@ public sealed class GenerationServiceTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// Tests the GenerateRepositoryInterfaceAsync method, verifying it generates the correct interface file.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GenerateRepositoryInterfaceAsync_GeneratesCorrectInterfaceFile()
     {
@@ -80,6 +103,10 @@ public sealed class GenerationServiceTests : IDisposable
         content.Should().Contain("Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);");
     }
 
+    /// <summary>
+    /// Tests the GenerateMigrationAsync method, verifying it generates the correct SQL migration file.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GenerateMigrationAsync_GeneratesCorrectSqlMigrationFile()
     {
@@ -103,6 +130,10 @@ public sealed class GenerationServiceTests : IDisposable
         content.Should().ContainEquivalentOf("Price REAL");
     }
 
+    /// <summary>
+    /// Tests the GenerateGrpcServiceAsync method, verifying it generates the correct gRPC service file.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GenerateGrpcServiceAsync_GeneratesCorrectProtoFile()
     {
@@ -123,6 +154,10 @@ public sealed class GenerationServiceTests : IDisposable
         content.Should().Contain("rpc Get(TestProductRequest) returns (TestProductResponse);");
     }
 
+    /// <summary>
+    /// Tests the GenerateRepositoryInterfaceAsync method, verifying it throws an exception for an invalid model missing an 'Id' property.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GenerateRepositoryInterfaceAsync_ThrowsExceptionForInvalidModelMissingId()
     {
@@ -134,6 +169,10 @@ public sealed class GenerationServiceTests : IDisposable
             .WithMessage("Entity must have an 'Id' property. (Parameter 'InvalidModelMissingId')");
     }
 
+    /// <summary>
+    /// Tests the GenerateRepositoryInterfaceAsync method, verifying it throws an exception for an invalid model with too few properties.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GenerateRepositoryInterfaceAsync_ThrowsExceptionForInvalidModelTooFewProperties()
     {
@@ -145,6 +184,10 @@ public sealed class GenerationServiceTests : IDisposable
             .WithMessage("Entity must have at least 2 properties. (Parameter 'InvalidModelTooFewProperties')");
     }
 
+    /// <summary>
+    /// Tests the GenerateMigrationAsync method, verifying it throws an exception for an invalid model missing an 'Id' property.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GenerateMigrationAsync_ThrowsExceptionForInvalidModelMissingId()
     {
@@ -156,6 +199,10 @@ public sealed class GenerationServiceTests : IDisposable
             .WithMessage("Entity must have an 'Id' property. (Parameter 'InvalidModelMissingId')");
     }
 
+    /// <summary>
+    /// Tests the GenerateGrpcServiceAsync method, verifying it throws an exception for an invalid model with too few properties.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GenerateGrpcServiceAsync_ThrowsExceptionForInvalidModelTooFewProperties()
     {
