@@ -10,8 +10,17 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
+/// <summary>
+/// Contains unit tests that verify the <see cref="Product.Validate"/> method
+/// correctly handles various edge cases such as null or empty properties,
+/// negative values, and invalid identifiers.
+/// </summary>
 public sealed class ProductEdgeCaseTests
 {
+    /// <summary>
+    /// Verifies that <see cref="Product.Validate"/> returns <c>false</c> when the
+    /// <c>Name</c> property is <c>null</c>.
+    /// </summary>
     [Fact]
     public void Validate_WithNullName_ReturnsFalse()
     {
@@ -37,6 +46,10 @@ public sealed class ProductEdgeCaseTests
         isValid.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies that <see cref="Product.Validate"/> returns <c>false</c> when the
+    /// <c>Sku</c> property is an empty string.
+    /// </summary>
     [Fact]
     public void Validate_WithEmptySku_ReturnsFalse()
     {
@@ -62,6 +75,10 @@ public sealed class ProductEdgeCaseTests
         isValid.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies that <see cref="Product.Validate"/> returns <c>false</c> when the
+    /// <c>Price</c> property is negative.
+    /// </summary>
     [Fact]
     public void Validate_WithNegativePrice_ReturnsFalse()
     {
@@ -87,6 +104,10 @@ public sealed class ProductEdgeCaseTests
         isValid.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies that <see cref="Product.Validate"/> returns <c>false</c> when the
+    /// <c>CategoryId</c> property is zero.
+    /// </summary>
     [Fact]
     public void Validate_WithZeroCategoryId_ReturnsFalse()
     {
