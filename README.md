@@ -49,3 +49,39 @@ public class Demo
     }
 }
 ```
+
+## BackgroundWorkerServiceExtensions
+
+The `BackgroundWorkerServiceExtensions` class provides extension methods for managing background task queues and scheduled tasks. It allows you to start/stop task runners, enqueue tasks, monitor queue length, and retrieve task statistics.
+
+```csharp
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+public class Demo
+{
+    public async Task RunAsync()
+    {
+        // Start scheduled task runner
+        var taskRunner = await BackgroundWorkerServiceExtensions.StartScheduledTaskAsync();
+        
+        // Enqueue a background task
+        await BackgroundWorkerServiceExtensions.EnqueueTaskAsync(
+            async () => 
+            {
+                await Task.Delay(1000);
+                Console.WriteLine("Task completed");
+            },
+            CancellationToken.None);
+        
+        // Get current task statistics
+        var stats = BackgroundWorkerServiceExtensions.GetTaskStatistics();
+        Console.WriteLine($"Queue length: {BackgroundWorkerServiceExtensions.GetQueueLength()}");
+        Console.WriteLine($"Worker count: {BackgroundWorkerServiceExtensions.GetWorkerCount()}");
+        
+        // Stop all scheduled tasks
+        await BackgroundWorkerServiceExtensions.StopScheduledTasksAsync();
+    }
+}
+```
