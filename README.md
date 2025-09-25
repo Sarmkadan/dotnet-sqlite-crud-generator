@@ -83,3 +83,27 @@ public class Demo
     }
 }
 ```
+
+## BulkTransferOptionsExtensions
+
+The `BulkTransferOptionsExtensions` class provides pre-configured options for bulk data transfer operations with different performance/safety tradeoffs. It offers static methods to create optimized configurations for high-throughput transfers, safe transfers with checkpoints, or custom batch settings.
+
+```csharp
+// Configure high-performance transfer with custom batch settings
+var options = BulkTransferOptions.WithHighPerformance
+    .WithBatchTimeout(5000)
+    .WithBufferSize(8192)
+    .WithoutProgressReporting();
+
+// Verify configuration
+if (options.IsHighThroughput)
+{
+    Console.WriteLine("Using high-throughput configuration");
+}
+
+// Use in transfer operation
+var transferResult = await BulkImportExportEngineExtensions.TransferToAsync<MyEntity>(
+    sourceContext, 
+    destinationContext, 
+    options);
+```
