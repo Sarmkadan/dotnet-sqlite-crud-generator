@@ -1,27 +1,21 @@
 // existing content ...
 
-## CacheBenchmarks
+## BulkOperationsBenchmarks
 
-The `CacheBenchmarks` class provides a set of benchmarking methods to evaluate the performance of a cache. It allows you to measure the execution time of cache hits, misses, and set operations.
+The `BulkOperationsBenchmarks` class provides a set of benchmarking methods to evaluate the performance of bulk operations on a SQLite database. It allows you to measure the execution time of import and export operations, as well as transfer operations between the database and a stream.
 
 Example usage:
 ```csharp
-public class CacheBenchmarksExample
+public class BulkOperationsBenchmarksExample
 {
     public async Task RunBenchmarks()
     {
-        var cacheBenchmarks = new CacheBenchmarks();
-        await cacheBenchmarks.Setup();
-        var product = await cacheBenchmarks.GetHit();
-        if (product == null)
-        {
-            product = await cacheBenchmarks.GetMiss();
-            await cacheBenchmarks.Set(product);
-        }
-        var exists = await cacheBenchmarks.ExistsHit();
-        var productOrSet = await cacheBenchmarks.GetOrSetHit();
-        var productOrSetMiss = await cacheBenchmarks.GetOrSetMiss();
-        await cacheBenchmarks.Cleanup();
+        var bulkOperationsBenchmarks = new BulkOperationsBenchmarks();
+        await bulkOperationsBenchmarks.Setup();
+        var importResult = await bulkOperationsBenchmarks.ImportBatchAsync();
+        var exportResult = await bulkOperationsBenchmarks.ExportToStreamAsync();
+        var transferResult = await bulkOperationsBenchmarks.TransferAsync();
+        await bulkOperationsBenchmarks.Cleanup();
     }
 }
 ```
