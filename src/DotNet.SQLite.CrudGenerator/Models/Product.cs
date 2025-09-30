@@ -73,6 +73,9 @@ public sealed class Product
         if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Sku))
             return false;
 
+        if (CategoryId <= 0)
+            return false;
+
         if (Price <= 0 || Cost < 0)
             return false;
 

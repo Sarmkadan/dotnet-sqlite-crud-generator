@@ -53,7 +53,7 @@ public sealed class UserService : IService<User, int>
             throw new ValidationException("User validation failed. Check required fields.");
         }
 
-        var existingUser = await ((UserRepository)_userRepository).GetByEmailAsync(entity.Email, cancellationToken);
+        var existingUser = await GetByEmailAsync(entity.Email, cancellationToken);
         if (existingUser is not null)
         {
             _logger?.LogWarning("Duplicate email detected for user with email {UserEmail}", entity.Email);
@@ -118,6 +118,19 @@ public sealed class UserService : IService<User, int>
         return success;
     }
 
+    /// <summary>
+    /// Looks up a user by email address, using the repository's dedicated
+    /// lookup when available and falling back to a generic search otherwise.
+    /// </summary>
+    private async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        if (_userRepository is UserRepository concreteRepository)
+            return await concreteRepository.GetByEmailAsync(email, cancellationToken);
+
+        var matches = await _userRepository.FindAsync(u => u.Email == email, cancellationToken);
+        return matches?.FirstOrDefault();
+    }
+
     public bool Validate(User entity)
     {
         if (entity is null) return false;
@@ -154,7 +167,7 @@ public sealed class UserService : IService<User, int>
             return null;
         }
 
-        var user = await ((UserRepository)_userRepository).GetByEmailAsync(email, cancellationToken);
+        var user = await GetByEmailAsync(email, cancellationToken);
         if (user is null)
         {
             _logger?.LogDebug("User with email {UserEmail} not found", email);

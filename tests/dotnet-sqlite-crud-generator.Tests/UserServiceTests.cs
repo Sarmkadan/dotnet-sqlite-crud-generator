@@ -109,6 +109,7 @@ public sealed class UserServiceTests
         // Arrange
         var existingUser = new User { Id = 1, Username = "oldname", Email = "old@example.com", PasswordHash = "oldhash", FirstName = "Old", LastName = "User" };
         var updatedUser = new User { Id = 1, Username = "newname", Email = "old@example.com", PasswordHash = "oldhash", FirstName = "Old", LastName = "User" };
+        _userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(existingUser)!);
         _userRepoMock.UpdateAsync(updatedUser, Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
 
         // Act
@@ -126,6 +127,8 @@ public sealed class UserServiceTests
     public async Task DeleteAsync_DeletesUserThroughRepository()
     {
         // Arrange
+        var existingUser = new User { Id = 1, Username = "user", Email = "user@example.com", PasswordHash = "hash", FirstName = "User", LastName = "One" };
+        _userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(existingUser)!);
         _userRepoMock.DeleteAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
 
         // Act

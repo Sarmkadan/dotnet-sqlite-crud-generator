@@ -225,30 +225,33 @@ public sealed class CachingIntegrationTests : IDisposable
 	[Fact]
 	public async Task EvictionPolicy_ShouldRemoveLeastRecentlyUsedItemsWhenCacheFull()
 	{
+		// This test needs a cache capped tightly enough to force eviction with
+		// only 3 small items, unlike the shared 10 KB fixture cache.
+		var cacheProvider = new MemoryCacheProvider(1000);
 
 		// Add 3 items, each 400 bytes, total 1200 bytes. Cache should evict oldest.
 		var item1 = new LargeObject(400);
 		var item2 = new LargeObject(400);
 		var item3 = new LargeObject(400);
 
-		await _cacheProvider.SetAsync("key1", item1); // Size: 400. Current: 400
+		await cacheProvider.SetAsync("key1", item1); // Size: 400. Current: 400
 		await Task.Delay(10); // Ensure LastAccessed differs
-		await _cacheProvider.SetAsync("key2", item2); // Size: 400. Current: 800
+		await cacheProvider.SetAsync("key2", item2); // Size: 400. Current: 800
 		await Task.Delay(10); // Ensure LastAccessed differs
-		await _cacheProvider.GetAsync<LargeObject>("key1"); // Access key1 to make it recently used
+		await cacheProvider.GetAsync<LargeObject>("key1"); // Access key1 to make it recently used
 
 		// Act
 		// Adding item3 (400 bytes) should cause eviction because 800 + 400 = 1200 > 1000
 		// key2 should be evicted (LRU among non-accessed)
-		await _cacheProvider.SetAsync("key3", item3); // Size: 400. Current: 800 (key2 evicted)
+		await cacheProvider.SetAsync("key3", item3); // Size: 400. Current: 800 (key2 evicted)
 
 		// Assert
-		var stats = _cacheProvider.GetStatistics();
+		var stats = cacheProvider.GetStatistics();
 		stats.TotalItems.Should().Be(2); // Should have 2 items: key1 (accessed) and key3 (new)
 
-		(await _cacheProvider.ExistsAsync("key1")).Should().BeTrue();
-		(await _cacheProvider.ExistsAsync("key2")).Should().BeFalse(); // key2 should be evicted
-		(await _cacheProvider.ExistsAsync("key3")).Should().BeTrue();
+		(await cacheProvider.ExistsAsync("key1")).Should().BeTrue();
+		(await cacheProvider.ExistsAsync("key2")).Should().BeFalse(); // key2 should be evicted
+		(await cacheProvider.ExistsAsync("key3")).Should().BeTrue();
 		stats.TotalSizeBytes.Should().Be(800);
 	}
 
