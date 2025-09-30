@@ -160,11 +160,11 @@ public sealed class DateTimeConverter : JsonConverter<DateTime>
 {
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return DateTime.Parse(reader.GetString() ?? DateTime.UtcNow.ToString("O"));
+        return DateTime.Parse(reader.GetString() ?? DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind);
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString("O"));
+        writer.WriteStringValue(value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
     }
 }

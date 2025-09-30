@@ -92,7 +92,7 @@ public static class DateTimeExtensionsJsonExtensions
             Type typeToConvert,
             JsonSerializerOptions options)
         {
-            return DateTime.Parse(reader.GetString()!);
+            return DateTime.Parse(reader.GetString()!, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind);
         }
 
         public override void Write(
