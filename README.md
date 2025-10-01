@@ -86,6 +86,43 @@ var exception = ValidationException.FromErrors(errors);
 throw exception;
 ```
 
+## ConfigurationException
+
+The `ConfigurationException` class represents an exception thrown when configuration is invalid or missing. It provides factory methods to create specific configuration-related exceptions for common scenarios like missing configuration values, invalid connection strings, file paths, and timeout values.
+
+
+
+Example usage:
+```csharp
+try
+{
+    var connectionString = ConfigurationManager.ConnectionStrings["MyDatabase"].ConnectionString;
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw ConfigurationException.MissingConfiguration("MyDatabase");
+    }
+    
+    var timeout = int.Parse(ConfigurationManager.AppSettings["CommandTimeout"]);
+    if (timeout <= 0)
+    {
+        throw ConfigurationException.InvalidTimeout("CommandTimeout", timeout);
+    }
+}
+catch (ConfigurationException ex)
+{
+    Console.WriteLine($"Configuration error: {ex.Message}");
+    // Handle specific exception types
+    if (ex.Message.Contains("Connection string"))
+    {
+        // Reconfigure connection string
+    }
+    else if (ex.Message.Contains("timeout"))
+    {
+        // Set valid timeout value
+    }
+}
+```
+
 ## MigrationDiffBenchmarks
 
 The `MigrationDiffBenchmarks` class provides a set of benchmarking methods to evaluate the performance of migration diff operations. It allows you to measure the execution time of various operations, such as computing the diff between two schema versions, getting the actual schema, and getting table info.
