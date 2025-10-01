@@ -46,6 +46,46 @@ public class AuditTrailBenchmarksExample
 }
 ```
 
+## ValidationException
+
+The `ValidationException` class represents an exception thrown when entity validation fails during CRUD operations. It collects multiple validation errors and provides methods to add errors and create exceptions from existing error lists.
+
+Example usage:
+```csharp
+try
+{
+    var product = new Product
+    {
+        Name = "Test Product",
+        Price = -100
+    };
+
+    if (product.Price < 0)
+    {
+        var validationException = new ValidationException("Product validation failed");
+        validationException.AddError(nameof(Product.Price), "Price must be a positive value");
+        throw validationException;
+    }
+}
+catch (ValidationException ex) when (ex.Errors.Any())
+{
+    Console.WriteLine($"Validation failed: {ex.Message}");
+    foreach (var error in ex.Errors)
+    {
+        Console.WriteLine($"- {error.Property}: {error.Message}");
+    }
+}
+
+// Creating from multiple errors
+var errors = new List<ValidationError>
+{
+    new() { Property = nameof(Product.Name), Message = "Name is required" },
+    new() { Property = nameof(Product.Price), Message = "Price must be positive" }
+};
+var exception = ValidationException.FromErrors(errors);
+throw exception;
+```
+
 ## MigrationDiffBenchmarks
 
 The `MigrationDiffBenchmarks` class provides a set of benchmarking methods to evaluate the performance of migration diff operations. It allows you to measure the execution time of various operations, such as computing the diff between two schema versions, getting the actual schema, and getting table info.
