@@ -79,4 +79,63 @@ Console.WriteLine($"Registered event types: {statistics.RegisteredEventTypes}");
 Console.WriteLine($"Total subscriptions: {statistics.TotalSubscriptions}");
 Console.WriteLine($"Total events published: {statistics.TotalEventsPublished}");
 ```
+
+## EntityChangedEvent
+
+The `EntityChangedEvent` is an abstract base class that represents domain events for entity lifecycle changes. It serves as the foundation for tracking entity creation, updates, and deletions throughout the application. This event system enables auditing, notifications, and cross-cutting concerns like logging and caching invalidation.
+
+Here's a realistic example of using `EntityChangedEvent` with a Product entity:
+
+```csharp
+// Define your entity
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public int StockQuantity { get; set; }
+}
+
+// Subscribe to entity creation events
+var eventBus = new EventBus();
+eventBus.Subscribe<EntityCreatedEvent<Product>>(async (createdEvent) =>
+{
+    Console.WriteLine($"Product created: {createdEvent.Entity?.Name}");
+    Console.WriteLine($"Entity type: {createdEvent.EntityType}");
+    Console.WriteLine($"Event ID: {createdEvent.EventId}");
+});
+
+// Subscribe to entity update events
+eventBus.Subscribe<EntityUpdatedEvent<Product>>(async (updatedEvent) =>
+{
+    Console.WriteLine($"Product updated: {updatedEvent.Entity?.Name}");
+    Console.WriteLine($"Changes: {string.Join(", ", updatedEvent.Changes.Select(kvp => $"{kvp.Key}: {kvp.Value.OldValue} → {kvp.Value.NewValue}"))}");
+});
+
+// Subscribe to entity deletion events
+eventBus.Subscribe<EntityDeletedEvent<Product>>(async (deletedEvent) =>
+{
+    Console.WriteLine($"Product deleted: {deletedEvent.Entity?.Name}");
+    Console.WriteLine($"Entity type: {deletedEvent.EntityType}");
+});
+
+// Create and publish a product
+var product = new Product { Id = 1, Name = "Laptop", Price = 999.99m, StockQuantity = 10 };
+await eventBus.PublishAsync(new EntityCreatedEvent<Product>(product.Id, product));
+
+// Update the product
+var oldProduct = new Product { Id = 1, Name = "Laptop", Price = 999.99m, StockQuantity = 10 };
+var updatedProduct = new Product { Id = 1, Name = "Laptop Pro", Price = 1099.99m, StockQuantity = 10 };
+var updateEvent = new EntityUpdatedEvent<Product>(updatedProduct.Id, updatedProduct, oldProduct);
+updateEvent.Changes.Add("Name", ("Laptop", "Laptop Pro"));
+updateEvent.Changes.Add("Price", (999.99m, 1099.99m));
+await eventBus.PublishAsync(updateEvent);
+
+// Delete the product
+await eventBus.PublishAsync(new EntityDeletedEvent<Product>(product.Id, product));
+
+// Bulk operations
+var products = new List<Product> { product, updatedProduct };
+await eventBus.PublishAsync(new BulkEntityChangedEvent<Product>(2, "BulkUpdate", products));
+```
 ```
