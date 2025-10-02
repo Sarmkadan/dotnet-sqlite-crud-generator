@@ -80,6 +80,99 @@ Console.WriteLine($"Total subscriptions: {statistics.TotalSubscriptions}");
 Console.WriteLine($"Total events published: {statistics.TotalEventsPublished}");
 ```
 
+## WebhookHandler
+
+The `WebhookHandler` class provides a robust mechanism for sending event notifications to external webhook endpoints. It handles payload serialization, HTTP request execution with retry logic, response validation, and comprehensive delivery tracking with statistics.
+
+
+Here's a realistic example of configuring and using the `WebhookHandler`:
+
+```csharp
+// Create a WebhookHandler with optional signing secret for payload verification
+var httpClient = new HttpClient();
+var webhookHandler = new WebhookHandler(httpClient, signingSecret: "your-secret-key");
+
+// Define your payload model
+public class OrderCreatedPayload
+{
+    public int OrderId { get; set; }
+    public string CustomerEmail { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+// Register webhook endpoints
+webhookHandler.RegisterEndpoint(
+    name: "order-service",
+    url: new Uri("https://orders.example.com/api/webhooks"),
+    eventTypes: ["order.created", "order.updated"],
+    active: true
+);
+
+webhookHandler.RegisterEndpoint(
+    name: "inventory-service",
+    url: new Uri("https://inventory.example.com/webhooks"),
+    eventTypes: ["product.stock.updated"],
+    active: true
+);
+
+// Send a webhook notification
+var orderPayload = new OrderCreatedPayload
+{
+    OrderId = 12345,
+    CustomerEmail = "customer@example.com",
+    TotalAmount = 99.99m,
+    CreatedAt = DateTime.UtcNow
+};
+
+var success = await webhookHandler.SendWebhookAsync(
+    eventType: "order.created",
+    payload: orderPayload
+);
+
+Console.WriteLine(success ? "Webhook sent successfully" : "Failed to send webhook");
+
+// Get all registered endpoints
+var endpoints = webhookHandler.GetEndpoints();
+foreach (var endpoint in endpoints)
+{
+    Console.WriteLine($"Endpoint: {endpoint.Name}");
+    Console.WriteLine($"  URL: {endpoint.Url}");
+    Console.WriteLine($"  Active: {endpoint.Active}");
+    Console.WriteLine($"  Events: {string.Join(", ", endpoint.EventTypes)}");
+    Console.WriteLine($"  Created: {endpoint.CreatedAt}");
+    Console.WriteLine($"  Deliveries: {endpoint.DeliveryCount}");
+    Console.WriteLine($"  Failures: {endpoint.FailureCount}");
+}
+
+// Get delivery history for a specific endpoint
+var deliveryHistory = webhookHandler.GetDeliveryHistory("order-service");
+foreach (var attempt in deliveryHistory)
+{
+    Console.WriteLine($"Delivery: {attempt.DeliveryId}");
+    Console.WriteLine($"  Event: {attempt.EventType}");
+    Console.WriteLine($"  Status: {(attempt.Success ? "Success" : "Failed")}");
+    Console.WriteLine($"  Status Code: {attempt.StatusCode}");
+    Console.WriteLine($"  Attempted: {attempt.AttemptedAt}");
+    if (!attempt.Success && !string.IsNullOrEmpty(attempt.Error))
+    {
+        Console.WriteLine($"  Error: {attempt.Error}");
+    }
+}
+
+// Get statistics
+var stats = webhookHandler.GetStatistics();
+Console.WriteLine($"Registered endpoints: {stats.RegisteredEndpoints}");
+Console.WriteLine($"Active endpoints: {stats.ActiveEndpoints}");
+Console.WriteLine($"Total deliveries: {stats.TotalDeliveries}");
+Console.WriteLine($"Successful: {stats.SuccessfulDeliveries}");
+Console.WriteLine($"Failed: {stats.FailedDeliveries}");
+
+// Manage endpoint state
+webhookHandler.DisableEndpoint("inventory-service");
+webhookHandler.EnableEndpoint("order-service");
+```
+
 ## EntityChangedEvent
 
 The `EntityChangedEvent` is an abstract base class that represents domain events for entity lifecycle changes. It serves as the foundation for tracking entity creation, updates, and deletions throughout the application. This event system enables auditing, notifications, and cross-cutting concerns like logging and caching invalidation.
