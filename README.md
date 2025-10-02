@@ -38,3 +38,45 @@ Console.WriteLine(duplicateKeyException.Message); // Output: An entity of type '
 var constraintViolationException = RepositoryException.ConstraintViolation("Product", "UniqueConstraint");
 Console.WriteLine(constraintViolationException.Message); // Output: Constraint violation in entity 'Product': UniqueConstraint
 ```
+
+## EventBus
+
+The `EventBus` class is a pub-sub messaging system that allows you to publish events and subscribe to them. It provides a way to decouple event producers and consumers, making it easier to manage complex event-driven systems.
+
+Here's an example of how to use the `EventBus` class:
+```csharp
+// Create an instance of the EventBus
+var eventBus = new EventBus();
+
+// Define an event class
+public class MyEvent : IEvent
+{
+    public string Data { get; set; }
+}
+
+// Subscribe to the event
+eventBus.Subscribe<MyEvent>(async (event) =>
+{
+    Console.WriteLine($"Received event: {event.Data}");
+});
+
+// Publish the event
+await eventBus.PublishAsync(new MyEvent { Data = "Hello, World!" });
+
+// Get the event history
+var eventHistory = eventBus.GetEventHistory();
+foreach (var eventEnvelope in eventHistory)
+{
+    Console.WriteLine($"Event ID: {eventEnvelope.EventId}");
+    Console.WriteLine($"Event Type: {eventEnvelope.EventTypeName}");
+    Console.WriteLine($"Timestamp: {eventEnvelope.Timestamp}");
+    Console.WriteLine($"Data: {eventEnvelope.Data}");
+}
+
+// Get the event statistics
+var statistics = eventBus.GetStatistics();
+Console.WriteLine($"Registered event types: {statistics.RegisteredEventTypes}");
+Console.WriteLine($"Total subscriptions: {statistics.TotalSubscriptions}");
+Console.WriteLine($"Total events published: {statistics.TotalEventsPublished}");
+```
+```
