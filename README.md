@@ -1,146 +1,40 @@
 // existing content ...
 
-## GenerationException
+## RepositoryException
 
-The `GenerationException` class represents an exception that occurs during the generation process. It provides additional information about the type of generation error, the source entity, and the line number where the error occurred.
-
-Example usage:
-```csharp
-try
-{
-    // Code that may throw a GenerationException
-}
-catch (GenerationException ex)
-{
-    Console.WriteLine($"Generation error: {ex.Message}");
-    Console.WriteLine($"Generation type: {ex.GenerationType}");
-    Console.WriteLine($"Source entity: {ex.SourceEntity}");
-    Console.WriteLine($"Line number: {ex.LineNumber}");
-}
-```
-
-## AuditTrailBenchmarks
-
-The `AuditTrailBenchmarks` class provides a set of benchmarking methods to evaluate the performance of audit trail operations. It allows you to measure the execution time of various operations, such as recording create, update, and delete operations, as well as retrieving entity and user trails.
-
-Example usage:
-```csharp
-public class AuditTrailBenchmarksExample
-{
-    public async Task RunBenchmarks()
-    {
-        var benchmarks = new AuditTrailBenchmarks();
-        await benchmarks.Setup();
-        await benchmarks.RecordCreateOperationAsync();
-        await benchmarks.RecordUpdateOperationAsync();
-        await benchmarks.RecordDeleteOperationAsync();
-        var entityTrail = await benchmarks.GetEntityTrailAsync();
-        var userTrail = await benchmarks.GetUserTrailAsync();
-        var recent = await benchmarks.GetRecentAsync();
-        var query = await benchmarks.QueryAsync();
-        var summary = await benchmarks.GetSummaryAsync();
-        await benchmarks.BulkRecordAsync();
-        await benchmarks.Cleanup();
-        benchmarks.Dispose();
-    }
-}
-```
-
-## ValidationException
-
-The `ValidationException` class represents an exception thrown when entity validation fails during CRUD operations. It collects multiple validation errors and provides methods to add errors and create exceptions from existing error lists.
+The `RepositoryException` class represents an exception that occurs during repository operations. It provides additional information about the type of repository error, the entity type, and the entity ID.
 
 Example usage:
 ```csharp
 try
 {
-    var product = new Product
-    {
-        Name = "Test Product",
-        Price = -100
-    };
-
-    if (product.Price < 0)
-    {
-        var validationException = new ValidationException("Product validation failed");
-        validationException.AddError(nameof(Product.Price), "Price must be a positive value");
-        throw validationException;
-    }
+    // Code that may throw a RepositoryException
 }
-catch (ValidationException ex) when (ex.Errors.Any())
+catch (RepositoryException ex)
 {
-    Console.WriteLine($"Validation failed: {ex.Message}");
-    foreach (var error in ex.Errors)
+    Console.WriteLine($"Repository error: {ex.Message}");
+    Console.WriteLine($"Entity type: {ex.EntityType}");
+    Console.WriteLine($"Entity ID: {ex.EntityId}");
+
+    if (ex is RepositoryException.EntityNotFoundException)
     {
-        Console.WriteLine($"- {error.Property}: {error.Message}");
+        // Handle entity not found
+    }
+    else if (ex is RepositoryException.DuplicateKeyException)
+    {
+        // Handle duplicate key
     }
 }
 
-// Creating from multiple errors
-var errors = new List<ValidationError>
-{
-    new() { Property = nameof(Product.Name), Message = "Name is required" },
-    new() { Property = nameof(Product.Price), Message = "Price must be positive" }
-};
-var exception = ValidationException.FromErrors(errors);
-throw exception;
+// Creating a RepositoryException
+var repositoryException = RepositoryException.EntityNotFound("Product", 123);
+Console.WriteLine(repositoryException.Message); // Output: Entity of type 'Product' with ID 123 was not found.
+
+// Creating a RepositoryException for duplicate key violations
+var duplicateKeyException = RepositoryException.DuplicateKey("Product", "Name", "Test Product");
+Console.WriteLine(duplicateKeyException.Message); // Output: An entity of type 'Product' with Name = 'Test Product' already exists.
+
+// Creating a RepositoryException for constraint violations
+var constraintViolationException = RepositoryException.ConstraintViolation("Product", "UniqueConstraint");
+Console.WriteLine(constraintViolationException.Message); // Output: Constraint violation in entity 'Product': UniqueConstraint
 ```
-
-## ConfigurationException
-
-The `ConfigurationException` class represents an exception thrown when configuration is invalid or missing. It provides factory methods to create specific configuration-related exceptions for common scenarios like missing configuration values, invalid connection strings, file paths, and timeout values.
-
-
-
-Example usage:
-```csharp
-try
-{
-    var connectionString = ConfigurationManager.ConnectionStrings["MyDatabase"].ConnectionString;
-    if (string.IsNullOrWhiteSpace(connectionString))
-    {
-        throw ConfigurationException.MissingConfiguration("MyDatabase");
-    }
-    
-    var timeout = int.Parse(ConfigurationManager.AppSettings["CommandTimeout"]);
-    if (timeout <= 0)
-    {
-        throw ConfigurationException.InvalidTimeout("CommandTimeout", timeout);
-    }
-}
-catch (ConfigurationException ex)
-{
-    Console.WriteLine($"Configuration error: {ex.Message}");
-    // Handle specific exception types
-    if (ex.Message.Contains("Connection string"))
-    {
-        // Reconfigure connection string
-    }
-    else if (ex.Message.Contains("timeout"))
-    {
-        // Set valid timeout value
-    }
-}
-```
-
-## MigrationDiffBenchmarks
-
-The `MigrationDiffBenchmarks` class provides a set of benchmarking methods to evaluate the performance of migration diff operations. It allows you to measure the execution time of various operations, such as computing the diff between two schema versions, getting the actual schema, and getting table info.
-
-Example usage:
-```csharp
-public class MigrationDiffBenchmarksExample
-{
-    public async Task RunBenchmarks()
-    {
-        var benchmarks = new MigrationDiffBenchmarks();
-        await benchmarks.Setup();
-        await benchmarks.ComputeDiffAsync_UpToDate();
-        benchmarks.GetExpectedSchema();
-        await benchmarks.GetTableInfoAsync();
-        await benchmarks.Cleanup();
-        benchmarks.Dispose();
-    }
-}
-```
-
