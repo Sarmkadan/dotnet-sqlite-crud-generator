@@ -177,6 +177,73 @@ webhookHandler.EnableEndpoint("order-service");
 
 The `EntityChangedEvent` is an abstract base class that represents domain events for entity lifecycle changes. It serves as the foundation for tracking entity creation, updates, and deletions throughout the application. This event system enables auditing, notifications, and cross-cutting concerns like logging and caching invalidation.
 
+
+## ExternalApiClient
+
+The `ExternalApiClient` provides a type-safe HTTP client for interacting with external REST APIs. It simplifies CRUD operations with built-in error handling, supports pagination through `GetCollectionAsync`, and provides detailed response information via `GetWithStatusAsync`. The client automatically handles URL construction and includes a health check method for verifying API availability.
+
+Here's a realistic example of using the `ExternalApiClient` to interact with a REST API:
+
+```csharp
+// Create an instance of ExternalApiClient
+var httpClient = new HttpClient();
+var apiClient = new ExternalApiClient(httpClient, "https://api.example.com/v1");
+
+// Define a model for the API response
+public class User
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+}
+
+// Get a single resource
+var user = await apiClient.GetAsync<User>("/users/42");
+Console.WriteLine(user?.Name); // Output: John Doe
+
+// Get a collection with pagination
+var usersPage = await apiClient.GetCollectionAsync<User>("/users", page: 1, pageSize: 20);
+if (usersPage != null)
+{
+    Console.WriteLine($"Total users: {usersPage.Count}");
+    foreach (var user in usersPage)
+    {
+        Console.WriteLine($"- {user.Name} ({user.Email})");
+    }
+}
+
+// Create a new resource
+var newUser = new { Name = "Jane Smith", Email = "jane@example.com" };
+var createdUser = await apiClient.CreateAsync<User>("/users", newUser);
+Console.WriteLine(createdUser?.Id); // Output: 43
+
+// Update a resource
+var updatedData = new { Name = "John Doe Updated", Email = "john.updated@example.com" };
+var updatedUser = await apiClient.UpdateAsync<User>("/users/42", updatedData);
+Console.WriteLine(updatedUser?.Name); // Output: John Doe Updated
+
+// Delete a resource
+var isDeleted = await apiClient.DeleteAsync("/users/99");
+Console.WriteLine(isDeleted ? "User deleted" : "Failed to delete user");
+
+// Get detailed response information
+var response = await apiClient.GetWithStatusAsync<User>("/users/42");
+if (response.Success)
+{
+    Console.WriteLine($"Status: {response.StatusCode}");
+    Console.WriteLine($"User: {response.Data?.Name}");
+}
+else
+{
+    Console.WriteLine($"Error: {response.Message}");
+}
+
+// Check API health
+var isHealthy = await apiClient.HealthCheckAsync();
+Console.WriteLine(isHealthy ? "API is healthy" : "API is unavailable");
+```
+
 Here's a realistic example of using `EntityChangedEvent` with a Product entity:
 
 ```csharp
