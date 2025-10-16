@@ -8,20 +8,20 @@ using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
 public class ProductServiceTests
 {
-    private readonly Mock<IRepository<Product, int>> _productRepoMock = new();
-    private readonly Mock<IRepository<Category, int>> _categoryRepoMock = new();
+    private readonly IRepository<Product, int> _productRepoMock = Substitute.For<IRepository<Product, int>>();
+    private readonly IRepository<Category, int> _categoryRepoMock = Substitute.For<IRepository<Category, int>>();
     private readonly ProductService _service;
 
     public ProductServiceTests()
     {
-        _service = new ProductService(_productRepoMock.Object, _categoryRepoMock.Object);
+        _service = new ProductService(_productRepoMock, _categoryRepoMock);
     }
 
     [Fact]
@@ -41,8 +41,8 @@ public class ProductServiceTests
         // Arrange
         var expected = new Product { Id = 7, Name = "Widget Pro", Sku = "WP-007", CategoryId = 2, Price = 49.99m };
         _productRepoMock
-            .Setup(r => r.GetByIdAsync(7, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expected);
+            .GetByIdAsync(7, Arg.Any<CancellationToken>())
+            .Returns(expected);
 
         // Act
         var result = await _service.GetAsync(7);
@@ -51,7 +51,7 @@ public class ProductServiceTests
         result.Should().NotBeNull();
         result!.Id.Should().Be(7);
         result.Name.Should().Be("Widget Pro");
-        _productRepoMock.Verify(r => r.GetByIdAsync(7, It.IsAny<CancellationToken>()), Times.Once);
+        await _productRepoMock.Received(1).GetByIdAsync(7, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -64,8 +64,8 @@ public class ProductServiceTests
             new() { Name = "Beta",  Sku = "B-002", CategoryId = 1, Price = 12.50m },
         };
         _productRepoMock
-            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(products);
+            .GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(products);
 
         // Act
         var result = (await _service.GetAllAsync()).ToList();
@@ -73,7 +73,7 @@ public class ProductServiceTests
         // Assert
         result.Should().HaveCount(2);
         result.Select(p => p.Name).Should().BeEquivalentTo(new[] { "Alpha", "Beta" });
-        _productRepoMock.Verify(r => r.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
+        await _productRepoMock.Received(1).GetAllAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -81,15 +81,15 @@ public class ProductServiceTests
     {
         // Arrange
         _productRepoMock
-            .Setup(r => r.ExistsAsync(42, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+            .ExistsAsync(42, Arg.Any<CancellationToken>())
+            .Returns(true);
 
         // Act
         var exists = await _service.ExistsAsync(42);
 
         // Assert
         exists.Should().BeTrue();
-        _productRepoMock.Verify(r => r.ExistsAsync(42, It.IsAny<CancellationToken>()), Times.Once);
+        await _productRepoMock.Received(1).ExistsAsync(42, Arg.Any<CancellationToken>());
     }
 }
 
@@ -155,11 +155,11 @@ public class EventBusTests
     }
 
     [Fact]
-    public void ClearEventHistory_AfterPublishingEvents_LeavesHistoryEmpty()
+    public async Task ClearEventHistory_AfterPublishingEvents_LeavesHistoryEmpty()
     {
         // Arrange
         var bus = new EventBus();
-        bus.PublishAsync(new StockDepletedEvent { ProductId = 1, Remaining = 5 }).GetAwaiter().GetResult();
+        await bus.PublishAsync(new StockDepletedEvent { ProductId = 1, Remaining = 5 });
 
         // Act
         bus.ClearEventHistory();

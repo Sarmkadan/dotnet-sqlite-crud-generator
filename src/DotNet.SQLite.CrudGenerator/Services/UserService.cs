@@ -53,7 +53,7 @@ public class UserService : IService<User, int>
         return await _userRepository.AddAsync(entity, cancellationToken);
     }
 
-    public async Task<User> UpdateAsync(User entity, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(User entity, CancellationToken cancellationToken = default)
     {
         if (entity == null)
             throw new ArgumentNullException(nameof(entity));

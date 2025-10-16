@@ -30,7 +30,7 @@ public interface IService<T, TKey> where T : class
     /// <summary>
     /// Updates an existing entity.
     /// </summary>
-    Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default);
+    Task<bool> UpdateAsync(T entity, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes an entity.
