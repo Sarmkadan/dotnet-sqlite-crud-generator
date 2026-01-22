@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
-public class ProductServiceTests
+public sealed class ProductServiceTests
 {
     private readonly IRepository<Product, int> _productRepoMock = Substitute.For<IRepository<Product, int>>();
     private readonly IRepository<Category, int> _categoryRepoMock = Substitute.For<IRepository<Category, int>>();
@@ -93,7 +94,7 @@ public class ProductServiceTests
     }
 }
 
-public class EventBusTests
+public sealed class EventBusTests
 {
     [Fact]
     public async Task PublishAsync_WithRegisteredAsyncHandler_HandlerReceivesPublishedEvent()

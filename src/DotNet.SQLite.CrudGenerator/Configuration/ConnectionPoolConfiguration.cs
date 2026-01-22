@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -9,7 +10,7 @@ namespace DotNet.SQLite.CrudGenerator.Configuration;
 /// Configuration options for the SQLite connection pool.
 /// Controls pool size, idle connection lifetime, and acquisition behaviour.
 /// </summary>
-public class ConnectionPoolConfiguration
+public sealed class ConnectionPoolConfiguration
 {
     /// <summary>The configuration section name used when binding from IConfiguration.</summary>
     public const string SectionName = "ConnectionPool";

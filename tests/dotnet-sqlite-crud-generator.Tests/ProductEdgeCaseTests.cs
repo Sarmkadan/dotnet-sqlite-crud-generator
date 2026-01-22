@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -9,7 +10,7 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
-public class ProductEdgeCaseTests
+public sealed class ProductEdgeCaseTests
 {
     [Fact]
     public void Validate_WithNullName_ReturnsFalse()

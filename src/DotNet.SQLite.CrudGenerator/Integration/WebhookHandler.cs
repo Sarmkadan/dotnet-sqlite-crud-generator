@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -14,7 +15,7 @@ namespace DotNet.SQLite.CrudGenerator.Integration;
 /// Webhook handler for sending event notifications to external endpoints.
 /// Supports payload signing, retry logic, and delivery tracking.
 /// </summary>
-public class WebhookHandler
+public sealed class WebhookHandler
 {
     private readonly HttpRequestExecutor _httpExecutor;
     private readonly ConcurrentDictionary<string, WebhookEndpoint> _endpoints = new();
@@ -150,11 +151,11 @@ public class WebhookHandler
     }
 }
 
-public class WebhookEndpoint
+public sealed class WebhookEndpoint
 {
     public string Name { get; set; } = string.Empty;
     public Uri Url { get; set; } = null!;
-    public string[] EventTypes { get; set; } = Array.Empty<string>();
+    public string[] EventTypes { get; set; } = [];
     public bool Active { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastDeliveryAt { get; set; }
@@ -162,7 +163,7 @@ public class WebhookEndpoint
     public int FailureCount { get; set; }
 }
 
-public class DeliveryAttempt
+public sealed class DeliveryAttempt
 {
     public Guid DeliveryId { get; set; }
     public string WebhookName { get; set; } = string.Empty;
@@ -174,7 +175,7 @@ public class DeliveryAttempt
     public string? Error { get; set; }
 }
 
-public class WebhookStatistics
+public sealed class WebhookStatistics
 {
     public int RegisteredEndpoints { get; set; }
     public int ActiveEndpoints { get; set; }

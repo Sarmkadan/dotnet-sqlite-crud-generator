@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.CLI;
 /// Command to generate CRUD operations, migrations, and gRPC services from C# models.
 /// Supports filtering by model name and customizable output directories.
 /// </summary>
-public class GenerateCommand : ICommand
+public sealed class GenerateCommand : ICommand
 {
     private string? _modelName;
     private string _outputDirectory = "./Generated";
@@ -35,7 +36,7 @@ public class GenerateCommand : ICommand
             var generationService = new GenerationService();
             var models = LoadModels();
 
-            if (_modelName != null)
+            if (_modelName is not null)
                 models = models.Where(m => m.Name.Equals(_modelName, StringComparison.OrdinalIgnoreCase)).ToList();
 
             if (!models.Any())

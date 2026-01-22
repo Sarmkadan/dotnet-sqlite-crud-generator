@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.Services;
 /// Service for exporting entity data to various formats.
 /// Supports JSON, CSV, and XML exports with streaming capability.
 /// </summary>
-public class DataExportService
+public sealed class DataExportService
 {
     private readonly JsonFormatter _jsonFormatter;
     private readonly CsvFormatter _csvFormatter;
@@ -112,12 +113,12 @@ public enum ExportFormat
     Xml
 }
 
-public class ExportReport
+public sealed class ExportReport
 {
     public string EntityName { get; set; } = string.Empty;
     public int ItemCount { get; set; }
     public DateTime ExportedAt { get; set; }
-    public string[] AvailableFormats { get; set; } = Array.Empty<string>();
+    public string[] AvailableFormats { get; set; } = [];
     public object? SampleItem { get; set; }
 
     public override string ToString()

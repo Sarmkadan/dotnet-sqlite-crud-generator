@@ -11,7 +11,7 @@ namespace DotNet.SQLite.CrudGenerator.Attributes;
 /// Marks a class for gRPC service generation.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class GenerateGrpcAttribute : Attribute
+public sealed class GenerateGrpcAttribute : Attribute
 {
     /// <summary>
     /// Gets or sets whether to generate async methods.

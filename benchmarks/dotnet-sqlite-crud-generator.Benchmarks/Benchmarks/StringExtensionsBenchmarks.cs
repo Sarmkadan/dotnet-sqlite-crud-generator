@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -16,7 +17,7 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public class StringExtensionsBenchmarks
+public sealed class StringExtensionsBenchmarks
 {
     private const string SnakeCaseInput = "user_profile_settings";
     private const string PascalCaseInput = "UserProfileSettings";

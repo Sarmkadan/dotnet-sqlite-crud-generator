@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Services;
 /// <summary>
 /// Service for managing product operations with inventory and pricing logic.
 /// </summary>
-public class ProductService : IService<Product, int>
+public sealed class ProductService : IService<Product, int>
 {
     private readonly IRepository<Product, int> _productRepository;
     private readonly IRepository<Category, int> _categoryRepository;
@@ -39,18 +40,18 @@ public class ProductService : IService<Product, int>
 
     public async Task<Product> CreateAsync(Product entity, CancellationToken cancellationToken = default)
     {
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         if (!Validate(entity))
             throw new ValidationException("Product validation failed. Check required fields and constraints.");
 
         var existingSku = await ((ProductRepository)_productRepository).GetBySkuAsync(entity.Sku, cancellationToken);
-        if (existingSku != null)
+        if (existingSku is not null)
             throw RepositoryException.DuplicateKey(nameof(Product), nameof(Product.Sku), entity.Sku);
 
         var category = await _categoryRepository.GetByIdAsync(entity.CategoryId, cancellationToken);
-        if (category == null)
+        if (category is null)
             throw new ValidationException($"Category with ID {entity.CategoryId} does not exist.");
 
         entity.CreatedAt = DateTime.UtcNow;
@@ -61,7 +62,7 @@ public class ProductService : IService<Product, int>
 
     public async Task<bool> UpdateAsync(Product entity, CancellationToken cancellationToken = default)
     {
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         if (entity.Id <= 0)
@@ -71,7 +72,7 @@ public class ProductService : IService<Product, int>
             throw new ValidationException("Product validation failed. Check required fields and constraints.");
 
         var existing = await GetAsync(entity.Id, cancellationToken);
-        if (existing == null)
+        if (existing is null)
             throw RepositoryException.EntityNotFound(nameof(Product), entity.Id);
 
         entity.UpdatedAt = DateTime.UtcNow;
@@ -84,7 +85,7 @@ public class ProductService : IService<Product, int>
             throw new ArgumentException("Product ID must be greater than 0", nameof(id));
 
         var product = await GetAsync(id, cancellationToken);
-        if (product == null)
+        if (product is null)
             throw RepositoryException.EntityNotFound(nameof(Product), id);
 
         return await _productRepository.DeleteAsync(id, cancellationToken);
@@ -92,7 +93,7 @@ public class ProductService : IService<Product, int>
 
     public bool Validate(Product entity)
     {
-        if (entity == null) return false;
+        if (entity is null) return false;
         return entity.Validate();
     }
 
@@ -126,7 +127,7 @@ public class ProductService : IService<Product, int>
             throw new ArgumentException("Restock quantity must be greater than 0", nameof(quantity));
 
         var product = await GetAsync(productId, cancellationToken);
-        if (product == null)
+        if (product is null)
             throw RepositoryException.EntityNotFound(nameof(Product), productId);
 
         product.AddStock(quantity);
@@ -147,7 +148,7 @@ public class ProductService : IService<Product, int>
             throw new ArgumentException("Sale quantity must be greater than 0", nameof(quantity));
 
         var product = await GetAsync(productId, cancellationToken);
-        if (product == null)
+        if (product is null)
             throw RepositoryException.EntityNotFound(nameof(Product), productId);
 
         if (product.StockQuantity < quantity)
@@ -195,7 +196,7 @@ public class ProductService : IService<Product, int>
 /// <summary>
 /// Statistics about product inventory.
 /// </summary>
-public class ProductInventoryStats
+public sealed class ProductInventoryStats
 {
     public int TotalProducts { get; set; }
     public int TotalUnitsInStock { get; set; }

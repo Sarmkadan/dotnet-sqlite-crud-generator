@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,37 +11,38 @@ using DotNet.SQLite.CrudGenerator.Services;
 using DotNet.SQLite.CrudGenerator.Data;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Interfaces;
+using DotNet.SQLite.CrudGenerator.Exceptions;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
-public class GenerationServiceTests : IDisposable
+public sealed class GenerationServiceTests : IDisposable
 {
     private readonly GenerationService _sut; // System Under Test
     private readonly string _testOutputPath;
 
     // Define simple models for testing purposes
-    public class TestProduct
+    public sealed class TestProduct
     {
         public int Id { get; set; }
         public string Name { get; set; }
         public decimal Price { get; set; }
     }
 
-    public class TestUser
+    public sealed class TestUser
     {
         public int Id { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
     }
 
-    public class InvalidModelMissingId
+    public sealed class InvalidModelMissingId
     {
         public string Name { get; set; }
     }
 
-    public class InvalidModelTooFewProperties
+    public sealed class InvalidModelTooFewProperties
     {
         public int Id { get; set; }
     }

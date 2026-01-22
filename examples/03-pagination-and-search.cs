@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace DotNet.SQLite.CrudGenerator.Examples;
 
 /// <summary>Demonstrates pagination and advanced search capabilities</summary>
-public class PaginationSearchExample
+public sealed class PaginationSearchExample
 {
     public static async Task RunAsync()
     {

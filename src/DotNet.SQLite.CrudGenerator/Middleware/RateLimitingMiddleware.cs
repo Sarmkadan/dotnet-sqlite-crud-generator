@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.Middleware;
 /// Uses a sliding window algorithm to track request counts per client.
 /// Prevents abuse by limiting requests to a configured threshold per time window.
 /// </summary>
-public class RateLimitingMiddleware : IMiddleware
+public sealed class RateLimitingMiddleware : IMiddleware
 {
     private readonly int _requestsPerWindow;
     private readonly TimeSpan _timeWindow;
@@ -96,7 +97,7 @@ public interface IClientIdentified
     string GetClientId();
 }
 
-public class RateLimitBucket
+public sealed class RateLimitBucket
 {
     private readonly int _maxRequests;
     private readonly TimeSpan _timeWindow;
@@ -144,13 +145,13 @@ public class RateLimitBucket
     }
 }
 
-public class RateLimitStatistics
+public sealed class RateLimitStatistics
 {
     public int TotalClients { get; set; }
     public Dictionary<string, ClientRateLimitInfo> ClientLimits { get; set; } = new();
 }
 
-public class ClientRateLimitInfo
+public sealed class ClientRateLimitInfo
 {
     public int RequestCount { get; set; }
     public DateTime ResetTime { get; set; }

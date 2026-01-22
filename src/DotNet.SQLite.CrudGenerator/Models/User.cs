@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.Models;
 /// <summary>
 /// Represents a user entity in the system with authentication and profile information.
 /// </summary>
-public class User
+public sealed class User
 {
     [Key]
     [JsonPropertyName("id")]
