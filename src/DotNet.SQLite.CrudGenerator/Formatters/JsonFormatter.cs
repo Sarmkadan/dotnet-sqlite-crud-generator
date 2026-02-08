@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Formatters;
 /// Supports both pretty-printing and compact output.
 /// Handles circular references and custom type conversions.
 /// </summary>
-public class JsonFormatter : IFormatter
+public sealed class JsonFormatter : IFormatter
 {
     private readonly JsonSerializerOptions _options;
 
@@ -38,7 +39,7 @@ public class JsonFormatter : IFormatter
     {
         try
         {
-            if (data == null)
+            if (data is null)
                 return "null";
 
             return JsonSerializer.Serialize(data, _options);
@@ -53,7 +54,7 @@ public class JsonFormatter : IFormatter
     {
         try
         {
-            if (items == null)
+            if (items is null)
                 return "[]";
 
             return JsonSerializer.Serialize(items.ToList(), _options);
@@ -149,13 +150,13 @@ public interface IFormatter
     Task<string> FormatAsync<T>(IEnumerable<T> items) where T : class;
 }
 
-public class FormattingException : Exception
+public sealed class FormattingException : Exception
 {
     public FormattingException(string message) : base(message) { }
     public FormattingException(string message, Exception innerException) : base(message, innerException) { }
 }
 
-public class DateTimeConverter : JsonConverter<DateTime>
+public sealed class DateTimeConverter : JsonConverter<DateTime>
 {
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

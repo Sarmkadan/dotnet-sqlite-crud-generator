@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -18,7 +19,7 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public class NamingConventionBenchmarks
+public sealed class NamingConventionBenchmarks
 {
     private static readonly Type ProductType = typeof(Product);
     private static readonly PropertyInfo NameProperty =

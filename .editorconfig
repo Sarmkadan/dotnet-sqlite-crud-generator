@@ -72,6 +72,12 @@ csharp_style_var_for_built_in_types = false:silent
 csharp_style_var_when_type_is_apparent = true:suggestion
 csharp_style_var_elsewhere = false:silent
 
+# Namespace declarations
+csharp_style_namespace_declarations = file_scoped:suggestion
+
+# Using directives
+csharp_using_directive_placement = outside_namespace:suggestion
+
 # .NET Code Quality Rules
 dotnet_code_quality_unused_parameters = all:warning
 

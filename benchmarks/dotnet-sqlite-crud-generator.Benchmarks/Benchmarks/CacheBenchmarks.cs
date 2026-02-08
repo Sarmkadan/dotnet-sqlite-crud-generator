@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -17,7 +18,7 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public class CacheBenchmarks
+public sealed class CacheBenchmarks
 {
     private MemoryCacheProvider _cache = null!;
     private Product _product = null!;

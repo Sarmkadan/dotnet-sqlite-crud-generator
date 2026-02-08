@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.CLI;
 /// Command for validating model definitions and database schema.
 /// Checks for common issues, naming conventions, and relationship integrity.
 /// </summary>
-public class ValidateCommand : ICommand
+public sealed class ValidateCommand : ICommand
 {
     private bool _strict = false;
     private bool _verbose = false;
@@ -127,9 +128,9 @@ public class ValidateCommand : ICommand
             // Check for nullable reference types
             if (property.PropertyType.IsClass &&
                 property.PropertyType != typeof(string) &&
-                Nullable.GetUnderlyingType(property.PropertyType) == null)
+                Nullable.GetUnderlyingType(property.PropertyType) is null)
             {
-                var hasRequired = property.GetCustomAttribute(typeof(RequiredAttribute)) != null;
+                var hasRequired = property.GetCustomAttribute(typeof(RequiredAttribute)) is not null;
                 if (!hasRequired)
                 {
                     results.Add(new ValidationResult
@@ -156,7 +157,7 @@ public class ValidateCommand : ICommand
         }
 
         // Check for parameterless constructor
-        var hasParameterlessConstructor = modelType.GetConstructor(Type.EmptyTypes) != null;
+        var hasParameterlessConstructor = modelType.GetConstructor(Type.EmptyTypes) is not null;
         if (!hasParameterlessConstructor)
         {
             results.Add(new ValidationResult
@@ -178,7 +179,7 @@ public class ValidateCommand : ICommand
             Console.WriteLine($"\n✗ Errors ({errors.Count}):");
             foreach (var error in errors)
                 Console.WriteLine($"  - {error.ModelName}" +
-                    (error.PropertyName != null ? $".{error.PropertyName}" : "") +
+                    (error.PropertyName is not null ? $".{error.PropertyName}" : "") +
                     $": {error.Message}");
         }
 
@@ -187,7 +188,7 @@ public class ValidateCommand : ICommand
             Console.WriteLine($"\n⚠ Warnings ({warnings.Count}):");
             foreach (var warning in warnings)
                 Console.WriteLine($"  - {warning.ModelName}" +
-                    (warning.PropertyName != null ? $".{warning.PropertyName}" : "") +
+                    (warning.PropertyName is not null ? $".{warning.PropertyName}" : "") +
                     $": {warning.Message}");
         }
     }
@@ -219,7 +220,7 @@ public enum ValidationSeverity
     Info
 }
 
-public class ValidationResult
+public sealed class ValidationResult
 {
     public string ModelName { get; set; } = string.Empty;
     public string? PropertyName { get; set; }
@@ -227,4 +228,4 @@ public class ValidationResult
     public ValidationSeverity Severity { get; set; }
 }
 
-public class RequiredAttribute : Attribute { }
+public sealed class RequiredAttribute : Attribute { }

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
-public class RepositoryIntegrationTests : IDisposable
+public sealed class RepositoryIntegrationTests : IDisposable
 {
     private DatabaseConnection _databaseConnection;
     private ConcreteProductRepository _productRepository;

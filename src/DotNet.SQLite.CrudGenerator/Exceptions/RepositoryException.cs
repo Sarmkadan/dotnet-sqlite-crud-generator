@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace DotNet.SQLite.CrudGenerator.Exceptions;
 /// <summary>
 /// Exception thrown when a repository operation fails.
 /// </summary>
-public class RepositoryException : Exception
+public sealed class RepositoryException : Exception
 {
     public RepositoryException(string message) : base(message) { }
 

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -16,7 +17,7 @@ public abstract class EntityChangedEvent<T> : DomainEvent where T : class
     public string EntityType { get; protected set; } = typeof(T).Name;
 }
 
-public class EntityCreatedEvent<T> : EntityChangedEvent<T> where T : class
+public sealed class EntityCreatedEvent<T> : EntityChangedEvent<T> where T : class
 {
     public EntityCreatedEvent(object aggregateId, T entity)
     {
@@ -26,7 +27,7 @@ public class EntityCreatedEvent<T> : EntityChangedEvent<T> where T : class
     }
 }
 
-public class EntityUpdatedEvent<T> : EntityChangedEvent<T> where T : class
+public sealed class EntityUpdatedEvent<T> : EntityChangedEvent<T> where T : class
 {
     public T? OldEntity { get; set; }
     public Dictionary<string, (object? OldValue, object? NewValue)> Changes { get; set; } = new();
@@ -40,7 +41,7 @@ public class EntityUpdatedEvent<T> : EntityChangedEvent<T> where T : class
     }
 }
 
-public class EntityDeletedEvent<T> : EntityChangedEvent<T> where T : class
+public sealed class EntityDeletedEvent<T> : EntityChangedEvent<T> where T : class
 {
     public EntityDeletedEvent(object aggregateId, T? deletedEntity = null)
     {
@@ -50,7 +51,7 @@ public class EntityDeletedEvent<T> : EntityChangedEvent<T> where T : class
     }
 }
 
-public class BulkEntityChangedEvent<T> : DomainEvent where T : class
+public sealed class BulkEntityChangedEvent<T> : DomainEvent where T : class
 {
     public int Count { get; set; }
     public string Operation { get; set; } = string.Empty;
@@ -69,7 +70,7 @@ public class BulkEntityChangedEvent<T> : DomainEvent where T : class
 /// <summary>
 /// Product-specific domain events.
 /// </summary>
-public class ProductRestockedEvent : DomainEvent
+public sealed class ProductRestockedEvent : DomainEvent
 {
     public int ProductId { get; set; }
     public int QuantityAdded { get; set; }
@@ -85,7 +86,7 @@ public class ProductRestockedEvent : DomainEvent
     }
 }
 
-public class ProductSoldEvent : DomainEvent
+public sealed class ProductSoldEvent : DomainEvent
 {
     public int ProductId { get; set; }
     public int QuantitySold { get; set; }
@@ -103,7 +104,7 @@ public class ProductSoldEvent : DomainEvent
     }
 }
 
-public class LowStockWarningEvent : DomainEvent
+public sealed class LowStockWarningEvent : DomainEvent
 {
     public int ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
@@ -124,7 +125,7 @@ public class LowStockWarningEvent : DomainEvent
 /// <summary>
 /// Order-specific domain events.
 /// </summary>
-public class OrderPlacedEvent : DomainEvent
+public sealed class OrderPlacedEvent : DomainEvent
 {
     public int OrderId { get; set; }
     public int UserId { get; set; }
@@ -142,7 +143,7 @@ public class OrderPlacedEvent : DomainEvent
     }
 }
 
-public class OrderCompletedEvent : DomainEvent
+public sealed class OrderCompletedEvent : DomainEvent
 {
     public int OrderId { get; set; }
     public DateTime CompletedAt { get; set; }

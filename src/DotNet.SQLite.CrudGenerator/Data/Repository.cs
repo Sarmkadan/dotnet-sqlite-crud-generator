@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -39,7 +40,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     public virtual async Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
         var cached = _cache.FirstOrDefault(e => GetId(e)?.Equals(id) == true);
-        if (cached != null) return cached;
+        if (cached is not null) return cached;
 
         await _database.OpenAsync(cancellationToken);
 
@@ -93,7 +94,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
         var count = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
 
-        if (predicate == null) return count;
+        if (predicate is null) return count;
 
         var all = await GetAllAsync(cancellationToken);
         return all.Count(predicate);
@@ -101,7 +102,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         await _database.OpenAsync(cancellationToken);
@@ -147,7 +148,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
     public virtual async Task<bool> UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         await _database.OpenAsync(cancellationToken);
@@ -169,7 +170,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected == 0)
             // Fix: Safe casting of potentially null id value
-            throw RepositoryException.EntityNotFound(typeof(T).Name, id == null ? 0 : Convert.ToInt32(id));
+            throw RepositoryException.EntityNotFound(typeof(T).Name, id is null ? 0 : Convert.ToInt32(id));
 
         var cachedIndex = _cache.FindIndex(e => GetId(e)?.Equals(id) == true);
         if (cachedIndex >= 0)
@@ -212,7 +213,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
     public virtual async Task<bool> ExistsAsync(TKey id, CancellationToken cancellationToken = default)
     {
-        return await GetByIdAsync(id, cancellationToken) != null;
+        return await GetByIdAsync(id, cancellationToken) is not null;
     }
 
     public virtual async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -233,7 +234,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     protected virtual TKey? GetId(T entity)
     {
         var prop = _idPropertyCache.GetOrAdd(typeof(T), static t => t.GetProperty("Id"));
-        return prop != null ? (TKey?)prop.GetValue(entity) : default;
+        return prop is not null ? (TKey?)prop.GetValue(entity) : default;
     }
 
     protected virtual T MapFromReader(SqliteDataReader reader)
@@ -244,7 +245,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             var fieldName = reader.GetName(i);
             var property = typeof(T).GetProperty(fieldName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
-            if (property != null && !reader.IsDBNull(i))
+            if (property is not null && !reader.IsDBNull(i))
             {
                 var value = reader.GetValue(i);
                 if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
