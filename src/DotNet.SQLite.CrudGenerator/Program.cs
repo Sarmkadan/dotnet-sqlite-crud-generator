@@ -142,8 +142,16 @@ class Program
         // Update operation
         Console.WriteLine("  5️⃣  Updating product...");
         createdProduct.AddStock(25);
-        var updatedProduct = await productService.UpdateAsync(createdProduct);
-        Console.WriteLine($"     ✓ Product updated: Stock now {updatedProduct.StockQuantity} units");
+        var updateSuccessful = await productService.UpdateAsync(createdProduct);
+        if (updateSuccessful)
+        {
+            var retrievedUpdatedProduct = await productService.GetAsync(createdProduct.Id);
+            Console.WriteLine($"     ✓ Product updated: Stock now {retrievedUpdatedProduct?.StockQuantity} units");
+        }
+        else
+        {
+            Console.WriteLine("     ❌ Product update failed.");
+        }
 
         // Get inventory stats
         Console.WriteLine("  6️⃣  Calculating inventory stats...");
