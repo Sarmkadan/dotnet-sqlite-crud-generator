@@ -59,7 +59,7 @@ public class ProductService : IService<Product, int>
         return await _productRepository.AddAsync(entity, cancellationToken);
     }
 
-    public async Task<Product> UpdateAsync(Product entity, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateAsync(Product entity, CancellationToken cancellationToken = default)
     {
         if (entity == null)
             throw new ArgumentNullException(nameof(entity));
@@ -130,7 +130,12 @@ public class ProductService : IService<Product, int>
             throw RepositoryException.EntityNotFound(nameof(Product), productId);
 
         product.AddStock(quantity);
-        return await UpdateAsync(product, cancellationToken);
+        var updated = await UpdateAsync(product, cancellationToken);
+        if (!updated)
+        {
+            throw new InvalidOperationException($"Failed to restock product with ID {productId}");
+        }
+        return (await GetAsync(productId, cancellationToken))!;
     }
 
     /// <summary>
@@ -149,7 +154,12 @@ public class ProductService : IService<Product, int>
             throw new ValidationException($"Insufficient stock. Available: {product.StockQuantity}, Requested: {quantity}");
 
         product.RemoveStock(quantity);
-        return await UpdateAsync(product, cancellationToken);
+        var updated = await UpdateAsync(product, cancellationToken);
+        if (!updated)
+        {
+            throw new InvalidOperationException($"Failed to sell product with ID {productId}");
+        }
+        return (await GetAsync(productId, cancellationToken))!;
     }
 
     /// <summary>
