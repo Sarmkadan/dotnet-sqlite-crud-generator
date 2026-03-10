@@ -23,7 +23,7 @@ public sealed class DatabaseSettings
     /// </summary>
     public string ConnectionString
     {
-        get => $"Data Source={FilePath};Version=3;";
+        get => $"Data Source=\"{FilePath}\";Version=3;"; // Hotfix: Quote FilePath to handle spaces and special characters.
         set { }
     }
 
