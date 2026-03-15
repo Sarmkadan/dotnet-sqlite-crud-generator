@@ -1,6 +1,7 @@
 [![Build](https://github.com/sarmkadan/dotnet-sqlite-crud-generator/actions/workflows/build.yml/badge.svg)](https://github.com/sarmkadan/dotnet-sqlite-crud-generator/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple.svg)](https://dotnet.microsoft.com/)
+[![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://www.docker.com/)
 
 # SQLite CRUD Generator
 
@@ -36,6 +37,12 @@ A comprehensive .NET 10 source generator and CRUD framework for SQLite databases
 - **Unit of Work Pattern**: Transaction support with coordinated multi-repository access
 - **Service Layer Architecture**: Well-structured service classes with business logic separation
 - **Dependency Injection**: Complete Microsoft.Extensions.DependencyInjection setup with fluent configuration
+
+### v2.0 New Features 🚀
+- **Async Bulk Import/Export**: High-performance bulk operations with streaming and progress reporting
+- **Streaming Support**: Process large datasets efficiently without memory overload
+- **Progress Reporting**: Real-time progress tracking for long-running bulk operations
+- **Enhanced CLI**: New commands and improved user experience
 
 ### Advanced Features
 - **Source Generation**: Generate boilerplate code at compile-time
@@ -252,6 +259,40 @@ make test
 # Clean build artifacts
 make clean
 ```
+
+## Quick Start with Docker 🐳
+
+Get up and running quickly with our Docker images:
+
+```bash
+# Pull the latest image
+docker pull sarmkadan/dotnet-sqlite-crud-generator:latest
+
+# Run the container
+docker run -it sarmkadan/dotnet-sqlite-crud-generator
+
+# Run with volume mount for persistence
+docker run -v /local/data:/app/data sarmkadan/dotnet-sqlite-crud-generator
+```
+
+### Quick Start with Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  crud-generator:
+    image: sarmkadan/dotnet-sqlite-crud-generator:latest
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8080:8080"
+```
+
+### Environment Variables
+
+- `DATABASE_PATH`: Path to SQLite database file
+- `CONNECTION_TIMEOUT`: Database connection timeout in seconds
+- `MAX_POOL_SIZE`: Maximum connection pool size
 
 ## Quick Start
 
