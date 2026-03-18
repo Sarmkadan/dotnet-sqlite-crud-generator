@@ -9,7 +9,7 @@
     <RootNamespace>DotNet.SQLite.CrudGenerator</RootNamespace>
     <AssemblyName>DotNet.SQLite.CrudGenerator</AssemblyName>
     <PackageId>Zaiets.dotnet.sqlite.crud.generator</PackageId>
-    <Version>1.0.0</Version>
+    <Version>2.0.0</Version>
     <Authors>Vladyslav Zaiets</Authors>
     <Description>Source generator that creates CRUD operations, migrations, and gRPC services from C# models</Description>
     <PackageTags>dotnet sqlite crud source-generator grpc migrations orm</PackageTags>
