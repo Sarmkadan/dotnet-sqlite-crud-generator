@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+#nullable enable
+
 using System.Collections.Concurrent;
 
 namespace DotNet.SQLite.CrudGenerator.BackgroundWorkers;
