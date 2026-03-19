@@ -3,6 +3,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+#nullable enable
+
 namespace DotNet.SQLite.CrudGenerator.Attributes;
 
 /// <summary>
