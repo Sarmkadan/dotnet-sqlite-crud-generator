@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.CLI;
 /// Supports both up (apply) and down (rollback) operations.
 /// Tracks migration history and validates migration files.
 /// </summary>
-public class MigrateCommand : ICommand
+public sealed class MigrateCommand : ICommand
 {
     private string _direction = "up";
     private string _migrationsPath = "./Migrations";

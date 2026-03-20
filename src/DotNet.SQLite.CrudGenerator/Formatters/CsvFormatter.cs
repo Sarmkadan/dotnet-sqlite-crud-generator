@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Formatters;
 /// Handles escaping, quoting, and custom delimiters.
 /// Supports both single objects (as single row) and collections.
 /// </summary>
-public class CsvFormatter : IFormatter
+public sealed class CsvFormatter : IFormatter
 {
     private readonly string _delimiter;
     private readonly bool _includeHeaders;
@@ -43,7 +44,7 @@ public class CsvFormatter : IFormatter
     {
         try
         {
-            if (items == null || !items.Any())
+            if (items is null || !items.Any())
                 return string.Empty;
 
             var itemList = items.ToList();
@@ -117,7 +118,7 @@ public class CsvFormatter : IFormatter
             {
                 var values = ParseLine(lines[i]);
                 var item = MapToObject<T>(headers, values);
-                if (item != null)
+                if (item is not null)
                     items.Add(item);
             }
 
@@ -182,7 +183,7 @@ public class CsvFormatter : IFormatter
     private T? MapToObject<T>(List<string> headers, List<string> values) where T : class
     {
         var obj = Activator.CreateInstance<T>();
-        if (obj == null)
+        if (obj is null)
             return null;
 
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -190,7 +191,7 @@ public class CsvFormatter : IFormatter
         for (int i = 0; i < headers.Count && i < values.Count; i++)
         {
             var property = properties.FirstOrDefault(p => p.Name.Equals(headers[i], StringComparison.OrdinalIgnoreCase));
-            if (property != null && property.CanWrite)
+            if (property is not null && property.CanWrite)
             {
                 try
                 {

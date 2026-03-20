@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ namespace DotNet.SQLite.CrudGenerator.BackgroundWorkers;
 /// Supports multiple worker threads, retry logic, and error handling.
 /// Provides graceful shutdown with task completion tracking.
 /// </summary>
-public class BackgroundWorkerService
+public sealed class BackgroundWorkerService
 {
     private readonly BackgroundTaskQueue _taskQueue;
     private readonly int _workerCount;
@@ -45,7 +46,7 @@ public class BackgroundWorkerService
 
     public async Task StopAsync(TimeSpan? timeout = null)
     {
-        if (!_isRunning || _cancellationTokenSource == null || _workerTasks == null)
+        if (!_isRunning || _cancellationTokenSource is null || _workerTasks is null)
             return;
 
         _cancellationTokenSource.Cancel();
@@ -78,7 +79,7 @@ public class BackgroundWorkerService
             try
             {
                 var task = await _taskQueue.DequeueAsync(cancellationToken);
-                if (task == null)
+                if (task is null)
                     continue;
 
                 await ExecuteTaskAsync(task, cancellationToken);
@@ -137,7 +138,7 @@ public class BackgroundWorkerService
 /// <summary>
 /// Helper class for scheduling periodic background tasks.
 /// </summary>
-public class ScheduledTaskRunner
+public sealed class ScheduledTaskRunner
 {
     private readonly BackgroundTaskQueue _taskQueue;
     private CancellationTokenSource? _cancellationTokenSource;

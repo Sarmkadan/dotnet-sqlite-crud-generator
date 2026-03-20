@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.Models;
 /// <summary>
 /// Represents a product entity with inventory and pricing information.
 /// </summary>
-public class Product
+public sealed class Product
 {
     [Key]
     [JsonPropertyName("id")]

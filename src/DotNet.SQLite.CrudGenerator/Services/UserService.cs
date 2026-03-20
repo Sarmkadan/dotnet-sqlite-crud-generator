@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Services;
 /// <summary>
 /// Service for managing user operations with validation and business logic.
 /// </summary>
-public class UserService : IService<User, int>
+public sealed class UserService : IService<User, int>
 {
     private readonly IRepository<User, int> _userRepository;
 
@@ -37,14 +38,14 @@ public class UserService : IService<User, int>
 
     public async Task<User> CreateAsync(User entity, CancellationToken cancellationToken = default)
     {
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         if (!Validate(entity))
             throw new ValidationException("User validation failed. Check required fields.");
 
         var existingUser = await ((UserRepository)_userRepository).GetByEmailAsync(entity.Email, cancellationToken);
-        if (existingUser != null)
+        if (existingUser is not null)
             throw RepositoryException.DuplicateKey(nameof(User), nameof(User.Email), entity.Email);
 
         entity.CreatedAt = DateTime.UtcNow;
@@ -55,7 +56,7 @@ public class UserService : IService<User, int>
 
     public async Task<bool> UpdateAsync(User entity, CancellationToken cancellationToken = default)
     {
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         if (entity.Id <= 0)
@@ -65,7 +66,7 @@ public class UserService : IService<User, int>
             throw new ValidationException("User validation failed. Check required fields.");
 
         var existing = await GetAsync(entity.Id, cancellationToken);
-        if (existing == null)
+        if (existing is null)
             throw RepositoryException.EntityNotFound(nameof(User), entity.Id);
 
         entity.UpdatedAt = DateTime.UtcNow;
@@ -78,7 +79,7 @@ public class UserService : IService<User, int>
             throw new ArgumentException("User ID must be greater than 0", nameof(id));
 
         var user = await GetAsync(id, cancellationToken);
-        if (user == null)
+        if (user is null)
             throw RepositoryException.EntityNotFound(nameof(User), id);
 
         return await _userRepository.DeleteAsync(id, cancellationToken);
@@ -86,7 +87,7 @@ public class UserService : IService<User, int>
 
     public bool Validate(User entity)
     {
-        if (entity == null) return false;
+        if (entity is null) return false;
         return entity.Validate();
     }
 
@@ -104,7 +105,7 @@ public class UserService : IService<User, int>
             return null;
 
         var user = await ((UserRepository)_userRepository).GetByEmailAsync(email, cancellationToken);
-        if (user == null || user.PasswordHash != passwordHash || !user.IsActive)
+        if (user is null || user.PasswordHash != passwordHash || !user.IsActive)
             return null;
 
         user.RecordLogin();
@@ -118,7 +119,7 @@ public class UserService : IService<User, int>
     public async Task<bool> ResetPasswordAsync(int userId, string newPasswordHash, CancellationToken cancellationToken = default)
     {
         var user = await GetAsync(userId, cancellationToken);
-        if (user == null)
+        if (user is null)
             return false;
 
         user.PasswordHash = newPasswordHash;
@@ -132,7 +133,7 @@ public class UserService : IService<User, int>
     public async Task<bool> DeactivateUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         var user = await GetAsync(userId, cancellationToken);
-        if (user == null)
+        if (user is null)
             return false;
 
         user.Deactivate();
@@ -146,7 +147,7 @@ public class UserService : IService<User, int>
     public async Task<bool> VerifyEmailAsync(int userId, CancellationToken cancellationToken = default)
     {
         var user = await GetAsync(userId, cancellationToken);
-        if (user == null)
+        if (user is null)
             return false;
 
         user.EmailVerified = true;

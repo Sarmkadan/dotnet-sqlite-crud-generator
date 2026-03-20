@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace DotNet.SQLite.CrudGenerator.Examples;
 
 /// <summary>Demonstrates basic CRUD operations with UserService</summary>
-public class BasicCrudExample
+public sealed class BasicCrudExample
 {
     public static async Task RunAsync()
     {
@@ -66,7 +67,7 @@ public class BasicCrudExample
                 // READ: Get single user by ID
                 Console.WriteLine("2️⃣  READ - Retrieving user by ID...");
                 var retrievedUser = await userService.GetByIdAsync(createdUser1.Id);
-                if (retrievedUser != null)
+                if (retrievedUser is not null)
                 {
                     Console.WriteLine($"   ✓ Retrieved: {retrievedUser.Username}");
                     Console.WriteLine($"     Email: {retrievedUser.Email}");
@@ -123,7 +124,7 @@ public class BasicCrudExample
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Error: {ex.Message}");
-            if (ex.InnerException != null)
+            if (ex.InnerException is not null)
                 Console.WriteLine($"   Details: {ex.InnerException.Message}");
         }
 

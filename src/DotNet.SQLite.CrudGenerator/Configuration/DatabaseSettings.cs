@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -8,7 +9,7 @@ namespace DotNet.SQLite.CrudGenerator.Configuration;
 /// <summary>
 /// Database configuration settings.
 /// </summary>
-public class DatabaseSettings
+public sealed class DatabaseSettings
 {
     public const string SectionName = "Database";
 
