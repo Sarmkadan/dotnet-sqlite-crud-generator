@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Formatters;
 /// Formats data to XML with customizable serialization options.
 /// Supports both single objects and collections with proper namespace handling.
 /// </summary>
-public class XmlFormatter : IFormatter
+public sealed class XmlFormatter : IFormatter
 {
     private readonly XmlWriterSettings _writerSettings;
     private readonly XmlSerializerNamespaces _namespaces;
@@ -37,7 +38,7 @@ public class XmlFormatter : IFormatter
     {
         try
         {
-            if (data == null)
+            if (data is null)
                 return "<null />";
 
             var serializer = new XmlSerializer(typeof(T));
@@ -126,7 +127,7 @@ public class XmlFormatter : IFormatter
             var items = new List<T>();
             var serializer = new XmlSerializer(typeof(T));
 
-            if (doc.DocumentElement?.ChildNodes != null)
+            if (doc.DocumentElement?.ChildNodes is not null)
             {
                 foreach (XmlNode node in doc.DocumentElement.ChildNodes)
                 {
@@ -135,7 +136,7 @@ public class XmlFormatter : IFormatter
                         using (var reader = new StringReader(element.OuterXml))
                         {
                             var item = (T?)serializer.Deserialize(reader);
-                            if (item != null)
+                            if (item is not null)
                                 items.Add(item);
                         }
                     }
@@ -172,7 +173,7 @@ public class XmlFormatter : IFormatter
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var property = properties.FirstOrDefault(p => p.Name == attributeName);
 
-        if (property != null && property.CanWrite)
+        if (property is not null && property.CanWrite)
         {
             property.SetValue(data, attributeValue);
         }

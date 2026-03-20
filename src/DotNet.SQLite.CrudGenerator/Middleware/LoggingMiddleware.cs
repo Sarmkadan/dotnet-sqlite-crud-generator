@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.Middleware;
 /// Middleware for logging operation execution time, results, and any exceptions.
 /// Provides detailed insights into application performance and operation flow.
 /// </summary>
-public class LoggingMiddleware : IMiddleware
+public sealed class LoggingMiddleware : IMiddleware
 {
     private readonly bool _enableDetailedLogging;
 
@@ -54,7 +55,7 @@ public class LoggingMiddleware : IMiddleware
     private void LogRequest<T>(string operationId, DateTime timestamp, string requestType, T request)
     {
         var log = $"[{timestamp:yyyy-MM-dd HH:mm:ss.fff}] [OP:{operationId}] Request: {requestType}";
-        if (_enableDetailedLogging && request != null)
+        if (_enableDetailedLogging && request is not null)
             log += Environment.NewLine + $"  Data: {System.Text.Json.JsonSerializer.Serialize(request)}";
 
         Console.WriteLine(log);
@@ -89,7 +90,7 @@ public delegate Task<MiddlewareResult> MiddlewareDelegate<TRequest, TResponse>(T
     where TRequest : class
     where TResponse : class;
 
-public class MiddlewareResult
+public sealed class MiddlewareResult
 {
     public bool Success { get; set; }
     public string? Message { get; set; }

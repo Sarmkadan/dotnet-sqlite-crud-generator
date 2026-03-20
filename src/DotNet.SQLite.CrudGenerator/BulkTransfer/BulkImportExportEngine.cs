@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -64,7 +65,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (source == null) throw new ArgumentNullException(nameof(source));
+        if (source is null) throw new ArgumentNullException(nameof(source));
 
         using var reader = new StreamReader(
             source,
@@ -104,7 +105,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (entities == null) throw new ArgumentNullException(nameof(entities));
+        if (entities is null) throw new ArgumentNullException(nameof(entities));
 
         var result = new BulkImportResult { StartedAt = DateTime.UtcNow };
         var sessionId = Guid.NewGuid();
@@ -143,7 +144,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (source == null) throw new ArgumentNullException(nameof(source));
+        if (source is null) throw new ArgumentNullException(nameof(source));
 
         var result = new BulkImportResult { StartedAt = DateTime.UtcNow };
         var sessionId = Guid.NewGuid();
@@ -187,7 +188,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (destination == null) throw new ArgumentNullException(nameof(destination));
+        if (destination is null) throw new ArgumentNullException(nameof(destination));
 
         var result = new BulkExportResult { StartedAt = DateTime.UtcNow, Format = format };
 
@@ -211,7 +212,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
             result.BytesWritten = bytes.Length;
             result.IsSuccess = true;
 
-            if (_options.EnableProgressReporting && progress != null)
+            if (_options.EnableProgressReporting && progress is not null)
             {
                 var snap = BuildProgress(
                     result.TotalExported, result.TotalExported,
@@ -266,8 +267,8 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (predicate == null) throw new ArgumentNullException(nameof(predicate));
-        if (destination == null) throw new ArgumentNullException(nameof(destination));
+        if (predicate is null) throw new ArgumentNullException(nameof(predicate));
+        if (destination is null) throw new ArgumentNullException(nameof(destination));
 
         var result = new BulkExportResult { StartedAt = DateTime.UtcNow, Format = format };
 
@@ -291,7 +292,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
             result.BytesWritten = bytes.Length;
             result.IsSuccess = true;
 
-            if (_options.EnableProgressReporting && progress != null)
+            if (_options.EnableProgressReporting && progress is not null)
             {
                 var snap = BuildProgress(
                     result.TotalExported, result.TotalExported,
@@ -344,7 +345,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
 
         var allEntities = (IEnumerable<T>)await _repository.GetAllAsync(cancellationToken);
 
-        if (transform != null)
+        if (transform is not null)
             allEntities = allEntities.Select(transform).OfType<T>().ToList();
 
         var exportResult = new BulkExportResult { StartedAt = DateTime.UtcNow, Format = destinationFormat };
@@ -422,7 +423,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
             Console.Error.WriteLine($"[BulkTransfer] Batch {batchIndex + 1} failed: {ex.Message}");
         }
 
-        if (!_options.EnableProgressReporting || progress == null)
+        if (!_options.EnableProgressReporting || progress is null)
             return;
 
         var processed = result.Succeeded + result.Failed;

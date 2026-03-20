@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
-public class CachingIntegrationTests : IDisposable
+public sealed class CachingIntegrationTests : IDisposable
 {
     private MemoryCacheProvider _cacheProvider;
     private CacheConfiguration _cacheConfiguration;

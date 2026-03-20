@@ -4,6 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>1591;1574;$(NoWarn)</NoWarn>
     <Authors>Vladyslav Zaiets</Authors>
     <PackageProjectUrl>https://github.com/sarmkadan/dotnet-sqlite-crud-generator</PackageProjectUrl>
   </PropertyGroup>

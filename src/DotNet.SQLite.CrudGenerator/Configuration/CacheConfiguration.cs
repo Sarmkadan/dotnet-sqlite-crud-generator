@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.Configuration;
 /// Configuration for cache provider setup and options.
 /// Allows configuring TTL, size limits, and cleanup policies.
 /// </summary>
-public class CacheConfiguration
+public sealed class CacheConfiguration
 {
     public bool Enabled { get; set; } = true;
     public long MaxSizeBytes { get; set; } = 10_000_000; // 10 MB
@@ -28,7 +29,7 @@ public class CacheConfiguration
 /// <summary>
 /// Configuration for event bus setup.
 /// </summary>
-public class EventBusConfiguration
+public sealed class EventBusConfiguration
 {
     public bool Enabled { get; set; } = true;
     public int MaxEventHistory { get; set; } = 1000;
@@ -39,7 +40,7 @@ public class EventBusConfiguration
 /// <summary>
 /// Configuration for HTTP client factory.
 /// </summary>
-public class HttpClientConfiguration
+public sealed class HttpClientConfiguration
 {
     public int ConnectionLimit { get; set; } = 10;
     public TimeSpan DefaultTimeout { get; set; } = TimeSpan.FromSeconds(30);
@@ -50,7 +51,7 @@ public class HttpClientConfiguration
 /// <summary>
 /// Configuration for webhook handler.
 /// </summary>
-public class WebhookConfiguration
+public sealed class WebhookConfiguration
 {
     public bool Enabled { get; set; } = true;
     public string? SigningSecret { get; set; }
@@ -62,7 +63,7 @@ public class WebhookConfiguration
 /// <summary>
 /// Configuration for background workers.
 /// </summary>
-public class BackgroundWorkerConfiguration
+public sealed class BackgroundWorkerConfiguration
 {
     public bool Enabled { get; set; } = true;
     public int WorkerCount { get; set; } = 2;
@@ -74,7 +75,7 @@ public class BackgroundWorkerConfiguration
 /// <summary>
 /// Composite configuration for all features.
 /// </summary>
-public class ApplicationConfiguration
+public sealed class ApplicationConfiguration
 {
     public DatabaseSettings Database { get; set; } = new();
     public CacheConfiguration Cache { get; set; } = new();
@@ -110,7 +111,7 @@ public class ApplicationConfiguration
 
     public void Validate()
     {
-        if (Database == null)
+        if (Database is null)
             throw new InvalidOperationException("Database configuration is required");
 
         if (string.IsNullOrEmpty(Database.ConnectionString))

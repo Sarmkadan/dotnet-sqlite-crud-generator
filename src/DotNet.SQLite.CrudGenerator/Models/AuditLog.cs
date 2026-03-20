@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.Models;
 /// <summary>
 /// Represents an audit log entry for tracking entity changes.
 /// </summary>
-public class AuditLog
+public sealed class AuditLog
 {
     [Key]
     [JsonPropertyName("id")]

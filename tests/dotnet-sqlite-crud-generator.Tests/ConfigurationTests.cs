@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -10,7 +11,7 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
-public class ConfigurationTests
+public sealed class ConfigurationTests
 {
     [Fact]
     public void DatabaseSettings_WithValidConnectionString_IsValid()

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -12,7 +13,7 @@ namespace DotNet.SQLite.CrudGenerator.CLI;
 /// Command for listing available models and their properties.
 /// Displays naming conventions and relationship information.
 /// </summary>
-public class ListCommand : ICommand
+public sealed class ListCommand : ICommand
 {
     private bool _verbose = false;
     private string? _filter = null;
@@ -30,7 +31,7 @@ public class ListCommand : ICommand
 
             var models = LoadModels();
 
-            if (_filter != null)
+            if (_filter is not null)
                 models = models.Where(m => m.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase)).ToList();
 
             if (!models.Any())

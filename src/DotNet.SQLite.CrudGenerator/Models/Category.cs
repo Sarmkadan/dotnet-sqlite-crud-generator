@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.Models;
 /// <summary>
 /// Represents a product category with hierarchical support.
 /// </summary>
-public class Category
+public sealed class Category
 {
     [Key]
     [JsonPropertyName("id")]
