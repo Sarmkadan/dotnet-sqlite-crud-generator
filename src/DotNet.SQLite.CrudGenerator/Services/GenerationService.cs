@@ -6,6 +6,7 @@
 
 using System.Reflection;
 using System.Text;
+using DotNet.SQLite.CrudGenerator.Attributes;
 using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Models;
 
@@ -142,36 +143,67 @@ public sealed class GenerationService
     {
         var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        if (!properties.Any(p => p.Name == "Id"))
-            throw GenerationException.InvalidModel(entityType.Name, "Entity must have an 'Id' property");
+        var hasCompositeKey = properties.Any(p =>
+            p.GetCustomAttribute<CompositeKeyAttribute>() is not null);
+
+        if (!hasCompositeKey && !properties.Any(p => p.Name == "Id"))
+            throw new GenerationException($"Entity must have an 'Id' property. (Parameter '{entityType.Name}')");
 
         if (properties.Length < 2)
-            throw GenerationException.InvalidModel(entityType.Name, "Entity must have at least 2 properties");
+            throw new GenerationException($"Entity must have at least 2 properties. (Parameter '{entityType.Name}')");
     }
 
     private List<string> GenerateColumnDefinitions(PropertyInfo[] properties)
     {
         var columns = new List<string>();
 
+        // Id column must come first as the primary key.
+        var idProp = Array.Find(properties, p => p.Name == "Id");
+        if (idProp is not null)
+            columns.Add("Id INTEGER PRIMARY KEY AUTOINCREMENT");
+
         foreach (var prop in properties)
         {
+            if (prop.Name == "Id") continue;
+
+            var notNull = IsNotNullable(prop) ? " NOT NULL" : "";
+
             var columnDef = prop.Name switch
             {
-                "Id" => "Id INTEGER PRIMARY KEY AUTOINCREMENT",
                 "CreatedAt" or "UpdatedAt" => $"{prop.Name} TEXT NOT NULL",
-                _ when prop.PropertyType == typeof(string) => $"{prop.Name} TEXT",
-                _ when prop.PropertyType == typeof(int) => $"{prop.Name} INTEGER",
-                _ when prop.PropertyType == typeof(decimal) => $"{prop.Name} REAL",
-                _ when prop.PropertyType == typeof(bool) => $"{prop.Name} INTEGER",
-                _ when prop.PropertyType == typeof(DateTime) => $"{prop.Name} TEXT",
-                _ => $"{prop.Name} TEXT"
+                _ when prop.PropertyType == typeof(string) => $"{prop.Name} TEXT{notNull}",
+                _ when prop.PropertyType == typeof(int) => $"{prop.Name} INTEGER{notNull}",
+                _ when prop.PropertyType == typeof(decimal) => $"{prop.Name} REAL{notNull}",
+                _ when prop.PropertyType == typeof(bool) => $"{prop.Name} INTEGER{notNull}",
+                _ when prop.PropertyType == typeof(DateTime) => $"{prop.Name} TEXT{notNull}",
+                _ when Nullable.GetUnderlyingType(prop.PropertyType) is not null => $"{prop.Name} TEXT",
+                _ => $"{prop.Name} TEXT{notNull}"
             };
 
-            if (prop.Name == "Id") continue;
             columns.Add(columnDef);
         }
 
         return columns;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when a property cannot hold a null value.
+    /// Value types are always non-nullable; reference types are non-nullable when they carry
+    /// a <see cref="System.ComponentModel.DataAnnotations.RequiredAttribute"/>.
+    /// Nullable value types (<c>int?</c>, <c>decimal?</c>, etc.) are treated as nullable.
+    /// </summary>
+    private static bool IsNotNullable(PropertyInfo prop)
+    {
+        // Nullable<T> value types (int?, decimal?, …) are explicitly nullable.
+        if (Nullable.GetUnderlyingType(prop.PropertyType) is not null)
+            return false;
+
+        // Non-nullable value types are never null.
+        if (prop.PropertyType.IsValueType)
+            return true;
+
+        // Reference types are non-nullable when decorated with [Required].
+        return prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RequiredAttribute>() is not null;
     }
 
     private string MapCSharpToProtoType(Type type) => type switch
