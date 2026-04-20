@@ -58,8 +58,8 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    - name: Install StyleCop analyzer
-      run: dotnet add package StyleCopAnalyzers --package-directory src/DotNet.SQLite.CrudGenerator/
+    - name: Restore dependencies
+      run: dotnet restore
 
     - name: Run code analysis
       run: dotnet build --no-restore /p:TreatWarningsAsErrors=true
