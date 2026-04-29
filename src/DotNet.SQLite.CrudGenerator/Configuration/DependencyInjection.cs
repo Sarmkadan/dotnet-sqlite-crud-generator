@@ -87,6 +87,9 @@ public static class DependencyInjection
         services.AddScoped<ProductService>();
         services.AddScoped<OrderService>();
         services.AddScoped<GenerationService>();
+        services.AddScoped<MigrationDiffService>();
+        services.AddScoped<QueryBuilderGenerationService>();
+        services.AddScoped<AuditTrailService>();
 
         // Register factory methods
         services.AddScoped(provider =>
