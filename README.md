@@ -244,6 +244,38 @@ var isHealthy = await apiClient.HealthCheckAsync();
 Console.WriteLine(isHealthy ? "API is healthy" : "API is unavailable");
 ```
 
+## HttpClientFactory
+
+The `HttpClientFactory` class provides a centralized mechanism for creating and managing `HttpClient` instances, implementing a connection pool pattern to optimize resource usage. It supports custom configuration via `HttpClientOptions` and works seamlessly with the `HttpRequestExecutor` to simplify HTTP requests with built-in retry policies.
+
+Here's an example of using the `HttpClientFactory` and `HttpRequestExecutor`:
+
+```csharp
+// Create the factory
+var factory = new HttpClientFactory(connectionLimit: 5);
+
+// Define client options
+var options = new HttpClientOptions
+{
+    BaseAddress = "https://api.example.com/",
+    Timeout = TimeSpan.FromSeconds(10)
+};
+
+// Get or create a named client
+var httpClient = factory.GetOrCreateClient("api-client", options);
+
+// Create an executor for the client
+var executor = new HttpRequestExecutor(httpClient, maxRetries: 2);
+
+// Perform an asynchronous JSON request
+var data = await executor.GetJsonAsync<Dictionary<string, string>>("/status");
+
+// Clean up resources when done
+factory.RemoveClient("api-client");
+factory.Dispose();
+```
+
+
 Here's a realistic example of using `EntityChangedEvent` with a Product entity:
 
 ```csharp
