@@ -8,15 +8,19 @@ obj/
 # IDE
 .vs/
 .vscode/
+.idea/
+*.user
+*.suo
 *.sln.user
 *.csproj.user
-.idea/
+*.DotSettings.user
 *.swp
 *.swo
 *~
 
 # NuGet
 *.nupkg
+packages/
 .nuget/
 
 # Test Results
@@ -34,3 +38,4 @@ Thumbs.db
 # User-specific
 .env
 *.log
+appsettings.Development.json
