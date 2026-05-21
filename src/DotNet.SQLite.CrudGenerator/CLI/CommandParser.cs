@@ -49,7 +49,13 @@ public sealed class CommandParser
             var commandName = args[0];
             if (!_commands.TryGetValue(commandName, out var commandType))
             {
-                Console.Error.WriteLine($"Unknown command: {commandName}");
+                Console.Error.WriteLine($"Unknown command: '{commandName}'");
+
+                // Suggest the closest matching command if any
+                var suggestion = FindClosestCommand(commandName);
+                if (suggestion is not null)
+                    Console.Error.WriteLine($"Did you mean '{suggestion}'?");
+
                 PrintHelp();
                 return 1;
             }
@@ -68,6 +74,52 @@ public sealed class CommandParser
             Console.Error.WriteLine($"Fatal Error: {ex.Message}");
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Finds the closest matching registered command using Levenshtein distance.
+    /// Returns null if no command is within a reasonable edit distance (3).
+    /// </summary>
+    private string? FindClosestCommand(string input)
+    {
+        const int maxDistance = 3;
+        string? bestMatch = null;
+        var bestDist = int.MaxValue;
+
+        foreach (var cmd in _commands.Keys)
+        {
+            var dist = LevenshteinDistance(input.ToLowerInvariant(), cmd.ToLowerInvariant());
+            if (dist < bestDist && dist <= maxDistance)
+            {
+                bestDist = dist;
+                bestMatch = cmd;
+            }
+        }
+
+        return bestMatch;
+    }
+
+    private static int LevenshteinDistance(string a, string b)
+    {
+        var n = a.Length;
+        var m = b.Length;
+        var d = new int[n + 1, m + 1];
+
+        for (var i = 0; i <= n; i++) d[i, 0] = i;
+        for (var j = 0; j <= m; j++) d[0, j] = j;
+
+        for (var i = 1; i <= n; i++)
+        {
+            for (var j = 1; j <= m; j++)
+            {
+                var cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                d[i, j] = Math.Min(
+                    Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                    d[i - 1, j - 1] + cost);
+            }
+        }
+
+        return d[n, m];
     }
 
     private void PrintHelp()
