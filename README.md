@@ -374,6 +374,12 @@ await userService.DeletePermanentlyAsync(userId);
 
 ## Usage Examples
 
+For comprehensive, runnable examples, check the `/examples` directory:
+
+- [Basic Usage](/examples/BasicUsage.cs) - Minimal setup and first call.
+- [Advanced Usage](/examples/AdvancedUsage.cs) - Configuration, custom options, and error handling.
+- [Integration Example](/examples/IntegrationExample.cs) - Wiring into ASP.NET dependency injection.
+
 ### Example 1: User Management
 
 ```csharp
