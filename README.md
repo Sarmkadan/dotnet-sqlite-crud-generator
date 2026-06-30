@@ -238,7 +238,7 @@ dotnet run --project src/DotNet.SQLite.CrudGenerator/DotNet.SQLite.CrudGenerator
 docker build -t dotnet-crud-generator .
 
 # Run in container
-docker run -it dotnet-crud-generator
+docker run -it -p 8080:8080 dotnet-crud-generator
 ```
 
 ### Method 3: Docker Compose
@@ -279,10 +279,10 @@ Get up and running quickly with our Docker images:
 docker pull sarmkadan/dotnet-sqlite-crud-generator:latest
 
 # Run the container
-docker run -it sarmkadan/dotnet-sqlite-crud-generator
+docker run -it -p 8080:8080 sarmkadan/dotnet-sqlite-crud-generator
 
 # Run with volume mount for persistence
-docker run -v /local/data:/app/data sarmkadan/dotnet-sqlite-crud-generator
+docker run -v /local/data:/app/data -p 8080:8080 sarmkadan/dotnet-sqlite-crud-generator
 ```
 
 ### Quick Start with Docker Compose
@@ -296,6 +296,7 @@ services:
       - ./data:/app/data
     ports:
       - "8080:8080"
+```
 ```
 
 ### Environment Variables
