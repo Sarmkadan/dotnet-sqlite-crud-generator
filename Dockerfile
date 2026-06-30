@@ -51,7 +51,7 @@ RUN dotnet publish "DotNet.SQLite.CrudGenerator.csproj" \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
 
 
-# Install native dependencies for SQLite and gRPC
+# Install native dependencies for SQLite, gRPC and curl for healthchecks
 RUN apk add --no-cache \
     icu-libs \
     krb5-libs \
@@ -60,6 +60,7 @@ RUN apk add --no-cache \
     libssl3 \
     libstdc++ \
     zlib \
+    curl \
     && apk --update add --no-cache icu-data-full
 
 
@@ -84,7 +85,7 @@ RUN chown -R appuser:appuser /app && \
 # Switch to non-root user
 USER appuser
 
-ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_URLS=http://+:8080
 ENV DATABASE_PATH=/data/app.db
 ENV LOG_LEVEL=Information
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
@@ -92,8 +93,8 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/health/ready || exit 1
+    CMD curl -f http://localhost:8080/health/ready || exit 1
 
-EXPOSE 5000
+EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "DotNet.SQLite.CrudGenerator.dll"]
