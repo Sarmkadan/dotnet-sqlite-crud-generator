@@ -39,25 +39,39 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
     public virtual async Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
+        if (id is null)
+            throw new ArgumentNullException(nameof(id));
+
         var cached = _cache.FirstOrDefault(e => GetId(e)?.Equals(id) == true);
         if (cached is not null) return cached;
 
-        await _database.OpenAsync(cancellationToken);
-
-        using var command = _database.Connection.CreateCommand();
-        command.CommandText = $"SELECT * FROM {_tableName} WHERE {_primaryKeyColumn} = @id LIMIT 1";
-        command.Parameters.AddWithValue("@id", id!);
-
-        using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (await reader.ReadAsync(cancellationToken))
+        try
         {
-            var entity = MapFromReader(reader);
-            if (!_cache.Contains(entity))
-                _cache.Add(entity);
-            return entity;
-        }
+            await _database.OpenAsync(cancellationToken);
 
-        return null;
+            using var command = _database.Connection.CreateCommand();
+            command.CommandText = $"SELECT * FROM {_tableName} WHERE {_primaryKeyColumn} = @id LIMIT 1";
+            command.Parameters.AddWithValue("@id", id!);
+
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                var entity = MapFromReader(reader);
+                if (!_cache.Contains(entity))
+                    _cache.Add(entity);
+                return entity;
+            }
+
+            return null;
+        }
+        catch (SqliteException ex)
+        {
+            throw new RepositoryException($"Database error while retrieving entity with ID {id} from table {_tableName}: {ex.Message}", ex);
+        }
+        catch (Exception ex) when (ex is not RepositoryException)
+        {
+            throw new RepositoryException($"Unexpected error while retrieving entity with ID {id} from table {_tableName}: {ex.Message}", ex);
+        }
     }
 
     public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -146,7 +160,11 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         }
         catch (SqliteException ex)
         {
-            throw new RepositoryException($"Failed to insert entity: {ex.Message}", ex);
+            throw new RepositoryException($"Failed to insert entity into table {_tableName}: {ex.Message}", ex);
+        }
+        catch (Exception ex) when (ex is not RepositoryException)
+        {
+            throw new RepositoryException($"Unexpected error while adding entity to table {_tableName}: {ex.Message}", ex);
         }
     }
 

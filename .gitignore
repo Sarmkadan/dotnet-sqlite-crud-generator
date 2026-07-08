@@ -50,3 +50,4 @@ launchSettings.json
 
 # Benchmarks output
 BenchmarkDotNet.Artifacts/
+.aider*
