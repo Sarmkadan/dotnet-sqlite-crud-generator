@@ -9,7 +9,7 @@ namespace DotNet.SQLite.CrudGenerator.Exceptions;
 /// <summary>
 /// Exception thrown when entity validation fails.
 /// </summary>
-public sealed class ValidationException : Exception
+public sealed class ValidationException : DotnetSqliteCrudGeneratorException
 {
     public ValidationException(string message) : base(message) { }
 

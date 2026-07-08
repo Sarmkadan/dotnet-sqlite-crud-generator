@@ -9,7 +9,7 @@ namespace DotNet.SQLite.CrudGenerator.Exceptions;
 /// <summary>
 /// Exception thrown when a repository operation fails.
 /// </summary>
-public sealed class RepositoryException : Exception
+public sealed class RepositoryException : DotnetSqliteCrudGeneratorException
 {
     public RepositoryException(string message) : base(message) { }
 
