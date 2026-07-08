@@ -103,6 +103,18 @@ public sealed class ProductService : IService<Product, int>
     }
 
     /// <summary>
+    /// Gets products matching the specified predicate.
+    /// </summary>
+    public Task<IEnumerable<Product>> FindAsync(Func<Product, bool> predicate, CancellationToken cancellationToken = default)
+        => _productRepository.FindAsync(predicate, cancellationToken);
+
+    /// <summary>
+    /// Counts products, optionally matching a predicate.
+    /// </summary>
+    public Task<int> CountAsync(Func<Product, bool>? predicate = null, CancellationToken cancellationToken = default)
+        => _productRepository.CountAsync(predicate, cancellationToken);
+
+    /// <summary>
     /// Gets products in a specific category.
     /// </summary>
     public async Task<IEnumerable<Product>> GetByCategoryAsync(int categoryId, CancellationToken cancellationToken = default)

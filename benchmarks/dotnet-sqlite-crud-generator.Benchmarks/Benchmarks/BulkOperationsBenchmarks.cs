@@ -7,6 +7,7 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using DotNet.SQLite.CrudGenerator.BulkTransfer;
+using DotNet.SQLite.CrudGenerator.Data;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
 
@@ -22,7 +23,7 @@ namespace DotNet.SQLite.CrudGenerator.Benchmarks;
 public sealed class BulkOperationsBenchmarks : IDisposable
 {
     private DatabaseConnection _database = null!;
-    private ProductService _productService = null!;
+    private BulkImportExportEngine<Product> _bulkEngine = null!;
     private List<Product> _sampleProducts = null!;
     private MemoryStream _importStream = null!;
     private MemoryStream _exportStream = null!;
@@ -36,7 +37,7 @@ public sealed class BulkOperationsBenchmarks : IDisposable
         _database = new DatabaseConnection("Data Source=:memory:");
         await _database.InitializeAsync();
 
-        _productService = new ProductService(_database);
+        _bulkEngine = new BulkImportExportEngine<Product>(new ProductRepository(_database), new DataExportService());
 
         // Generate sample data
         _sampleProducts = new List<Product>(TotalItems);
@@ -73,13 +74,13 @@ public sealed class BulkOperationsBenchmarks : IDisposable
 
     [Benchmark(Description = "BulkImport: ImportBatchAsync (1000 items)")]
     public async Task<BulkImportResult> ImportBatchAsync()
-        => await _productService.ImportBatchAsync(_sampleProducts.Take(BatchSize));
+        => await _bulkEngine.ImportBatchAsync(_sampleProducts.Take(BatchSize));
 
     [Benchmark(Description = "BulkImport: ImportStreamingAsync (1000 items)")]
     public async Task<BulkImportResult> ImportStreamingAsync()
     {
         var stream = _sampleProducts.Take(BatchSize).ToAsyncEnumerable();
-        return await _productService.ImportStreamingAsync(stream);
+        return await _bulkEngine.ImportStreamingAsync(stream);
     }
 
     [Benchmark(Description = "BulkExport: ExportToStreamAsync (all items)")]
@@ -87,7 +88,7 @@ public sealed class BulkOperationsBenchmarks : IDisposable
     {
         _exportStream.SetLength(0);
         _exportStream.Position = 0;
-        return await _productService.ExportToStreamAsync(_exportStream, ExportFormat.Json);
+        return await _bulkEngine.ExportToStreamAsync(_exportStream, ExportFormat.Json);
     }
 
     [Benchmark(Description = "BulkTransfer: TransferAsync (1000 items)")]
@@ -95,7 +96,7 @@ public sealed class BulkOperationsBenchmarks : IDisposable
     {
         _exportStream.SetLength(0);
         _exportStream.Position = 0;
-        return await _productService.TransferAsync(
+        return await _bulkEngine.TransferAsync(
             _importStream,
             ImportFormat.Json,
             _exportStream,
@@ -107,7 +108,7 @@ public sealed class BulkOperationsBenchmarks : IDisposable
     public async Task<BulkImportResult> ImportFromStreamAsync()
     {
         _importStream.Position = 0;
-        return await _productService.ImportFromStreamAsync(
+        return await _bulkEngine.ImportFromStreamAsync(
             _importStream,
             ImportFormat.Json
         );

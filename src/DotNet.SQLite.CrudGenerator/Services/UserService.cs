@@ -97,6 +97,18 @@ public sealed class UserService : IService<User, int>
     }
 
     /// <summary>
+    /// Gets users matching the specified predicate.
+    /// </summary>
+    public Task<IEnumerable<User>> FindAsync(Func<User, bool> predicate, CancellationToken cancellationToken = default)
+        => _userRepository.FindAsync(predicate, cancellationToken);
+
+    /// <summary>
+    /// Counts users, optionally matching a predicate.
+    /// </summary>
+    public Task<int> CountAsync(Func<User, bool>? predicate = null, CancellationToken cancellationToken = default)
+        => _userRepository.CountAsync(predicate, cancellationToken);
+
+    /// <summary>
     /// Authenticates a user with email and password hash.
     /// </summary>
     public async Task<User?> AuthenticateAsync(string email, string passwordHash, CancellationToken cancellationToken = default)

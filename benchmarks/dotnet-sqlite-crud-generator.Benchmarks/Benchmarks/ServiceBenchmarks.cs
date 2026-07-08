@@ -6,6 +6,8 @@
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
+using DotNet.SQLite.CrudGenerator.Data;
+using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
 
@@ -276,8 +278,8 @@ public sealed class CategoryService : IService<Category, int>
         => _categoryRepository.ExistsAsync(id, cancellationToken);
 
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
-        => _categoryRepository.CountAsync(cancellationToken);
+        => _categoryRepository.CountAsync(predicate: null, cancellationToken);
 
-    public Task<IEnumerable<Category>> FindAsync(System.Linq.Expressions.Expression<Func<Category, bool>> predicate, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<Category>> FindAsync(Func<Category, bool> predicate, CancellationToken cancellationToken = default)
         => _categoryRepository.FindAsync(predicate, cancellationToken);
 }
