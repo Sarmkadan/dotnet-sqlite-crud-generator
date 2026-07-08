@@ -6,6 +6,8 @@
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
+using DotNet.SQLite.CrudGenerator.Data;
+using DotNet.SQLite.CrudGenerator.Enums;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
 
@@ -71,13 +73,13 @@ public sealed class AuditTrailBenchmarks : IDisposable
         await _database.SaveChangesAsync();
 
         // Record initial audit events
-        await _auditService.RecordAsync(_sampleProduct.Id, OperationType.Create, 1);
-        await _auditService.RecordAsync(_sampleUser.Id, OperationType.Create, 1);
+        await _auditService.RecordAsync(nameof(Product), _sampleProduct.Id, OperationType.Create, 1);
+        await _auditService.RecordAsync(nameof(User), _sampleUser.Id, OperationType.Create, 1);
     }
 
     [Benchmark(Description = "AuditTrail: RecordAsync (Create operation)")]
     public async Task RecordCreateOperationAsync()
-        => await _auditService.RecordAsync(_sampleProduct.Id, OperationType.Create, 1);
+        => await _auditService.RecordAsync(nameof(Product), _sampleProduct.Id, OperationType.Create, 1);
 
     [Benchmark(Description = "AuditTrail: RecordAsync (Update operation)")]
     public async Task RecordUpdateOperationAsync()
@@ -86,7 +88,7 @@ public sealed class AuditTrailBenchmarks : IDisposable
         _sampleProduct.UpdatedAt = DateTime.UtcNow;
         await _productService.UpdateAsync(_sampleProduct);
         await _database.SaveChangesAsync();
-        await _auditService.RecordAsync(_sampleProduct.Id, OperationType.Update, 1);
+        await _auditService.RecordAsync(nameof(Product), _sampleProduct.Id, OperationType.Update, 1);
     }
 
     [Benchmark(Description = "AuditTrail: RecordAsync (Delete operation)")]
@@ -94,7 +96,7 @@ public sealed class AuditTrailBenchmarks : IDisposable
     {
         await _productService.DeleteAsync(_sampleProduct.Id);
         await _database.SaveChangesAsync();
-        await _auditService.RecordAsync(_sampleProduct.Id, OperationType.Delete, 1);
+        await _auditService.RecordAsync(nameof(Product), _sampleProduct.Id, OperationType.Delete, 1);
     }
 
     [Benchmark(Description = "AuditTrail: GetEntityTrailAsync")]
@@ -132,7 +134,7 @@ public sealed class AuditTrailBenchmarks : IDisposable
         var tasks = new List<Task>();
         for (int i = 0; i < 100; i++)
         {
-            tasks.Add(_auditService.RecordAsync(_sampleUser.Id, OperationType.Update, 1));
+            tasks.Add(_auditService.RecordAsync(nameof(User), _sampleUser.Id, OperationType.Update, 1));
         }
         await Task.WhenAll(tasks);
     }

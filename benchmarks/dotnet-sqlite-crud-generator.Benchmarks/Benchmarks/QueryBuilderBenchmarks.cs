@@ -6,6 +6,7 @@
 
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
+using DotNet.SQLite.CrudGenerator.Data;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
 
