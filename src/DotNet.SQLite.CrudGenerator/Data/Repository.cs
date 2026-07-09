@@ -11,6 +11,7 @@ using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Interfaces;
 using Microsoft.Data.Sqlite;
 
+using Microsoft.Extensions.Logging;
 namespace DotNet.SQLite.CrudGenerator.Data;
 
 /// <summary>
@@ -29,9 +30,11 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     protected readonly string _primaryKeyColumn;
     protected List<T> _cache = new();
     protected bool _cacheLoaded = false;
+    protected readonly ILogger<Repository<T, TKey>>? _logger;
 
-    protected Repository(DatabaseConnection database)
+    protected Repository(DatabaseConnection database, ILogger<Repository<T, TKey>>? logger = null)
     {
+        _logger = logger;
         _database = database ?? throw new ArgumentNullException(nameof(database));
         _tableName = typeof(T).Name + "s";
         _primaryKeyColumn = "Id";
@@ -42,8 +45,16 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         if (id is null)
             throw new ArgumentNullException(nameof(id));
 
+        _logger?.LogDebug("Attempting to retrieve entity {EntityType} with ID {EntityId} from cache", typeof(T).Name, id);
+
         var cached = _cache.FirstOrDefault(e => GetId(e)?.Equals(id) == true);
-        if (cached is not null) return cached;
+        if (cached is not null)
+        {
+            _logger?.LogDebug("Entity {EntityType} with ID {EntityId} found in cache", typeof(T).Name, id);
+            return cached;
+        }
+
+        _logger?.LogDebug("Entity {EntityType} with ID {EntityId} not found in cache, querying database", typeof(T).Name, id);
 
         try
         {
@@ -59,24 +70,34 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
                 var entity = MapFromReader(reader);
                 if (!_cache.Contains(entity))
                     _cache.Add(entity);
+                _logger?.LogInformation("Successfully retrieved entity {EntityType} with ID {EntityId} from database", typeof(T).Name, id);
                 return entity;
             }
 
+            _logger?.LogDebug("Entity {EntityType} with ID {EntityId} not found in database", typeof(T).Name, id);
             return null;
         }
         catch (SqliteException ex)
         {
+            _logger?.LogError(ex, "Database error while retrieving entity {EntityType} with ID {EntityId} from table {TableName}", typeof(T).Name, id, _tableName);
             throw new RepositoryException($"Database error while retrieving entity with ID {id} from table {_tableName}: {ex.Message}", ex);
         }
         catch (Exception ex) when (ex is not RepositoryException)
         {
+            _logger?.LogError(ex, "Unexpected error while retrieving entity {EntityType} with ID {EntityId} from table {TableName}", typeof(T).Name, id, _tableName);
             throw new RepositoryException($"Unexpected error while retrieving entity with ID {id} from table {_tableName}: {ex.Message}", ex);
         }
     }
 
     public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        if (_cacheLoaded) return _cache.AsReadOnly();
+        _logger?.LogDebug("Retrieving all entities {EntityType} from table {TableName}", typeof(T).Name, _tableName);
+
+        if (_cacheLoaded)
+        {
+            _logger?.LogDebug("Returning {EntityCount} cached entities {EntityType} from table {TableName}", _cache.Count, typeof(T).Name, _tableName);
+            return _cache.AsReadOnly();
+        }
 
         await _database.OpenAsync(cancellationToken);
 
@@ -90,6 +111,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
         _cache = results;
         _cacheLoaded = true;
+        _logger?.LogInformation("Successfully retrieved {EntityCount} entities {EntityType} from table {TableName}", _cache.Count, typeof(T).Name, _tableName);
         return _cache.AsReadOnly();
     }
 
@@ -118,6 +140,8 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     {
         if (entity is null)
             throw new ArgumentNullException(nameof(entity));
+
+        _logger?.LogDebug("Adding new entity {EntityType} to table {TableName}", typeof(T).Name, _tableName);
 
         await _database.OpenAsync(cancellationToken);
 
@@ -152,18 +176,22 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             }
 
             _cache.Add(entity);
+            _logger?.LogInformation("Successfully added entity {EntityType} with ID {EntityId} to table {TableName}", typeof(T).Name, lastId, _tableName);
             return entity;
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
         {
+            _logger?.LogWarning(ex, "Duplicate key error while adding entity {EntityType} to table {TableName}", typeof(T).Name, _tableName);
             throw RepositoryException.DuplicateKey(typeof(T).Name, "Unknown", entity);
         }
         catch (SqliteException ex)
         {
+            _logger?.LogError(ex, "Failed to insert entity {EntityType} into table {TableName}", typeof(T).Name, _tableName);
             throw new RepositoryException($"Failed to insert entity into table {_tableName}: {ex.Message}", ex);
         }
         catch (Exception ex) when (ex is not RepositoryException)
         {
+            _logger?.LogError(ex, "Unexpected error while adding entity {EntityType} to table {TableName}", typeof(T).Name, _tableName);
             throw new RepositoryException($"Unexpected error while adding entity to table {_tableName}: {ex.Message}", ex);
         }
     }
@@ -183,11 +211,13 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
+        var id = GetId(entity);
+        _logger?.LogDebug("Attempting to update entity {EntityType} with ID {EntityId} in table {TableName}", typeof(T).Name, id, _tableName);
+
         await _database.OpenAsync(cancellationToken);
 
         var properties = GetProperties();
         var updates = string.Join(", ", properties.Select((p, i) => $"{p.Name} = @p{i}"));
-        var id = GetId(entity);
 
         using var command = _database.Connection.CreateCommand();
         command.CommandText = $"UPDATE {_tableName} SET {updates} WHERE {_primaryKeyColumn} = @id";
@@ -201,18 +231,24 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected == 0)
+        {
+            _logger?.LogWarning("Entity {EntityType} with ID {EntityId} not found for update in table {TableName}", typeof(T).Name, id, _tableName);
             // Fix: Safe casting of potentially null id value
             throw RepositoryException.EntityNotFound(typeof(T).Name, id is null ? 0 : Convert.ToInt32(id));
+        }
 
         var cachedIndex = _cache.FindIndex(e => GetId(e)?.Equals(id) == true);
         if (cachedIndex >= 0)
             _cache[cachedIndex] = entity;
 
+        _logger?.LogInformation("Successfully updated entity {EntityType} with ID {EntityId} in table {TableName}", typeof(T).Name, id, _tableName);
         return affected > 0; // Return true if at least one row was affected
     }
 
     public virtual async Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default)
     {
+        _logger?.LogDebug("Attempting to delete entity {EntityType} with ID {EntityId} from table {TableName}", typeof(T).Name, id, _tableName);
+
         await _database.OpenAsync(cancellationToken);
 
         using var command = _database.Connection.CreateCommand();
@@ -221,7 +257,14 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected > 0)
+        {
             _cache.RemoveAll(e => GetId(e)?.Equals(id) == true);
+            _logger?.LogInformation("Successfully deleted entity {EntityType} with ID {EntityId} from table {TableName}", typeof(T).Name, id, _tableName);
+        }
+        else
+        {
+            _logger?.LogDebug("Entity {EntityType} with ID {EntityId} not found for deletion in table {TableName}", typeof(T).Name, id, _tableName);
+        }
 
         return affected > 0;
     }
@@ -229,6 +272,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     public virtual async Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default)
     {
         var id = GetId(entity);
+        _logger?.LogDebug("Deleting entity {EntityType} with ID {EntityId} via entity reference", typeof(T).Name, id);
         return await DeleteAsync(id!, cancellationToken);
     }
 

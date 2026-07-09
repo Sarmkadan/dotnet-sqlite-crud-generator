@@ -10,6 +10,7 @@ using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace DotNet.SQLite.CrudGenerator.Configuration;
 
@@ -71,6 +72,9 @@ public static class DependencyInjection
 
         // Register database connection
         services.AddSingleton(new DatabaseConnection(connectionString));
+        
+        // Register logging
+        services.AddLogging(logging => logging.AddConsole());
 
         // Register unit of work
         services.AddScoped<IUnitOfWork, DbContextProvider>();
