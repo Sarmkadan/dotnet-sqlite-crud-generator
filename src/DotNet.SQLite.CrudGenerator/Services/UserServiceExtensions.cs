@@ -24,16 +24,16 @@ public static class UserServiceExtensions
     /// <param name="email">The email address to search for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The user if found, otherwise null.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="email"/> is null or whitespace.</exception>
     public static async Task<User?> GetByEmailAsync(this UserService service, string email, CancellationToken cancellationToken = default)
     {
-        if (service is null)
-            throw new ArgumentNullException(nameof(service));
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
 
-        if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email cannot be null or whitespace", nameof(email));
-
-        var userRepository = (UserRepository)service.GetFieldValue("_userRepository");
-        return await userRepository.GetByEmailAsync(email, cancellationToken);
+        return await service.FindAsync(u => u.Email?.Equals(email, StringComparison.OrdinalIgnoreCase) == true, cancellationToken) is IEnumerable<User> users
+            ? users.FirstOrDefault()
+            : null;
     }
 
     /// <summary>
@@ -43,16 +43,16 @@ public static class UserServiceExtensions
     /// <param name="username">The username to search for.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The user if found, otherwise null.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="username"/> is null or whitespace.</exception>
     public static async Task<User?> GetByUsernameAsync(this UserService service, string username, CancellationToken cancellationToken = default)
     {
-        if (service is null)
-            throw new ArgumentNullException(nameof(service));
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentException.ThrowIfNullOrWhiteSpace(username);
 
-        if (string.IsNullOrWhiteSpace(username))
-            throw new ArgumentException("Username cannot be null or whitespace", nameof(username));
-
-        var users = await service.FindAsync(u => u.Username?.Equals(username, StringComparison.OrdinalIgnoreCase) == true, cancellationToken);
-        return users.FirstOrDefault();
+        return await service.FindAsync(u => u.Username?.Equals(username, StringComparison.OrdinalIgnoreCase) == true, cancellationToken) is IEnumerable<User> users
+            ? users.FirstOrDefault()
+            : null;
     }
 
     /// <summary>
@@ -62,13 +62,12 @@ public static class UserServiceExtensions
     /// <param name="email">The email address to check.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if user exists, otherwise false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="email"/> is null or whitespace.</exception>
     public static async Task<bool> ExistsByEmailAsync(this UserService service, string email, CancellationToken cancellationToken = default)
     {
-        if (service is null)
-            throw new ArgumentNullException(nameof(service));
-
-        if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email cannot be null or whitespace", nameof(email));
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
 
         var user = await service.GetByEmailAsync(email, cancellationToken);
         return user is not null;
@@ -80,10 +79,10 @@ public static class UserServiceExtensions
     /// <param name="service">The UserService instance.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Collection of active users.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
     public static async Task<IEnumerable<User>> GetActiveUsersAsync(this UserService service, CancellationToken cancellationToken = default)
     {
-        if (service is null)
-            throw new ArgumentNullException(nameof(service));
+        ArgumentNullException.ThrowIfNull(service);
 
         return await service.FindAsync(u => u.IsActive, cancellationToken);
     }
@@ -94,10 +93,10 @@ public static class UserServiceExtensions
     /// <param name="service">The UserService instance.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Collection of verified users.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
     public static async Task<IEnumerable<User>> GetVerifiedUsersAsync(this UserService service, CancellationToken cancellationToken = default)
     {
-        if (service is null)
-            throw new ArgumentNullException(nameof(service));
+        ArgumentNullException.ThrowIfNull(service);
 
         return await service.FindAsync(u => u.EmailVerified, cancellationToken);
     }
@@ -110,14 +109,15 @@ public static class UserServiceExtensions
     /// <param name="endDate">The end date of the range (inclusive).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Collection of users created within the specified range.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
+    /// <exception cref="ArgumentException"><paramref name="startDate"/> is after <paramref name="endDate"/>.</exception>
     public static async Task<IEnumerable<User>> GetUsersByCreationDateAsync(
         this UserService service,
         DateTime startDate,
         DateTime endDate,
         CancellationToken cancellationToken = default)
     {
-        if (service is null)
-            throw new ArgumentNullException(nameof(service));
+        ArgumentNullException.ThrowIfNull(service);
 
         if (startDate > endDate)
             throw new ArgumentException("Start date must be before or equal to end date", nameof(startDate));
@@ -131,10 +131,10 @@ public static class UserServiceExtensions
     /// <param name="service">The UserService instance.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The count of active users.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
     public static async Task<int> CountActiveUsersAsync(this UserService service, CancellationToken cancellationToken = default)
     {
-        if (service is null)
-            throw new ArgumentNullException(nameof(service));
+        ArgumentNullException.ThrowIfNull(service);
 
         var activeUsers = await service.GetActiveUsersAsync(cancellationToken);
         return activeUsers.Count();
@@ -146,10 +146,10 @@ public static class UserServiceExtensions
     /// <param name="service">The UserService instance.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The count of verified users.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is null.</exception>
     public static async Task<int> CountVerifiedUsersAsync(this UserService service, CancellationToken cancellationToken = default)
     {
-        if (service is null)
-            throw new ArgumentNullException(nameof(service));
+        ArgumentNullException.ThrowIfNull(service);
 
         var verifiedUsers = await service.GetVerifiedUsersAsync(cancellationToken);
         return verifiedUsers.Count();
@@ -158,12 +158,18 @@ public static class UserServiceExtensions
     /// <summary>
     /// Helper method to get private field value via reflection.
     /// </summary>
+    /// <param name="obj">The object instance.</param>
+    /// <param name="fieldName">Name of the field to retrieve.</param>
+    /// <returns>The field value.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="obj"/> is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="fieldName"/> is null.</exception>
+    /// <exception cref="InvalidOperationException">Field not found or inaccessible.</exception>
     private static object GetFieldValue(this object obj, string fieldName)
     {
-        if (obj is null)
-            throw new ArgumentNullException(nameof(obj));
+        ArgumentNullException.ThrowIfNull(obj);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldName);
 
         var field = obj.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        return field?.GetValue(obj) ?? throw new InvalidOperationException($"Field {fieldName} not found");
+        return field?.GetValue(obj) ?? throw new InvalidOperationException($"Field {fieldName} not found or inaccessible");
     }
 }
