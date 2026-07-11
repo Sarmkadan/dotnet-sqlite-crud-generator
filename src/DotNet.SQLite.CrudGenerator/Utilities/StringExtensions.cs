@@ -26,9 +26,14 @@ public static class StringExtensions
     /// Converts a string to PascalCase (e.g., "user_id" -> "UserId").
     /// Useful for C# property naming conventions.
     /// </summary>
+    /// <param name="input">The input string to convert.</param>
+    /// <returns>The PascalCase string, or empty string if input is null or empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string ToPascalCase(this string input)
     {
-        if (string.IsNullOrEmpty(input))
+        ArgumentNullException.ThrowIfNull(input);
+
+        if (input.Length == 0)
             return input;
 
         var span = input.AsSpan();
@@ -62,9 +67,14 @@ public static class StringExtensions
     /// Converts a string to camelCase (e.g., "UserId" -> "userId").
     /// Useful for JSON and JavaScript naming conventions.
     /// </summary>
+    /// <param name="input">The input string to convert.</param>
+    /// <returns>The camelCase string, or empty string if input is null or empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string ToCamelCase(this string input)
     {
-        if (string.IsNullOrEmpty(input))
+        ArgumentNullException.ThrowIfNull(input);
+
+        if (input.Length == 0)
             return input;
 
         var pascal = input.ToPascalCase();
@@ -83,9 +93,14 @@ public static class StringExtensions
     /// Converts a string to snake_case (e.g., "UserId" -> "user_id").
     /// Useful for database column naming conventions.
     /// </summary>
+    /// <param name="input">The input string to convert.</param>
+    /// <returns>The snake_case string, or the lowercase input if no transitions found.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string ToSnakeCase(this string input)
     {
-        if (string.IsNullOrEmpty(input))
+        ArgumentNullException.ThrowIfNull(input);
+
+        if (input.Length == 0)
             return input;
 
         var span = input.AsSpan();
@@ -117,21 +132,27 @@ public static class StringExtensions
     /// Converts a string to kebab-case (e.g., "UserId" -> "user-id").
     /// Useful for URL and configuration naming.
     /// </summary>
+    /// <param name="input">The input string to convert.</param>
+    /// <returns>The kebab-case string.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string ToKebabCase(this string input)
     {
-        if (string.IsNullOrEmpty(input))
-            return input;
+        ArgumentNullException.ThrowIfNull(input);
 
         return input.ToSnakeCase().Replace('_', '-');
     }
 
     /// <summary>
     /// Pluralizes a word (basic implementation).
-    /// Note: This is a simplified version; use external library for production use.
     /// </summary>
+    /// <param name="word">The word to pluralize.</param>
+    /// <returns>The pluralized word.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="word"/> is null.</exception>
     public static string Pluralize(this string word)
     {
-        if (string.IsNullOrEmpty(word))
+        ArgumentNullException.ThrowIfNull(word);
+
+        if (word.Length == 0)
             return word;
 
         if (word.EndsWith('y'))
@@ -146,9 +167,18 @@ public static class StringExtensions
     /// <summary>
     /// Truncates a string to a maximum length, optionally adding ellipsis.
     /// </summary>
+    /// <param name="input">The input string to truncate.</param>
+    /// <param name="maxLength">The maximum length of the resulting string.</param>
+    /// <param name="addEllipsis">Whether to add ellipsis (...) when truncating.</param>
+    /// <returns>The truncated string, or the original string if it's already short enough.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="maxLength"/> is negative.</exception>
     public static string Truncate(this string input, int maxLength, bool addEllipsis = false)
     {
-        if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentOutOfRangeException.ThrowIfNegative(maxLength);
+
+        if (input.Length <= maxLength)
             return input;
 
         // Span slice avoids an intermediate Substring allocation when appending ellipsis.
@@ -160,6 +190,8 @@ public static class StringExtensions
     /// <summary>
     /// Checks if a string is null, empty, or consists only of whitespace.
     /// </summary>
+    /// <param name="input">The string to check.</param>
+    /// <returns>True if the string is null, empty, or whitespace; otherwise false.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsNullOrWhiteSpace(this string? input)
     {
@@ -169,10 +201,12 @@ public static class StringExtensions
     /// <summary>
     /// Removes all whitespace from a string.
     /// </summary>
+    /// <param name="input">The input string.</param>
+    /// <returns>A new string with all whitespace removed, or the original string if it contains no whitespace.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string RemoveWhitespace(this string input)
     {
-        if (string.IsNullOrEmpty(input))
-            return input;
+        ArgumentNullException.ThrowIfNull(input);
 
         var span = input.AsSpan();
 
@@ -195,10 +229,12 @@ public static class StringExtensions
     /// <summary>
     /// Converts a string to a slug suitable for URLs.
     /// </summary>
+    /// <param name="input">The input string to convert to a slug.</param>
+    /// <returns>The URL-friendly slug string.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string ToSlug(this string input)
     {
-        if (string.IsNullOrEmpty(input))
-            return input;
+        ArgumentNullException.ThrowIfNull(input);
 
         var slug = input.ToLowerInvariant()
             .Replace(' ', '-')
@@ -212,9 +248,17 @@ public static class StringExtensions
     /// <summary>
     /// Repeats a string the specified number of times.
     /// </summary>
+    /// <param name="input">The string to repeat.</param>
+    /// <param name="count">The number of times to repeat the string.</param>
+    /// <returns>The repeated string, or empty string if count is 0 or input is null/empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="count"/> is negative.</exception>
     public static string Repeat(this string input, int count)
     {
-        if (count <= 0 || string.IsNullOrEmpty(input))
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+
+        if (count == 0 || input.Length == 0)
             return string.Empty;
 
         return string.Create(input.Length * count, (input, count), static (chars, state) =>
@@ -233,10 +277,14 @@ public static class StringExtensions
     /// <summary>
     /// Checks if a string matches a pattern (basic regex).
     /// </summary>
+    /// <param name="input">The input string to check.</param>
+    /// <param name="pattern">The regex pattern to match against.</param>
+    /// <returns>True if the input matches the pattern; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> or <paramref name="pattern"/> is null.</exception>
     public static bool MatchesPattern(this string input, string pattern)
     {
-        if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(pattern))
-            return false;
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(pattern);
 
         try
         {
@@ -251,10 +299,12 @@ public static class StringExtensions
     /// <summary>
     /// Gets the first word of a string.
     /// </summary>
+    /// <param name="input">The input string.</param>
+    /// <returns>The first word, or empty string if input is null or empty.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
     public static string FirstWord(this string input)
     {
-        if (string.IsNullOrEmpty(input))
-            return string.Empty;
+        ArgumentNullException.ThrowIfNull(input);
 
         // IndexOfAny on a Span avoids the array allocation from Split.
         var span = input.AsSpan().TrimStart();
