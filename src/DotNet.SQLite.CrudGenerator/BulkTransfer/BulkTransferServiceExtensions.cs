@@ -29,11 +29,11 @@ public static class BulkTransferServiceExtensions
     /// <remarks>
     /// The following registrations are added (each via <c>TryAdd*</c>):
     /// <list type="bullet">
-    ///   <item><see cref="BulkImportExportEngine{T}"/> — the concrete, scoped implementation</item>
-    ///   <item><see cref="IBulkImportService{T}"/> resolved from the concrete registration above</item>
-    ///   <item><see cref="IBulkExportService{T}"/> resolved from the concrete registration above</item>
-    ///   <item><see cref="IBulkTransferService{T}"/> resolved from the concrete registration above</item>
-    ///   <item><see cref="BulkTransferPipeline{T}"/> — transient fluent builder</item>
+    /// <item><see cref="BulkImportExportEngine{T}"/> — the concrete, scoped implementation</item>
+    /// <item><see cref="IBulkImportService{T}"/> resolved from the concrete registration above</item>
+    /// <item><see cref="IBulkExportService{T}"/> resolved from the concrete registration above</item>
+    /// <item><see cref="IBulkTransferService{T}"/> resolved from the concrete registration above</item>
+    /// <item><see cref="BulkTransferPipeline{T}"/> — transient fluent builder</item>
     /// </list>
     /// An <see cref="IRepository{T,TKey}"/> with <c>TKey = int</c> must already be registered
     /// (e.g. via <c>AddApplicationServices</c>) before the first scope is created.
@@ -62,14 +62,9 @@ public static class BulkTransferServiceExtensions
                 provider.GetRequiredService<DataExportService>(),
                 options));
 
-        services.TryAddScoped<IBulkImportService<T>>(
-            provider => provider.GetRequiredService<BulkImportExportEngine<T>>());
-
-        services.TryAddScoped<IBulkExportService<T>>(
-            provider => provider.GetRequiredService<BulkImportExportEngine<T>>());
-
-        services.TryAddScoped<IBulkTransferService<T>>(
-            provider => provider.GetRequiredService<BulkImportExportEngine<T>>());
+        services.TryAddScoped<IBulkImportService<T>>(provider => provider.GetRequiredService<BulkImportExportEngine<T>>());
+        services.TryAddScoped<IBulkExportService<T>>(provider => provider.GetRequiredService<BulkImportExportEngine<T>>());
+        services.TryAddScoped<IBulkTransferService<T>>(provider => provider.GetRequiredService<BulkImportExportEngine<T>>());
 
         services.TryAddTransient<BulkTransferPipeline<T>>(provider =>
             new BulkTransferPipeline<T>(provider.GetRequiredService<IBulkTransferService<T>>()));
@@ -95,17 +90,17 @@ public static class BulkTransferServiceExtensions
 
         return services.AddBulkTransfer<T>(o =>
         {
-            o.BatchSize              = options.BatchSize;
-            o.MaxConcurrency        = options.MaxConcurrency;
-            o.EnableProgressReporting   = options.EnableProgressReporting;
+            o.BatchSize = options.BatchSize;
+            o.MaxConcurrency = options.MaxConcurrency;
+            o.EnableProgressReporting = options.EnableProgressReporting;
             o.ProgressReportingInterval = options.ProgressReportingInterval;
-            o.BufferSize            = options.BufferSize;
-            o.EnableCheckpointing   = options.EnableCheckpointing;
-            o.CheckpointFilePath    = options.CheckpointFilePath;
-            o.ValidationMode        = options.ValidationMode;
-            o.MaxErrorThreshold     = options.MaxErrorThreshold;
-            o.UseTransactions       = options.UseTransactions;
-            o.BatchTimeout          = options.BatchTimeout;
+            o.BufferSize = options.BufferSize;
+            o.EnableCheckpointing = options.EnableCheckpointing;
+            o.CheckpointFilePath = options.CheckpointFilePath;
+            o.ValidationMode = options.ValidationMode;
+            o.MaxErrorThreshold = options.MaxErrorThreshold;
+            o.UseTransactions = options.UseTransactions;
+            o.BatchTimeout = options.BatchTimeout;
         });
     }
 
@@ -118,6 +113,7 @@ public static class BulkTransferServiceExtensions
     /// </summary>
     /// <param name="result">The result to evaluate.</param>
     /// <returns>The same result to allow fluent call chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="result"/> is <c>null</c>.</exception>
     /// <exception cref="InvalidOperationException">
     /// Thrown when <see cref="BulkImportResult.IsSuccess"/> is <c>false</c>.
     /// </exception>
@@ -141,6 +137,7 @@ public static class BulkTransferServiceExtensions
     /// </summary>
     /// <param name="result">The result to summarise.</param>
     /// <returns>A human-readable summary string.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="result"/> is <c>null</c>.</exception>
     public static string ToSummary(this BulkImportResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -158,6 +155,7 @@ public static class BulkTransferServiceExtensions
     /// </summary>
     /// <param name="result">The result to evaluate.</param>
     /// <returns>The same result to allow fluent call chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="result"/> is <c>null</c>.</exception>
     /// <exception cref="InvalidOperationException">
     /// Thrown when <see cref="BulkExportResult.IsSuccess"/> is <c>false</c>.
     /// </exception>
@@ -166,9 +164,11 @@ public static class BulkTransferServiceExtensions
         ArgumentNullException.ThrowIfNull(result);
 
         if (!result.IsSuccess)
+        {
             throw new InvalidOperationException(
                 $"Bulk export failed after writing {result.TotalExported:N0} record(s) " +
                 $"({result.BytesWritten:N0} bytes).");
+        }
 
         return result;
     }
@@ -178,6 +178,7 @@ public static class BulkTransferServiceExtensions
     /// </summary>
     /// <param name="result">The result to summarise.</param>
     /// <returns>A human-readable summary string.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="result"/> is <c>null</c>.</exception>
     public static string ToSummary(this BulkExportResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
