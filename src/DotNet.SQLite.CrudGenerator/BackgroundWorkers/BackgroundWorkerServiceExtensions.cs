@@ -17,6 +17,8 @@ public static class BackgroundWorkerServiceExtensions
     /// <param name="interval">The time interval between executions.</param>
     /// <param name="initialDelay">Optional initial delay before the first execution. Defaults to the interval.</param>
     /// <returns>A <see cref="ScheduledTaskRunner"/> instance that can be used to manage the scheduled task.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> or <paramref name="action"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="interval"/> is less than or equal to <see cref="TimeSpan.Zero"/>.</exception>
     public static async Task<ScheduledTaskRunner> StartScheduledTaskAsync(
         this BackgroundWorkerService service,
         string taskName,
@@ -24,22 +26,15 @@ public static class BackgroundWorkerServiceExtensions
         TimeSpan interval,
         TimeSpan? initialDelay = null)
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
-
-        if (action is null)
-        {
-            throw new ArgumentNullException(nameof(action));
-        }
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(action);
 
         if (interval <= TimeSpan.Zero)
         {
-            throw new ArgumentOutOfRangeException(nameof(interval), "Interval must be greater than zero.");
+            throw new ArgumentOutOfRangeException(nameof(interval), interval, "Interval must be greater than zero.");
         }
 
-        var runner = new ScheduledTaskRunner(service.GetTaskQueue());
+        var runner = new ScheduledTaskRunner(service.TaskQueue);
         await runner.ScheduleAsync(taskName, action, interval, initialDelay);
 
         return runner;
@@ -51,14 +46,12 @@ public static class BackgroundWorkerServiceExtensions
     /// <param name="service">The background worker service instance.</param>
     /// <param name="timeout">Optional timeout for graceful shutdown. Defaults to 5 seconds.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is <see langword="null"/>.</exception>
     public static async Task StopScheduledTasksAsync(
         this BackgroundWorkerService service,
         TimeSpan? timeout = null)
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
 
         // Note: ScheduledTaskRunner instances are managed by the caller
         // This method provides a convenient way to stop all scheduled tasks
@@ -72,16 +65,12 @@ public static class BackgroundWorkerServiceExtensions
     /// </summary>
     /// <param name="service">The background worker service instance.</param>
     /// <returns>The <see cref="BackgroundTaskQueue"/> instance.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is <see langword="null"/>.</exception>
     public static BackgroundTaskQueue GetTaskQueue(this BackgroundWorkerService service)
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
 
-        // Use reflection to access the private field
-        var field = typeof(BackgroundWorkerService).GetField("_taskQueue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        return (BackgroundTaskQueue)field?.GetValue(service)!;
+        return service.TaskQueue;
     }
 
     /// <summary>
@@ -89,16 +78,12 @@ public static class BackgroundWorkerServiceExtensions
     /// </summary>
     /// <param name="service">The background worker service instance.</param>
     /// <returns>The number of worker threads.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is <see langword="null"/>.</exception>
     public static int GetWorkerCount(this BackgroundWorkerService service)
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
 
-        // Use reflection to access the private field
-        var field = typeof(BackgroundWorkerService).GetField("_workerCount", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        return (int)field?.GetValue(service)!;
+        return service.WorkerCount;
     }
 
     /// <summary>
@@ -108,20 +93,14 @@ public static class BackgroundWorkerServiceExtensions
     /// <param name="task">The task to enqueue.</param>
     /// <param name="priority">Optional priority for the task. Defaults to Normal.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> or <paramref name="task"/> is <see langword="null"/>.</exception>
     public static async Task EnqueueTaskAsync(
         this BackgroundWorkerService service,
         BackgroundTask task,
         TaskPriority priority = TaskPriority.Normal)
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
-
-        if (task is null)
-        {
-            throw new ArgumentNullException(nameof(task));
-        }
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(task);
 
         var queue = service.GetTaskQueue();
         await queue.EnqueueAsync(task, priority);
@@ -132,12 +111,10 @@ public static class BackgroundWorkerServiceExtensions
     /// </summary>
     /// <param name="service">The background worker service instance.</param>
     /// <returns>The number of pending tasks in the queue.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is <see langword="null"/>.</exception>
     public static int GetQueueLength(this BackgroundWorkerService service)
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
 
         var queue = service.GetTaskQueue();
         return queue.GetQueueLength();
@@ -148,12 +125,10 @@ public static class BackgroundWorkerServiceExtensions
     /// </summary>
     /// <param name="service">The background worker service instance.</param>
     /// <returns>A <see cref="TaskStatistics"/> object containing execution statistics.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is <see langword="null"/>.</exception>
     public static TaskStatistics GetTaskStatistics(this BackgroundWorkerService service)
     {
-        if (service is null)
-        {
-            throw new ArgumentNullException(nameof(service));
-        }
+        ArgumentNullException.ThrowIfNull(service);
 
         var queue = service.GetTaskQueue();
         return queue.GetStatistics();
