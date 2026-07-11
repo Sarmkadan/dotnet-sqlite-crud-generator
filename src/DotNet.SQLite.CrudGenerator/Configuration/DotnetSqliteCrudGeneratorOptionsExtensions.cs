@@ -6,7 +6,9 @@
 // =====================================================================
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace DotNet.SQLite.CrudGenerator.Configuration;
 
@@ -14,20 +16,25 @@ namespace DotNet.SQLite.CrudGenerator.Configuration;
 /// Extension methods for <see cref="DotnetSqliteCrudGeneratorOptions"/> that provide
 /// convenient configuration helpers and fluent APIs for common scenarios.
 /// </summary>
+/// <remarks>
+/// All extension methods are designed to be chainable for fluent configuration patterns.
+/// </remarks>
 public static class DotnetSqliteCrudGeneratorOptionsExtensions
 {
     /// <summary>
     /// Configures the database connection string with a custom value.
     /// </summary>
-    /// <param name="options">The options instance to configure.</param>
-    /// <param name="connectionString">The custom connection string to use.</param>
+    /// <param name="options">The options instance to configure. Cannot be null.</param>
+    /// <param name="connectionString">The custom connection string to use. Cannot be null or empty.</param>
     /// <returns>The configured options for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="connectionString"/> is null or empty.</exception>
     public static DotnetSqliteCrudGeneratorOptions WithConnectionString(
         this DotnetSqliteCrudGeneratorOptions options,
         string connectionString)
     {
         ArgumentNullException.ThrowIfNull(options);
+        ArgumentException.ThrowIfNullOrEmpty(connectionString);
 
         options.Database.ConnectionString = connectionString;
         options.Database.FilePath = null;
@@ -37,9 +44,9 @@ public static class DotnetSqliteCrudGeneratorOptionsExtensions
     /// <summary>
     /// Configures the database to use an in-memory SQLite instance.
     /// </summary>
-    /// <param name="options">The options instance to configure.</param>
+    /// <param name="options">The options instance to configure. Cannot be null.</param>
     /// <returns>The configured options for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
     public static DotnetSqliteCrudGeneratorOptions WithInMemoryDatabase(
         this DotnetSqliteCrudGeneratorOptions options)
     {
@@ -53,11 +60,11 @@ public static class DotnetSqliteCrudGeneratorOptionsExtensions
     /// <summary>
     /// Configures the connection pool for development scenarios with more aggressive pooling.
     /// </summary>
-    /// <param name="options">The options instance to configure.</param>
+    /// <param name="options">The options instance to configure. Cannot be null.</param>
     /// <param name="maxPoolSize">Maximum pool size (default: 20).</param>
     /// <param name="idleTimeoutMinutes">Idle timeout in minutes (default: 2).</param>
     /// <returns>The configured options for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when maxPoolSize is less than 1.</exception>
     public static DotnetSqliteCrudGeneratorOptions WithDevelopmentPoolSettings(
         this DotnetSqliteCrudGeneratorOptions options,
@@ -85,9 +92,9 @@ public static class DotnetSqliteCrudGeneratorOptionsExtensions
     /// <summary>
     /// Configures the cache to be disabled for testing or performance-critical scenarios.
     /// </summary>
-    /// <param name="options">The options instance to configure.</param>
+    /// <param name="options">The options instance to configure. Cannot be null.</param>
     /// <returns>The configured options for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
     public static DotnetSqliteCrudGeneratorOptions WithCacheDisabled(
         this DotnetSqliteCrudGeneratorOptions options)
     {
@@ -100,10 +107,10 @@ public static class DotnetSqliteCrudGeneratorOptionsExtensions
     /// <summary>
     /// Configures the background worker pool size based on available processor count.
     /// </summary>
-    /// <param name="options">The options instance to configure.</param>
+    /// <param name="options">The options instance to configure. Cannot be null.</param>
     /// <param name="multiplier">Worker count multiplier (default: 1).</param>
     /// <returns>The configured options for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when multiplier is less than 1.</exception>
     public static DotnetSqliteCrudGeneratorOptions WithProcessorBasedWorkerCount(
         this DotnetSqliteCrudGeneratorOptions options,
@@ -125,9 +132,9 @@ public static class DotnetSqliteCrudGeneratorOptionsExtensions
     /// Validates the configuration and throws a <see cref="ValidationException"/>
     /// with a formatted error message containing all validation failures.
     /// </summary>
-    /// <param name="options">The options to validate.</param>
+    /// <param name="options">The options to validate. Cannot be null.</param>
     /// <exception cref="ValidationException">Thrown when validation fails with all error messages.</exception>
-    /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
     public static void ValidateWithDetails(this DotnetSqliteCrudGeneratorOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -151,9 +158,9 @@ public static class DotnetSqliteCrudGeneratorOptionsExtensions
     /// Creates a new instance with all settings copied from the current instance.
     /// Useful for creating variations of a base configuration.
     /// </summary>
-    /// <param name="options">The source options to clone.</param>
+    /// <param name="options">The source options to clone. Cannot be null.</param>
     /// <returns>A deep copy of the options.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when options is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
     public static DotnetSqliteCrudGeneratorOptions Clone(this DotnetSqliteCrudGeneratorOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
