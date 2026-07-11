@@ -3,7 +3,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Collections.Generic;
 using System.Linq;
@@ -23,19 +23,23 @@ public static class ExternalApiClientExtensions
     /// Returns a default value instead of throwing on failure.
     /// </summary>
     /// <typeparam name="T">Response type</typeparam>
-    /// <param name="client">The API client</param>
-    /// <param name="endpoint">API endpoint</param>
-    /// <param name="maxRetries">Maximum retry attempts (default: 3)</param>
-    /// <returns>Response data or null if failed after retries</returns>
-    public static async Task<T?> GetWithRetryAsync<T>(this ExternalApiClient client, string endpoint, int maxRetries = 3)
+    /// <param name="client">The API client instance. Cannot be null.</param>
+    /// <param name="endpoint">API endpoint. Cannot be null or empty.</param>
+    /// <param name="maxRetries">Maximum retry attempts (default: 3). Must be non-negative.</param>
+    /// <returns>Response data or null if failed after retries.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="client"/> or <paramref name="endpoint"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="endpoint"/> is empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="maxRetries"/> is negative.</exception>
+    public static async Task<T?> GetWithRetryAsync<T>(
+        this ExternalApiClient client,
+        string endpoint,
+        int maxRetries = 3)
     {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
-        if (string.IsNullOrEmpty(endpoint))
-            throw new ArgumentException("Endpoint cannot be null or empty", nameof(endpoint));
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrEmpty(endpoint);
+        ArgumentOutOfRangeException.ThrowIfNegative(maxRetries);
 
-        int retryCount = 0;
-        while (retryCount <= maxRetries)
+        for (int retryCount = 0; retryCount <= maxRetries; retryCount++)
         {
             try
             {
@@ -43,8 +47,7 @@ public static class ExternalApiClientExtensions
             }
             catch (ApiClientException) when (retryCount < maxRetries)
             {
-                retryCount++;
-                await Task.Delay(100 * retryCount); // Exponential backoff
+                await Task.Delay(100 * (retryCount + 1)); // Exponential backoff starting from 100ms
             }
         }
 
@@ -55,22 +58,30 @@ public static class ExternalApiClientExtensions
     /// Safely executes a GET collection request with automatic retry on transient failures.
     /// Returns an empty list instead of throwing on failure.
     /// </summary>
-    /// <typeparam name="T">Item type in collection</typeparam>
-    /// <param name="client">The API client</param>
-    /// <param name="endpoint">API endpoint</param>
-    /// <param name="page">Page number (default: 1)</param>
-    /// <param name="pageSize">Items per page (default: 50)</param>
-    /// <param name="maxRetries">Maximum retry attempts (default: 3)</param>
-    /// <returns>Collection of items or empty list if failed</returns>
-    public static async Task<List<T>> GetCollectionWithRetryAsync<T>(this ExternalApiClient client, string endpoint, int page = 1, int pageSize = 50, int maxRetries = 3)
+    /// <typeparam name="T">Item type in collection.</typeparam>
+    /// <param name="client">The API client instance. Cannot be null.</param>
+    /// <param name="endpoint">API endpoint. Cannot be null or empty.</param>
+    /// <param name="page">Page number (default: 1). Must be positive.</param>
+    /// <param name="pageSize">Items per page (default: 50). Must be positive.</param>
+    /// <param name="maxRetries">Maximum retry attempts (default: 3). Must be non-negative.</param>
+    /// <returns>Collection of items or empty list if failed.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="client"/> or <paramref name="endpoint"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="endpoint"/> is empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="page"/>, <paramref name="pageSize"/>, or <paramref name="maxRetries"/> is negative.</exception>
+    public static async Task<List<T>> GetCollectionWithRetryAsync<T>(
+        this ExternalApiClient client,
+        string endpoint,
+        int page = 1,
+        int pageSize = 50,
+        int maxRetries = 3)
     {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
-        if (string.IsNullOrEmpty(endpoint))
-            throw new ArgumentException("Endpoint cannot be null or empty", nameof(endpoint));
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrEmpty(endpoint);
+        ArgumentOutOfRangeException.ThrowIfNegative(page);
+        ArgumentOutOfRangeException.ThrowIfNegative(pageSize);
+        ArgumentOutOfRangeException.ThrowIfNegative(maxRetries);
 
-        int retryCount = 0;
-        while (retryCount <= maxRetries)
+        for (int retryCount = 0; retryCount <= maxRetries; retryCount++)
         {
             try
             {
@@ -79,8 +90,7 @@ public static class ExternalApiClientExtensions
             }
             catch (ApiClientException) when (retryCount < maxRetries)
             {
-                retryCount++;
-                await Task.Delay(100 * retryCount); // Exponential backoff
+                await Task.Delay(100 * (retryCount + 1)); // Exponential backoff starting from 100ms
             }
         }
 
@@ -90,52 +100,60 @@ public static class ExternalApiClientExtensions
     /// <summary>
     /// Executes a GET request and automatically handles pagination to retrieve all items.
     /// </summary>
-    /// <typeparam name="T">Item type in collection</typeparam>
-    /// <param name="client">The API client</param>
-    /// <param name="endpoint">API endpoint</param>
-    /// <param name="pageSize">Items per page (default: 100)</param>
-    /// <returns>Flattened list of all items across all pages</returns>
-    public static async Task<List<T>> GetAllPagesAsync<T>(this ExternalApiClient client, string endpoint, int pageSize = 100)
+    /// <typeparam name="T">Item type in collection.</typeparam>
+    /// <param name="client">The API client instance. Cannot be null.</param>
+    /// <param name="endpoint">API endpoint. Cannot be null or empty.</param>
+    /// <param name="pageSize">Items per page (default: 100). Must be positive.</param>
+    /// <returns>Flattened list of all items across all pages.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="client"/> or <paramref name="endpoint"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="endpoint"/> is empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="pageSize"/> is not positive.</exception>
+    public static async Task<List<T>> GetAllPagesAsync<T>(
+        this ExternalApiClient client,
+        string endpoint,
+        int pageSize = 100)
     {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
-        if (string.IsNullOrEmpty(endpoint))
-            throw new ArgumentException("Endpoint cannot be null or empty", nameof(endpoint));
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrEmpty(endpoint);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
 
         var allItems = new List<T>();
         int currentPage = 1;
-        bool hasMore = true;
 
-        while (hasMore)
+        while (true)
         {
             var items = await client.GetCollectionAsync<T>(endpoint, currentPage, pageSize);
 
-            if (items == null || items.Count == 0)
+            if (items is null || items.Count == 0)
             {
-                hasMore = false;
+                break;
             }
-            else
-            {
-                allItems.AddRange(items);
-                currentPage++;
-            }
+
+            allItems.AddRange(items);
+            currentPage++;
         }
 
         return allItems;
     }
 
-
     /// <summary>
     /// Executes a health check with custom timeout and returns detailed status.
     /// </summary>
-    /// <param name="client">The API client</param>
-    /// <param name="healthEndpoint">Health check endpoint (default: "/health")</param>
-    /// <param name="timeoutMilliseconds">Request timeout in milliseconds</param>
-    /// <returns>Health check result with status and response time</returns>
-    public static async Task<HealthCheckResult> DetailedHealthCheckAsync(this ExternalApiClient client, string healthEndpoint = "/health", int timeoutMilliseconds = 5000)
+    /// <param name="client">The API client instance. Cannot be null.</param>
+    /// <param name="healthEndpoint">Health check endpoint (default: "/health"). Cannot be null or empty.</param>
+    /// <param name="timeoutMilliseconds">Request timeout in milliseconds (default: 5000). Must be positive.</param>
+    /// <returns>Health check result with status and response time.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="client"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="healthEndpoint"/> is null or empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="timeoutMilliseconds"/> is not positive.</exception>
+    public static async Task<HealthCheckResult> DetailedHealthCheckAsync(
+        this ExternalApiClient client,
+        string healthEndpoint = "/health",
+        int timeoutMilliseconds = 5000)
     {
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrEmpty(healthEndpoint);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeoutMilliseconds, 0);
 
         var result = new HealthCheckResult();
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
