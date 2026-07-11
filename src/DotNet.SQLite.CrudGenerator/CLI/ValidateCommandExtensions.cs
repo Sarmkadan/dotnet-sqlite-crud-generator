@@ -20,18 +20,12 @@ public static class ValidateCommandExtensions
     /// <param name="command">The validate command instance.</param>
     /// <param name="modelType">The model type to validate.</param>
     /// <param name="strict">Whether to use strict validation mode.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="command"/> or <paramref name="modelType"/> is <see langword="null"/>.</exception>
     /// <returns>List of validation results for the specified model.</returns>
     public static List<ValidationResult> ValidateModel(this ValidateCommand command, Type modelType, bool strict = false)
     {
-        if (command is null)
-        {
-            throw new ArgumentNullException(nameof(command));
-        }
-
-        if (modelType is null)
-        {
-            throw new ArgumentNullException(nameof(modelType));
-        }
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(modelType);
 
         var results = new List<ValidationResult>();
 
@@ -113,13 +107,11 @@ public static class ValidateCommandExtensions
     /// </summary>
     /// <param name="command">The validate command instance.</param>
     /// <param name="strict">Whether to use strict validation mode.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="command"/> is <see langword="null"/>.</exception>
     /// <returns>List of all validation results.</returns>
     public static List<ValidationResult> ValidateAllModels(this ValidateCommand command, bool strict = false)
     {
-        if (command is null)
-        {
-            throw new ArgumentNullException(nameof(command));
-        }
+        ArgumentNullException.ThrowIfNull(command);
 
         var results = new List<ValidationResult>();
         var assembly = Assembly.GetExecutingAssembly();
@@ -140,30 +132,26 @@ public static class ValidateCommandExtensions
     /// <summary>
     /// Filters validation results to only include those with Error severity.
     /// </summary>
-    /// <param name="command">The validate command instance.</param>
+    /// <param name="results">The validation results to filter.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="results"/> is <see langword="null"/>.</exception>
     /// <returns>List of validation results with Error severity.</returns>
-    public static List<ValidationResult> GetErrors(this ValidateCommand command)
+    public static List<ValidationResult> GetErrors(this List<ValidationResult> results)
     {
-        if (command is null)
-        {
-            throw new ArgumentNullException(nameof(command));
-        }
+        ArgumentNullException.ThrowIfNull(results);
 
-        return new List<ValidationResult>();
+        return results.Where(r => r.Severity == ValidationSeverity.Error).ToList();
     }
 
     /// <summary>
     /// Filters validation results to only include those with Warning severity.
     /// </summary>
-    /// <param name="command">The validate command instance.</param>
+    /// <param name="results">The validation results to filter.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="results"/> is <see langword="null"/>.</exception>
     /// <returns>List of validation results with Warning severity.</returns>
-    public static List<ValidationResult> GetWarnings(this ValidateCommand command)
+    public static List<ValidationResult> GetWarnings(this List<ValidationResult> results)
     {
-        if (command is null)
-        {
-            throw new ArgumentNullException(nameof(command));
-        }
+        ArgumentNullException.ThrowIfNull(results);
 
-        return new List<ValidationResult>();
+        return results.Where(r => r.Severity == ValidationSeverity.Warning).ToList();
     }
 }
