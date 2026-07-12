@@ -12,18 +12,22 @@ using FluentAssertions.Primitives; // Added
 using NSubstitute;
 using Xunit;
 
-namespace DotNet.SQLite.CrudGenerator.Tests;
-
+/// <summary>
+/// Tests for the UserService class.
+/// </summary>
 public sealed class UserServiceTests
 {
-    private readonly IRepository<User, int> _userRepoMock = Substitute.For<IRepository<User, int>>();
-    private readonly UserService _userService;
-
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UserServiceTests"/> class.
+    /// </summary>
     public UserServiceTests()
     {
         _userService = new UserService(_userRepoMock);
     }
 
+    /// <summary>
+    /// Tests that GetAsync returns the user from the repository when the id is valid.
+    /// </summary>
     [Fact]
     public async Task GetAsync_WithValidId_ReturnsUserFromRepository()
     {
@@ -39,6 +43,9 @@ public sealed class UserServiceTests
         await _userRepoMock.Received(1).GetByIdAsync(1, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Tests that GetAsync returns null when the id is not valid.
+    /// </summary>
     [Fact]
     public async Task GetAsync_WithNonExistentId_ReturnsNull()
     {
@@ -53,6 +60,9 @@ public sealed class UserServiceTests
         await _userRepoMock.Received(1).GetByIdAsync(99, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Tests that GetAllAsync returns all users from the repository.
+    /// </summary>
     [Fact]
     public async Task GetAllAsync_ReturnsAllUsersFromRepository()
     {
@@ -72,6 +82,9 @@ public sealed class UserServiceTests
         await _userRepoMock.Received(1).GetAllAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Tests that CreateAsync adds the user through the repository.
+    /// </summary>
     [Fact]
     public async Task CreateAsync_AddsUserThroughRepository()
     {
@@ -87,6 +100,9 @@ public sealed class UserServiceTests
         await _userRepoMock.Received(1).AddAsync(newUser, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Tests that UpdateAsync updates the user through the repository.
+    /// </summary>
     [Fact]
     public async Task UpdateAsync_UpdatesUserThroughRepository()
     {
@@ -103,6 +119,9 @@ public sealed class UserServiceTests
         await _userRepoMock.Received(1).UpdateAsync(updatedUser, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Tests that DeleteAsync deletes the user through the repository.
+    /// </summary>
     [Fact]
     public async Task DeleteAsync_DeletesUserThroughRepository()
     {
@@ -116,4 +135,7 @@ public sealed class UserServiceTests
         result.Should().BeTrue();
         await _userRepoMock.Received(1).DeleteAsync(1, Arg.Any<CancellationToken>());
     }
+
+    private readonly IRepository<User, int> _userRepoMock = Substitute.For<IRepository<User, int>>();
+    private readonly UserService _userService;
 }
