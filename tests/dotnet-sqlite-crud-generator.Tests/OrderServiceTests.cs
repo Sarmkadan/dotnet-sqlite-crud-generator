@@ -14,142 +14,185 @@ using Xunit;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
+/// <summary>
+/// Contains unit tests for the <see cref="OrderService"/> class.
+/// Tests the CRUD operations and business logic for order management.
+/// </summary>
 public sealed class OrderServiceTests
 {
-    private readonly IRepository<Order, int> _orderRepoMock = Substitute.For<IRepository<Order, int>>();
-    private readonly IRepository<User, int> _userRepoMock = Substitute.For<IRepository<User, int>>();
-    private readonly IRepository<AuditLog, int> _auditLogRepoMock = Substitute.For<IRepository<AuditLog, int>>();
-    private readonly OrderService _orderService;
+	/// <summary>
+	/// Mock repository for testing order operations.
+	/// </summary>
+	private readonly IRepository<Order, int> _orderRepoMock = Substitute.For<IRepository<Order, int>>();
 
-    public OrderServiceTests()
-    {
-        _orderService = new OrderService(_orderRepoMock, _userRepoMock, _auditLogRepoMock);
-    }
+	/// <summary>
+	/// Mock repository for testing user operations.
+	/// </summary>
+	private readonly IRepository<User, int> _userRepoMock = Substitute.For<IRepository<User, int>>();
 
-    [Fact]
-    public async Task GetAsync_WithValidId_ReturnsOrderFromRepository()
-    {
-        // Arrange
-        var expectedOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
-        _orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(expectedOrder));
+	/// <summary>
+	/// Mock repository for testing audit logging operations.
+	/// </summary>
+	private readonly IRepository<AuditLog, int> _auditLogRepoMock = Substitute.For<IRepository<AuditLog, int>>();
 
-        // Act
-        var result = await _orderService.GetAsync(1);
+	/// <summary>
+	/// The service under test that coordinates order operations with repositories.
+	/// </summary>
+	private readonly OrderService _orderService;
 
-        // Assert
-        result.Should().Be(expectedOrder);
-        await _orderRepoMock.Received(1).GetByIdAsync(1, Arg.Any<CancellationToken>());
-    }
+	/// <summary>
+	/// Initializes a new instance of the <see cref="OrderServiceTests"/> class with mock repositories.
+	/// </summary>
+	public OrderServiceTests()
+	{
+		_orderService = new OrderService(_orderRepoMock, _userRepoMock, _auditLogRepoMock);
+	}
 
-    [Fact]
-    public async Task GetAllAsync_ReturnsAllOrdersFromRepository()
-    {
-        // Arrange
-        var orders = new List<Order>
-        {
-            new() { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" },
-            new() { Id = 2, UserId = 2, TotalAmount = 200m, OrderNumber = "ORD-002" }
-        };
-        _orderRepoMock.GetAllAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(orders.AsEnumerable()));
+	[Fact]
+	/// <summary>
+	/// Tests that GetAsync returns the expected order when a valid ID is provided.
+	/// </summary>
+	public async Task GetAsync_WithValidId_ReturnsOrderFromRepository()
+	{
+		// Arrange
+		var expectedOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
+		_orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(expectedOrder));
 
-        // Act
-        var result = await _orderService.GetAllAsync();
+		// Act
+		var result = await _orderService.GetAsync(1);
 
-        // Assert
-        result.Should().BeEquivalentTo(orders);
-        await _orderRepoMock.Received(1).GetAllAsync(Arg.Any<CancellationToken>());
-    }
+		// Assert
+		result.Should().Be(expectedOrder);
+		await _orderRepoMock.Received(1).GetByIdAsync(1, Arg.Any<CancellationToken>());
+	}
 
-    [Fact]
-    public async Task CreateAsync_AddsOrderThroughRepositoryAndLogsAudit()
-    {
-        // Arrange
-        var newOrder = new Order { UserId = 1, TotalAmount = 150m, OrderNumber = "ORD-003" };
-        var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
-        _userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(user));
-        _orderRepoMock.AddAsync(newOrder, Arg.Any<CancellationToken>()).Returns(Task.FromResult(newOrder));
-        _auditLogRepoMock.AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(new AuditLog { EntityType = "Order", EntityId = 1, ChangedByUserId = 1 }));
+	[Fact]
+	/// <summary>
+	/// Tests that GetAllAsync returns all orders from the repository.
+	/// </summary>
+	public async Task GetAllAsync_ReturnsAllOrdersFromRepository()
+	{
+		// Arrange
+		var orders = new List<Order>
+		{
+			new() { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" },
+			new() { Id = 2, UserId = 2, TotalAmount = 200m, OrderNumber = "ORD-002" }
+		};
+		_orderRepoMock.GetAllAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(orders.AsEnumerable()));
 
-        // Act
-        var result = await _orderService.CreateAsync(newOrder);
+		// Act
+		var result = await _orderService.GetAllAsync();
 
-        // Assert
-        result.Should().Be(newOrder);
-        await _orderRepoMock.Received(1).AddAsync(newOrder, Arg.Any<CancellationToken>());
-        await _auditLogRepoMock.Received(1).AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>());
-    }
+		// Assert
+		result.Should().BeEquivalentTo(orders);
+		await _orderRepoMock.Received(1).GetAllAsync(Arg.Any<CancellationToken>());
+	}
 
-    [Fact]
-    public async Task UpdateAsync_UpdatesOrderThroughRepositoryAndLogsAudit()
-    {
-        // Arrange
-        var existingOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
-        var updatedOrder = new Order { Id = 1, UserId = 1, TotalAmount = 200m, OrderNumber = "ORD-001" };
-        var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
+	[Fact]
+	/// <summary>
+	/// Tests that CreateAsync adds an order through the repository and logs an audit entry.
+	/// </summary>
+	public async Task CreateAsync_AddsOrderThroughRepositoryAndLogsAudit()
+	{
+		// Arrange
+		var newOrder = new Order { UserId = 1, TotalAmount = 150m, OrderNumber = "ORD-003" };
+		var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
+		_userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(user));
+		_orderRepoMock.AddAsync(newOrder, Arg.Any<CancellationToken>()).Returns(Task.FromResult(newOrder));
+		_auditLogRepoMock.AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(new AuditLog { EntityType = "Order", EntityId = 1, ChangedByUserId = 1 }));
 
-        _orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(existingOrder));
-        _userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(user));
-        _orderRepoMock.UpdateAsync(updatedOrder, Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
-        _auditLogRepoMock.AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(new AuditLog { EntityType = "Order", EntityId = 1, ChangedByUserId = 1 }));
+		// Act
+		var result = await _orderService.CreateAsync(newOrder);
 
-        // Act
-        var result = await _orderService.UpdateAsync(updatedOrder);
+		// Assert
+		result.Should().Be(newOrder);
+		await _orderRepoMock.Received(1).AddAsync(newOrder, Arg.Any<CancellationToken>());
+		await _auditLogRepoMock.Received(1).AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>());
+	}
 
-        // Assert
-        result.Should().BeTrue();
-        await _orderRepoMock.Received(1).UpdateAsync(updatedOrder, Arg.Any<CancellationToken>());
-        await _auditLogRepoMock.Received(1).AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>());
-    }
+	[Fact]
+	/// <summary>
+	/// Tests that UpdateAsync updates an existing order through the repository and logs an audit entry.
+	/// </summary>
+	public async Task UpdateAsync_UpdatesOrderThroughRepositoryAndLogsAudit()
+	{
+		// Arrange
+		var existingOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
+		var updatedOrder = new Order { Id = 1, UserId = 1, TotalAmount = 200m, OrderNumber = "ORD-001" };
+		var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
 
-    [Fact]
-    public async Task DeleteAsync_DeletesOrderThroughRepositoryAndLogsAudit()
-    {
-        // Arrange
-        var existingOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
-        var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
+		_orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(existingOrder));
+		_userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(user));
+		_orderRepoMock.UpdateAsync(updatedOrder, Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
+		_auditLogRepoMock.AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(new AuditLog { EntityType = "Order", EntityId = 1, ChangedByUserId = 1 }));
 
-        _orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(existingOrder));
-        _userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(user));
-        _orderRepoMock.DeleteAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
-        _auditLogRepoMock.AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(new AuditLog { EntityType = "Order", EntityId = 1, ChangedByUserId = 1 }));
+		// Act
+		var result = await _orderService.UpdateAsync(updatedOrder);
 
-        // Act
-        var result = await _orderService.DeleteAsync(1);
+		// Assert
+		result.Should().BeTrue();
+		await _orderRepoMock.Received(1).UpdateAsync(updatedOrder, Arg.Any<CancellationToken>());
+		await _auditLogRepoMock.Received(1).AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>());
+	}
 
-        // Assert
-        result.Should().BeTrue();
-        await _orderRepoMock.Received(1).DeleteAsync(1, Arg.Any<CancellationToken>());
-        await _auditLogRepoMock.Received(1).AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>());
-    }
+	[Fact]
+	/// <summary>
+	/// Tests that DeleteAsync deletes an order through the repository and logs an audit entry.
+	/// </summary>
+	public async Task DeleteAsync_DeletesOrderThroughRepositoryAndLogsAudit()
+	{
+		// Arrange
+		var existingOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
+		var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
 
-    [Fact]
-    public async Task CreateAsync_WithNonExistentUser_ThrowsArgumentException()
-    {
-        // Arrange
-        var newOrder = new Order { UserId = 99, TotalAmount = 150m, OrderNumber = "ORD-004" };
-        _userRepoMock.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns(Task.FromResult((User)null!));
+		_orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(existingOrder));
+		_userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(user));
+		_orderRepoMock.DeleteAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(true));
+		_auditLogRepoMock.AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(new AuditLog { EntityType = "Order", EntityId = 1, ChangedByUserId = 1 }));
 
-        // Act
-        var act = async () => await _orderService.CreateAsync(newOrder);
+		// Act
+		var result = await _orderService.DeleteAsync(1);
 
-        // Assert
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*User with ID 99 not found*");
-    }
+		// Assert
+		result.Should().BeTrue();
+		await _orderRepoMock.Received(1).DeleteAsync(1, Arg.Any<CancellationToken>());
+		await _auditLogRepoMock.Received(1).AddAsync(Arg.Any<AuditLog>(), Arg.Any<CancellationToken>());
+	}
 
-    [Fact]
-    public async Task UpdateAsync_WithNonExistentOrder_ReturnsFalse()
-    {
-        // Arrange
-        var updatedOrder = new Order { Id = 99, UserId = 1, TotalAmount = 200m, OrderNumber = "ORD-005" };
-        _orderRepoMock.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns(Task.FromResult((Order)null!));
+	[Fact]
+	/// <summary>
+	/// Tests that CreateAsync throws an ArgumentException when attempting to create an order with a non-existent user.
+	/// </summary>
+	public async Task CreateAsync_WithNonExistentUser_ThrowsArgumentException()
+	{
+		// Arrange
+		var newOrder = new Order { UserId = 99, TotalAmount = 150m, OrderNumber = "ORD-004" };
+		_userRepoMock.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns(Task.FromResult((User)null!));
 
-        // Act
-        var result = await _orderService.UpdateAsync(updatedOrder);
+		// Act
+		var act = async () => await _orderService.CreateAsync(newOrder);
 
-        // Assert
-        result.Should().BeFalse();
-        await _orderRepoMock.Received(1).GetByIdAsync(99, Arg.Any<CancellationToken>());
-        await _orderRepoMock.DidNotReceive().UpdateAsync(Arg.Any<Order>(), Arg.Any<CancellationToken>());
-    }
+		// Assert
+		await act.Should().ThrowAsync<ArgumentException>()
+			.WithMessage("*User with ID 99 not found*");
+	}
+
+	[Fact]
+	/// <summary>
+	/// Tests that UpdateAsync returns false when attempting to update a non-existent order.
+	/// </summary>
+	public async Task UpdateAsync_WithNonExistentOrder_ReturnsFalse()
+	{
+		// Arrange
+		var updatedOrder = new Order { Id = 99, UserId = 1, TotalAmount = 200m, OrderNumber = "ORD-005" };
+		_orderRepoMock.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns(Task.FromResult((Order)null!));
+
+		// Act
+		var result = await _orderService.UpdateAsync(updatedOrder);
+
+		// Assert
+		result.Should().BeFalse();
+		await _orderRepoMock.Received(1).GetByIdAsync(99, Arg.Any<CancellationToken>());
+		await _orderRepoMock.DidNotReceive().UpdateAsync(Arg.Any<Order>(), Arg.Any<CancellationToken>());
+	}
 }
