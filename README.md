@@ -128,3 +128,37 @@ public class Demo
     }
 }
 ```
+
+## DataExportServiceExtensions
+
+The `DataExportServiceExtensions` class provides extension methods for exporting data in various formats. It allows you to export data as JSON, CSV, or byte arrays, and also supports exporting to multiple files. 
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+
+public class Demo
+{
+    public async Task RunAsync()
+    {
+        var data = new[] { new { Id = 1, Name = "John" }, new { Id = 2, Name = "Jane" } };
+
+        // Export data as JSON
+        var jsonData = await DataExportServiceExtensions.ExportAsJsonAsync(data);
+        Console.WriteLine(jsonData);
+
+        // Export data as CSV
+        var csvData = await DataExportServiceExtensions.ExportAsCsvAsync(data);
+        Console.WriteLine(csvData);
+
+        // Export data to multiple files
+        var exportResult = await DataExportServiceExtensions.ExportToMultipleFilesAsync(data);
+        foreach (var file in exportResult)
+        {
+            Console.WriteLine($"{file.Key}: {file.Value}");
+        }
+    }
+}
+``` 
+```
