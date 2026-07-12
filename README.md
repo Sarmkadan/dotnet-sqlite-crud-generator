@@ -85,3 +85,46 @@ public class Demo
     }
 }
 ```
+
+## UserServiceExtensions
+
+`UserServiceExtensions` provides a collection of helper methods for retrieving and querying `User` entities. It includes operations to fetch users by email or username, check for existence, obtain active or verified users, filter users by creation date, and count active or verified users.
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+
+public class Demo
+{
+    public async Task RunAsync()
+    {
+        var email = "user@example.com";
+        var username = "johndoe";
+
+        // Retrieve a user by email or username
+        var userByEmail = await UserServiceExtensions.GetByEmailAsync(email);
+        var userByUsername = await UserServiceExtensions.GetByUsernameAsync(username);
+
+        // Check whether a user exists for a given email
+        bool exists = await UserServiceExtensions.ExistsByEmailAsync(email);
+
+        // Get collections of users
+        IEnumerable<User> activeUsers = await UserServiceExtensions.GetActiveUsersAsync();
+        IEnumerable<User> verifiedUsers = await UserServiceExtensions.GetVerifiedUsersAsync();
+        IEnumerable<User> recentUsers = await UserServiceExtensions.GetUsersByCreationDateAsync();
+
+        // Count users
+        int activeCount = await UserServiceExtensions.CountActiveUsersAsync();
+        int verifiedCount = await UserServiceExtensions.CountVerifiedUsersAsync();
+
+        // Example output
+        Console.WriteLine($"User by email: {userByEmail?.Id}");
+        Console.WriteLine($"User by username: {userByUsername?.Id}");
+        Console.WriteLine($"Exists by email: {exists}");
+        Console.WriteLine($"Active users count: {activeCount}");
+        Console.WriteLine($"Verified users count: {verifiedCount}");
+    }
+}
+```
