@@ -11,17 +11,28 @@ using DotNet.SQLite.CrudGenerator.Services;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
+/// <summary>
+/// Tests for the <see cref="MigrationDiffService"/> class, verifying schema generation,
+/// diff computation, and actual schema retrieval against an in‑memory SQLite database.
+/// </summary>
 public sealed class MigrationDiffServiceTests : IDisposable
 {
     private readonly DatabaseConnection _db;
     private readonly MigrationDiffService _sut;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MigrationDiffServiceTests"/> class,
+    /// creating an in‑memory database connection and the service under test.
+    /// </summary>
     public MigrationDiffServiceTests()
     {
         _db = new DatabaseConnection("Data Source=:memory:");
         _sut = new MigrationDiffService(_db);
     }
 
+    /// <summary>
+    /// Disposes the in‑memory database connection after each test.
+    /// </summary>
     public void Dispose() => _db.Dispose();
 
     // ---------- helper entity classes ----------
@@ -43,6 +54,10 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
     // ---------- GetExpectedSchema ----------
 
+    /// <summary>
+    /// Verifies that <see cref="MigrationDiffService.GetExpectedSchema(Type)"/> returns
+    /// the correct SQLite column types for a simple entity.
+    /// </summary>
     [Fact]
     public void GetExpectedSchema_ReturnsCorrectColumnTypes()
     {
@@ -59,6 +74,9 @@ public sealed class MigrationDiffServiceTests : IDisposable
         schema["Price"].SqliteType.Should().Be("REAL");
     }
 
+    /// <summary>
+    /// Ensures that non‑nullable value types are marked as NOT NULL in the expected schema.
+    /// </summary>
     [Fact]
     public void GetExpectedSchema_NonNullableValueTypeIsMarkedNotNull()
     {
@@ -70,6 +88,9 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
     // ---------- ComputeDiffAsync — table does not exist ----------
 
+    /// <summary>
+    /// When the target table does not exist, all columns should be reported as added.
+    /// </summary>
     [Fact]
     public async Task ComputeDiffAsync_AllColumnsMarkedAdded_WhenTableDoesNotExist()
     {
@@ -82,6 +103,9 @@ public sealed class MigrationDiffServiceTests : IDisposable
             .Should().Contain(["Id", "Name", "Price"]);
     }
 
+    /// <summary>
+    /// The alter script for a non‑existent table should contain an ADD COLUMN statement.
+    /// </summary>
     [Fact]
     public async Task ComputeDiffAsync_AlterScriptContainsAddColumn_WhenTableDoesNotExist()
     {
@@ -93,6 +117,9 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
     // ---------- ComputeDiffAsync — schema matches ----------
 
+    /// <summary>
+    /// When the database schema matches the model, the diff reports up‑to‑date.
+    /// </summary>
     [Fact]
     public async Task ComputeDiffAsync_IsUpToDate_WhenSchemaMatchesModel()
     {
@@ -109,6 +136,9 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
     // ---------- ComputeDiffAsync — column added ----------
 
+    /// <summary>
+    /// Detects a column that exists in the model but not in the database.
+    /// </summary>
     [Fact]
     public async Task ComputeDiffAsync_DetectsAddedColumn()
     {
@@ -127,6 +157,9 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
     // ---------- ComputeDiffAsync — column removed ----------
 
+    /// <summary>
+    /// Detects a column that exists in the database but not in the model.
+    /// </summary>
     [Fact]
     public async Task ComputeDiffAsync_DetectsRemovedColumn()
     {
@@ -144,6 +177,9 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
     // ---------- ComputeDiffAsync — type changed ----------
 
+    /// <summary>
+    /// Detects a column whose SQLite type differs from the model's expected type.
+    /// </summary>
     [Fact]
     public async Task ComputeDiffAsync_DetectsTypeChange()
     {
@@ -161,6 +197,10 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
     // ---------- GetActualSchemaAsync — empty when table missing ----------
 
+    /// <summary>
+    /// When the specified table does not exist, <see cref="MigrationDiffService.GetActualSchemaAsync(string)"/>
+    /// returns an empty dictionary.
+    /// </summary>
     [Fact]
     public async Task GetActualSchemaAsync_ReturnsEmptyDictionary_WhenTableMissing()
     {
