@@ -12,11 +12,17 @@ using DotNet.SQLite.CrudGenerator.Services;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
+/// <summary>
+/// Tests for the AuditTrailService class.
+/// </summary>
 public sealed class AuditTrailServiceTests : IDisposable
 {
     private readonly DatabaseConnection _db;
     private readonly AuditTrailService _sut;
 
+    /// <summary>
+    /// Initializes a new instance of the AuditTrailServiceTests class.
+    /// </summary>
     public AuditTrailServiceTests()
     {
         _db = new DatabaseConnection("Data Source=:memory:");
@@ -24,10 +30,17 @@ public sealed class AuditTrailServiceTests : IDisposable
         _db.InitializeDatabaseAsync(false).GetAwaiter().GetResult();
     }
 
+    /// <summary>
+    /// Disposes of the database connection.
+    /// </summary>
     public void Dispose() => _db.Dispose();
 
     // ---------- RecordAsync ----------
 
+    /// <summary>
+    /// Tests that RecordAsync persists an entry to the database.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task RecordAsync_PersistsEntryToDatabase()
     {
@@ -43,6 +56,10 @@ public sealed class AuditTrailServiceTests : IDisposable
         results[0].NewValues.Should().Be("{\"Name\":\"Widget\"}");
     }
 
+    /// <summary>
+    /// Tests that RecordAsync throws an exception when the entity type is empty.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task RecordAsync_ThrowsOnEmptyEntityType()
     {
@@ -52,6 +69,10 @@ public sealed class AuditTrailServiceTests : IDisposable
         await act.Should().ThrowAsync<ArgumentException>();
     }
 
+    /// <summary>
+    /// Tests that RecordAsync serializes objects to JSON.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task RecordAsync_Generic_SerializesObjectsToJson()
     {
@@ -68,6 +89,10 @@ public sealed class AuditTrailServiceTests : IDisposable
 
     // ---------- QueryAsync ----------
 
+    /// <summary>
+    /// Tests that QueryAsync filters on operation type.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task QueryAsync_FiltersOnOperationType()
     {
@@ -85,6 +110,10 @@ public sealed class AuditTrailServiceTests : IDisposable
         creates[0].OperationType.Should().Be(OperationType.Create);
     }
 
+    /// <summary>
+    /// Tests that QueryAsync respects the date range.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task QueryAsync_RespectsDateRange()
     {
@@ -101,6 +130,10 @@ public sealed class AuditTrailServiceTests : IDisposable
 
     // ---------- GetEntityTrailAsync ----------
 
+    /// <summary>
+    /// Tests that GetEntityTrailAsync returns only the matching entity.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GetEntityTrailAsync_ReturnsOnlyMatchingEntity()
     {
@@ -114,6 +147,11 @@ public sealed class AuditTrailServiceTests : IDisposable
 
     // ---------- GetRecentAsync ----------
 
+    /// <summary>
+    /// Tests that GetRecentAsync respects the limit.
+    /// </summary>
+    /// <param name="limit">The maximum number of records to return.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GetRecentAsync_RespectsLimit()
     {
@@ -127,6 +165,11 @@ public sealed class AuditTrailServiceTests : IDisposable
 
     // ---------- PurgeAsync ----------
 
+    /// <summary>
+    /// Tests that PurgeAsync deletes old entries.
+    /// </summary>
+    /// <param name="before">The date before which entries are deleted.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task PurgeAsync_DeletesOldEntries()
     {
@@ -141,6 +184,10 @@ public sealed class AuditTrailServiceTests : IDisposable
 
     // ---------- GetSummaryAsync ----------
 
+    /// <summary>
+    /// Tests that GetSummaryAsync returns the correct totals.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     [Fact]
     public async Task GetSummaryAsync_ReturnsCorrectTotals()
     {
