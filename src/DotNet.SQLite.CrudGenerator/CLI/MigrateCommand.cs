@@ -17,6 +17,7 @@ public sealed class MigrateCommand : ICommand
 {
     private string _direction = "up";
     private string _migrationsPath = "./Migrations";
+    private string _connectionString = "Data Source=crudgenerator.db";
     private bool _dryRun = false;
     private bool _verbose = false;
 
@@ -48,12 +49,46 @@ public sealed class MigrateCommand : ICommand
                 return 0;
             }
 
+            using var db = new DatabaseConnection(_connectionString);
+            await db.OpenAsync();
+            await EnsureMigrationsTableAsync(db);
+
             foreach (var migration in migrations)
             {
                 if (_verbose)
                     Console.WriteLine($"Applying migration: {migration}");
 
-                // In a real implementation, would execute the migration script
+                var fullPath = Path.Combine(_migrationsPath, migration);
+                var script = await File.ReadAllTextAsync(fullPath);
+
+                using (var transaction = db.Connection.BeginTransaction())
+                {
+                    using (var command = db.Connection.CreateCommand())
+                    {
+                        command.Transaction = transaction;
+                        command.CommandText = script;
+                        await command.ExecuteNonQueryAsync();
+                    }
+
+                    using (var trackCommand = db.Connection.CreateCommand())
+                    {
+                        trackCommand.Transaction = transaction;
+                        if (_direction == "up")
+                        {
+                            trackCommand.CommandText = "INSERT OR REPLACE INTO schema_migrations (name, applied_at) VALUES (@name, @appliedAt)";
+                            trackCommand.Parameters.AddWithValue("@appliedAt", DateTime.UtcNow.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+                        }
+                        else
+                        {
+                            trackCommand.CommandText = "DELETE FROM schema_migrations WHERE name = @name";
+                        }
+                        trackCommand.Parameters.AddWithValue("@name", migration);
+                        await trackCommand.ExecuteNonQueryAsync();
+                    }
+
+                    transaction.Commit();
+                }
+
                 Console.WriteLine($"✓ Applied: {migration}");
             }
 
@@ -67,6 +102,13 @@ public sealed class MigrateCommand : ICommand
                 Console.Error.WriteLine(ex.StackTrace);
             return 1;
         }
+    }
+
+    private static async Task EnsureMigrationsTableAsync(DatabaseConnection db)
+    {
+        using var command = db.Connection.CreateCommand();
+        command.CommandText = "CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)";
+        await command.ExecuteNonQueryAsync();
     }
 
     private bool ParseArguments(string[] args)
@@ -98,6 +140,15 @@ public sealed class MigrateCommand : ICommand
                         return false;
                     }
                     _migrationsPath = args[++i];
+                    break;
+
+                case "--database":
+                    if (i + 1 >= args.Length)
+                    {
+                        Console.Error.WriteLine("--database requires a value");
+                        return false;
+                    }
+                    _connectionString = $"Data Source={args[++i]}";
                     break;
 
                 case "--dry-run":
@@ -159,6 +210,7 @@ Usage: dotnet run migrate [options]
 Options:
   -d, --direction <up|down>   Migration direction (default: up)
   -p, --path <path>           Path to migrations directory (default: ./Migrations)
+  --database <path>           Path to the SQLite database file (default: crudgenerator.db)
   --dry-run                   Show what would be executed without applying
   -v, --verbose               Enable verbose output
   -h, --help                  Show this help message

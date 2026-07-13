@@ -305,7 +305,9 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
              .ToList());
 
     protected virtual object? GetPropertyValue(T entity, PropertyInfo property) =>
-        property.PropertyType == typeof(DateTime) ? property.GetValue(entity)?.ToString() : property.GetValue(entity);
+        property.PropertyType == typeof(DateTime)
+            ? ((DateTime?)property.GetValue(entity))?.ToString("O", System.Globalization.CultureInfo.InvariantCulture)
+            : property.GetValue(entity);
 
     protected virtual TKey? GetId(T entity)
     {
@@ -337,7 +339,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             var targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
 
             if (targetType == typeof(DateTime))
-                value = DateTime.Parse(value.ToString() ?? "");
+                value = DateTime.Parse(value.ToString() ?? "", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind);
 
             property.SetValue(entity, Convert.ChangeType(value, targetType));
         }

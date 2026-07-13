@@ -290,8 +290,8 @@ public sealed class AuditTrailService
         using var rangeReader = await rangeCmd.ExecuteReaderAsync(cancellationToken);
         if (await rangeReader.ReadAsync(cancellationToken) && !rangeReader.IsDBNull(0))
         {
-            summary.OldestEntry = DateTime.Parse(rangeReader.GetString(0));
-            summary.NewestEntry = DateTime.Parse(rangeReader.GetString(1));
+            summary.OldestEntry = DateTime.Parse(rangeReader.GetString(0), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind);
+            summary.NewestEntry = DateTime.Parse(rangeReader.GetString(1), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind);
         }
 
         return summary;
@@ -310,7 +310,7 @@ public sealed class AuditTrailService
             NewValues = reader.IsDBNull(6) ? null : reader.GetString(6),
             ChangeReason = reader.IsDBNull(7) ? null : reader.GetString(7),
             IpAddress = reader.IsDBNull(8) ? null : reader.GetString(8),
-            Timestamp = DateTime.Parse(reader.GetString(9))
+            Timestamp = DateTime.Parse(reader.GetString(9), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind)
         };
     }
 }
