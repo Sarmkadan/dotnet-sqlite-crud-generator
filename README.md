@@ -1,29 +1,28 @@
 // existing content ...
 
-## DotnetSqliteCrudGeneratorOptionsExtensions
+## PerformanceMonitorExtensions
 
-The `DotnetSqliteCrudGeneratorOptionsExtensions` class provides a set of extension methods for configuring `DotnetSqliteCrudGeneratorOptions`. It allows you to customize the behavior of the CRUD generator, such as setting the connection string, enabling/disabling caching, and configuring worker settings.
+The `PerformanceMonitorExtensions` class provides utility methods to analyze and summarize performance metrics collected during operations. It offers insights into execution times, success rates, and identifies slow or problematic operations for optimization.
 
-Here's an example usage:
+Example usage:
 ```csharp
-using DotNet.SQLite.CrudGenerator.Configuration;
-
-public class Demo
+public class PerformanceLogger
 {
-    public void Run()
+    public void LogMetrics()
     {
-        var options = new DotnetSqliteCrudGeneratorOptions();
-        options = options.WithConnectionString("Data Source=example.db")
-                         .WithDevelopmentPoolSettings()
-                         .WithCacheDisabled()
-                         .WithProcessorBasedWorkerCount();
+        var averageTime = PerformanceMonitorExtensions.GetAverageExecutionTime();
+        var total = PerformanceMonitorExtensions.GetTotalExecutionTime();
+        var successRate = PerformanceMonitorExtensions.GetSuccessRate();
+        var recent = PerformanceMonitorExtensions.GetMostRecentOperation();
+        var slowOps = PerformanceMonitorExtensions.GetSlowOperations();
+        var problemOps = PerformanceMonitorExtensions.GetProblematicOperations();
+        var summary = PerformanceMonitorExtensions.GetPerformanceSummary();
+        var frequentOp = PerformanceMonitorExtensions.GetMostFrequentOperation();
 
-        // Validate options
-        DotnetSqliteCrudGeneratorOptionsExtensions.ValidateWithDetails(options);
-
-        // Clone options
-        var clonedOptions = DotnetSqliteCrudGeneratorOptionsExtensions.Clone(options);
+        Console.WriteLine(summary);
+        Console.WriteLine($"Average execution time: {averageTime:F2}ms");
+        Console.WriteLine($"Slow operations count: {slowOps.Count()}");
+        Console.WriteLine($"Problematic operations count: {problemOps.Count()}");
     }
 }
 ```
-// existing content ...
