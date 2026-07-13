@@ -27,3 +27,24 @@ public class AuditTrailBenchmarksExample
 }
 ```
 
+## MigrationDiffBenchmarks
+
+The `MigrationDiffBenchmarks` class provides a set of benchmarking methods to evaluate the performance of migration diff operations. It allows you to measure the execution time of various operations, such as computing the diff between two schema versions, getting the actual schema, and getting table info.
+
+Example usage:
+```csharp
+public class MigrationDiffBenchmarksExample
+{
+    public async Task RunBenchmarks()
+    {
+        var benchmarks = new MigrationDiffBenchmarks();
+        await benchmarks.Setup();
+        await benchmarks.ComputeDiffAsync_UpToDate();
+        benchmarks.GetExpectedSchema();
+        await benchmarks.GetTableInfoAsync();
+        await benchmarks.Cleanup();
+        benchmarks.Dispose();
+    }
+}
+```
+
