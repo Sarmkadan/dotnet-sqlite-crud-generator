@@ -5,6 +5,7 @@
 // =============================================================================
 
 using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace DotNet.SQLite.CrudGenerator.Caching;
 
@@ -192,12 +193,39 @@ public sealed class MemoryCacheProvider : ICacheProvider
     }
 
     // Type-based estimation: avoids Marshal.SizeOf which throws for non-blittable types.
-    private static long EstimateSize(object obj) => obj switch
+    private static long EstimateSize(object obj)
     {
-        string s  => 50L + (long)s.Length * 2,
-        byte[] b  => 50L + b.Length,
-        _         => 178L,
-    };
+        return obj switch
+        {
+            string s  => 50L + (long)s.Length * 2,
+            byte[] b  => 50L + b.Length,
+            _         => EstimateObjectGraphSize(obj) is > 0 and var bulk ? bulk : 178L,
+        };
+    }
+
+    // Best-effort estimate of the "bulk" data hanging off an arbitrary cached object
+    // (e.g. byte[]/string payload fields), so size-based eviction reacts to objects
+    // that carry large buffers instead of treating every non-primitive as a fixed 178 bytes.
+    private static long EstimateObjectGraphSize(object obj)
+    {
+        long total = 0;
+        foreach (var property in obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (property.GetIndexParameters().Length != 0)
+                continue;
+
+            var value = property.GetValue(obj);
+            total += value switch
+            {
+                null      => 0L,
+                byte[] b  => b.Length,
+                string s  => (long)s.Length * 2,
+                _         => 0L,
+            };
+        }
+
+        return total;
+    }
 
     private class CacheEntry
     {

@@ -32,6 +32,23 @@ public sealed class RepositoryIntegrationTests : IDisposable
         _productRepository = new ConcreteProductRepository(_databaseConnection);
         _userRepository = new ConcreteUserRepository(_databaseConnection);
         _databaseConnection.InitializeDatabaseAsync(true).GetAwaiter().GetResult();
+        SeedCategories();
+    }
+
+    /// <summary>
+    /// Seeds the categories referenced by product fixtures, since Products.CategoryId
+    /// has a foreign key constraint against Categories(Id).
+    /// </summary>
+    private void SeedCategories()
+    {
+        using var command = _databaseConnection.Connection.CreateCommand();
+        command.CommandText = @"
+            INSERT INTO Categories (Id, Name, DisplayOrder, IsActive, CreatedAt, UpdatedAt)
+            VALUES
+                (1, 'Category 1', 0, 1, datetime('now'), datetime('now')),
+                (2, 'Category 2', 0, 1, datetime('now'), datetime('now')),
+                (3, 'Category 3', 0, 1, datetime('now'), datetime('now'));";
+        command.ExecuteNonQuery();
     }
 
     private void CreateTables()

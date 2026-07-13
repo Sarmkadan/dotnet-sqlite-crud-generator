@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Services;
@@ -55,7 +56,7 @@ public sealed class OrderServiceTests
 	public async Task GetAsync_WithValidId_ReturnsOrderFromRepository()
 	{
 		// Arrange
-		var expectedOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
+		var expectedOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001", ItemCount = 1 };
 		_orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(expectedOrder));
 
 		// Act
@@ -75,8 +76,8 @@ public sealed class OrderServiceTests
 		// Arrange
 		var orders = new List<Order>
 		{
-			new() { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" },
-			new() { Id = 2, UserId = 2, TotalAmount = 200m, OrderNumber = "ORD-002" }
+			new() { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001", ItemCount = 1 },
+			new() { Id = 2, UserId = 2, TotalAmount = 200m, OrderNumber = "ORD-002", ItemCount = 1 }
 		};
 		_orderRepoMock.GetAllAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(orders.AsEnumerable()));
 
@@ -95,7 +96,7 @@ public sealed class OrderServiceTests
 	public async Task CreateAsync_AddsOrderThroughRepositoryAndLogsAudit()
 	{
 		// Arrange
-		var newOrder = new Order { UserId = 1, TotalAmount = 150m, OrderNumber = "ORD-003" };
+		var newOrder = new Order { UserId = 1, TotalAmount = 150m, OrderNumber = "ORD-003", ItemCount = 1 };
 		var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
 		_userRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(user));
 		_orderRepoMock.AddAsync(newOrder, Arg.Any<CancellationToken>()).Returns(Task.FromResult(newOrder));
@@ -117,8 +118,8 @@ public sealed class OrderServiceTests
 	public async Task UpdateAsync_UpdatesOrderThroughRepositoryAndLogsAudit()
 	{
 		// Arrange
-		var existingOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
-		var updatedOrder = new Order { Id = 1, UserId = 1, TotalAmount = 200m, OrderNumber = "ORD-001" };
+		var existingOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001", ItemCount = 1 };
+		var updatedOrder = new Order { Id = 1, UserId = 1, TotalAmount = 200m, OrderNumber = "ORD-001", ItemCount = 1 };
 		var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
 
 		_orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(existingOrder));
@@ -142,7 +143,7 @@ public sealed class OrderServiceTests
 	public async Task DeleteAsync_DeletesOrderThroughRepositoryAndLogsAudit()
 	{
 		// Arrange
-		var existingOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001" };
+		var existingOrder = new Order { Id = 1, UserId = 1, TotalAmount = 100m, OrderNumber = "ORD-001", ItemCount = 1 };
 		var user = new User { Id = 1, Username = "testuser", Email = "user@example.com", PasswordHash = "hash", FirstName = "Test", LastName = "User" };
 
 		_orderRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult(existingOrder));
@@ -161,37 +162,37 @@ public sealed class OrderServiceTests
 
 	[Fact]
 	/// <summary>
-	/// Tests that CreateAsync throws an ArgumentException when attempting to create an order with a non-existent user.
+	/// Tests that CreateAsync throws a ValidationException when attempting to create an order with a non-existent user.
 	/// </summary>
-	public async Task CreateAsync_WithNonExistentUser_ThrowsArgumentException()
+	public async Task CreateAsync_WithNonExistentUser_ThrowsValidationException()
 	{
 		// Arrange
-		var newOrder = new Order { UserId = 99, TotalAmount = 150m, OrderNumber = "ORD-004" };
+		var newOrder = new Order { UserId = 99, TotalAmount = 150m, OrderNumber = "ORD-004", ItemCount = 1 };
 		_userRepoMock.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns(Task.FromResult((User)null!));
 
 		// Act
 		var act = async () => await _orderService.CreateAsync(newOrder);
 
 		// Assert
-		await act.Should().ThrowAsync<ArgumentException>()
-			.WithMessage("*User with ID 99 not found*");
+		await act.Should().ThrowAsync<ValidationException>()
+			.WithMessage("*User with ID 99 does not exist*");
 	}
 
 	[Fact]
 	/// <summary>
-	/// Tests that UpdateAsync returns false when attempting to update a non-existent order.
+	/// Tests that UpdateAsync throws a RepositoryException when attempting to update a non-existent order.
 	/// </summary>
-	public async Task UpdateAsync_WithNonExistentOrder_ReturnsFalse()
+	public async Task UpdateAsync_WithNonExistentOrder_ThrowsRepositoryException()
 	{
 		// Arrange
-		var updatedOrder = new Order { Id = 99, UserId = 1, TotalAmount = 200m, OrderNumber = "ORD-005" };
+		var updatedOrder = new Order { Id = 99, UserId = 1, TotalAmount = 200m, OrderNumber = "ORD-005", ItemCount = 1 };
 		_orderRepoMock.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns(Task.FromResult((Order)null!));
 
 		// Act
-		var result = await _orderService.UpdateAsync(updatedOrder);
+		var act = async () => await _orderService.UpdateAsync(updatedOrder);
 
 		// Assert
-		result.Should().BeFalse();
+		await act.Should().ThrowAsync<RepositoryException>();
 		await _orderRepoMock.Received(1).GetByIdAsync(99, Arg.Any<CancellationToken>());
 		await _orderRepoMock.DidNotReceive().UpdateAsync(Arg.Any<Order>(), Arg.Any<CancellationToken>());
 	}

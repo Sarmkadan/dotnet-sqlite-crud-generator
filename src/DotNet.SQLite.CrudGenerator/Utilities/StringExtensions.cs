@@ -27,14 +27,11 @@ public static class StringExtensions
     /// Useful for C# property naming conventions.
     /// </summary>
     /// <param name="input">The input string to convert.</param>
-    /// <returns>The PascalCase string, or empty string if input is null or empty.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
+    /// <returns>The PascalCase string, or the original input if it is null or empty.</returns>
     public static string ToPascalCase(this string input)
     {
-        ArgumentNullException.ThrowIfNull(input);
-
-        if (input.Length == 0)
-            return input;
+        if (input is null || input.Length == 0)
+            return input!;
 
         var span = input.AsSpan();
 
@@ -94,14 +91,11 @@ public static class StringExtensions
     /// Useful for database column naming conventions.
     /// </summary>
     /// <param name="input">The input string to convert.</param>
-    /// <returns>The snake_case string, or the lowercase input if no transitions found.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> is null.</exception>
+    /// <returns>The snake_case string, or the lowercase input if no transitions found. Returns the original input if it is null or empty.</returns>
     public static string ToSnakeCase(this string input)
     {
-        ArgumentNullException.ThrowIfNull(input);
-
-        if (input.Length == 0)
-            return input;
+        if (input is null || input.Length == 0)
+            return input!;
 
         var span = input.AsSpan();
 
