@@ -1,28 +1,27 @@
 // existing content ...
 
-## PerformanceMonitorExtensions
+## CacheBenchmarks
 
-The `PerformanceMonitorExtensions` class provides utility methods to analyze and summarize performance metrics collected during operations. It offers insights into execution times, success rates, and identifies slow or problematic operations for optimization.
+The `CacheBenchmarks` class provides a set of benchmarking methods to evaluate the performance of a cache. It allows you to measure the execution time of cache hits, misses, and set operations.
 
 Example usage:
 ```csharp
-public class PerformanceLogger
+public class CacheBenchmarksExample
 {
-    public void LogMetrics()
+    public async Task RunBenchmarks()
     {
-        var averageTime = PerformanceMonitorExtensions.GetAverageExecutionTime();
-        var total = PerformanceMonitorExtensions.GetTotalExecutionTime();
-        var successRate = PerformanceMonitorExtensions.GetSuccessRate();
-        var recent = PerformanceMonitorExtensions.GetMostRecentOperation();
-        var slowOps = PerformanceMonitorExtensions.GetSlowOperations();
-        var problemOps = PerformanceMonitorExtensions.GetProblematicOperations();
-        var summary = PerformanceMonitorExtensions.GetPerformanceSummary();
-        var frequentOp = PerformanceMonitorExtensions.GetMostFrequentOperation();
-
-        Console.WriteLine(summary);
-        Console.WriteLine($"Average execution time: {averageTime:F2}ms");
-        Console.WriteLine($"Slow operations count: {slowOps.Count()}");
-        Console.WriteLine($"Problematic operations count: {problemOps.Count()}");
+        var cacheBenchmarks = new CacheBenchmarks();
+        await cacheBenchmarks.Setup();
+        var product = await cacheBenchmarks.GetHit();
+        if (product == null)
+        {
+            product = await cacheBenchmarks.GetMiss();
+            await cacheBenchmarks.Set(product);
+        }
+        var exists = await cacheBenchmarks.ExistsHit();
+        var productOrSet = await cacheBenchmarks.GetOrSetHit();
+        var productOrSetMiss = await cacheBenchmarks.GetOrSetMiss();
+        await cacheBenchmarks.Cleanup();
     }
 }
 ```
