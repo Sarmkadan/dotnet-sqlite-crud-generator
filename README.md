@@ -1,5 +1,24 @@
 // existing content ...
 
+## GenerationException
+
+The `GenerationException` class represents an exception that occurs during the generation process. It provides additional information about the type of generation error, the source entity, and the line number where the error occurred.
+
+Example usage:
+```csharp
+try
+{
+    // Code that may throw a GenerationException
+}
+catch (GenerationException ex)
+{
+    Console.WriteLine($"Generation error: {ex.Message}");
+    Console.WriteLine($"Generation type: {ex.GenerationType}");
+    Console.WriteLine($"Source entity: {ex.SourceEntity}");
+    Console.WriteLine($"Line number: {ex.LineNumber}");
+}
+```
+
 ## AuditTrailBenchmarks
 
 The `AuditTrailBenchmarks` class provides a set of benchmarking methods to evaluate the performance of audit trail operations. It allows you to measure the execution time of various operations, such as recording create, update, and delete operations, as well as retrieving entity and user trails.
