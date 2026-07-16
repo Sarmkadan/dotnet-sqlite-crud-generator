@@ -145,4 +145,54 @@ if (progress.EstimatedTimeRemaining.HasValue)
     Console.WriteLine($"ETA: {progress.EstimatedTimeRemaining}");
 ```
 
+## Category
+
+`Category` represents a hierarchical category entity used for organizing and categorizing items within the application. It supports parent-child relationships, slug generation, display ordering, and active/inactive state management. The class includes validation methods and automatic timestamp tracking for creation and updates.
+
+
+
+**Example**
+
+```csharp
+// Create a root category
+var rootCategory = new Category
+{
+    Name = "Electronics",
+    Description = "Electronic devices and components",
+    DisplayOrder = 1,
+    IsActive = true
+};
+
+// Validate the category
+bool isValid = rootCategory.Validate();
+Console.WriteLine($"Category is valid: {isValid}");
+
+// Generate a URL-friendly slug
+rootCategory.GenerateSlug();
+Console.WriteLine($"Generated slug: {rootCategory.Slug}");
+
+// Create a subcategory with a parent reference
+var subCategory = new Category
+{
+    Name = "Smartphones",
+    Description = "Mobile phones and smartphones",
+    ParentCategoryId = rootCategory.Id,
+    DisplayOrder = 1,
+    IsActive = true
+};
+
+// Check if a category is a root category (no parent)
+bool isRoot = subCategory.IsRootCategory;
+Console.WriteLine($"Is root category: {isRoot}");
+
+// Deactivate a category
+rootCategory.Deactivate();
+Console.WriteLine($"Category active status: {rootCategory.IsActive}");
+
+// Update a category and check timestamps
+rootCategory.Description = "Consumer electronics and devices";
+Console.WriteLine($"Created at: {rootCategory.CreatedAt}");
+Console.WriteLine($"Updated at: {rootCategory.UpdatedAt}");
+```
+
 // ... rest of README content ...
