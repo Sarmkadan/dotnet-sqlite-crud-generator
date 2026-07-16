@@ -1222,6 +1222,94 @@ class Program
 }
 ```
 
+## ReflectionHelper
+
+`ReflectionHelper` is a utility class that provides advanced reflection operations for dynamic object creation, property access, and type analysis. It simplifies common reflection tasks with strongly-typed methods that handle null checks, case-insensitive member lookup, and error handling, making reflection operations safer and more maintainable.
+
+The class includes methods for creating object instances, getting/setting property values, copying properties between objects, invoking methods, checking type hierarchies, and working with attributes.
+
+Below is a realistic example of using `ReflectionHelper` in an application:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
+using DotNet.SQLite.CrudGenerator.Utilities;
+using DotNet.SQLite.CrudGenerator.Models;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Create a sample model
+        var product = new Product
+        {
+            Id = 1,
+            Name = "Wireless Headphones",
+            Price = 149.99m,
+            StockQuantity = 100,
+            CategoryId = 5
+        };
+
+        // Create a new instance using generic method
+        var newProduct = ReflectionHelper.CreateInstance<Product>();
+        Console.WriteLine($"Created new instance: {newProduct != null}");
+
+        // Set a property value using reflection
+        ReflectionHelper.SetProperty(newProduct, "Name", "Bluetooth Speaker");
+        ReflectionHelper.SetProperty(newProduct, "Price", 59.99m);
+        ReflectionHelper.SetProperty(newProduct, "StockQuantity", 75);
+        Console.WriteLine($"Product name: {ReflectionHelper.GetProperty(newProduct, "Name")}");
+
+        // Get all property values as dictionary
+        var propertyValues = ReflectionHelper.GetPropertyValues(newProduct);
+        Console.WriteLine($"\nProperty values:");
+        foreach (var kvp in propertyValues)
+        {
+            Console.WriteLine($" {kvp.Key}: {kvp.Value}");
+        }
+
+        // Copy properties from one object to another
+        var productCopy = ReflectionHelper.ShallowCopy(product);
+        Console.WriteLine($"\nOriginal product ID: {product.Id}");
+        Console.WriteLine($"Copied product ID: {ReflectionHelper.GetProperty(productCopy, "Id")}");
+
+        // Check if a type inherits from another
+        bool inheritsFromObject = ReflectionHelper.InheritsFrom(typeof(Product), typeof(object));
+        Console.WriteLine($"\nProduct inherits from object: {inheritsFromObject}");
+
+        // Check if a property has a specific attribute
+        var nameProperty = typeof(Product).GetProperty("Name");
+        bool hasRequiredAttribute = ReflectionHelper.HasAttribute<RequiredAttribute>(nameProperty!);
+        Console.WriteLine($"Name property has [Required] attribute: {hasRequiredAttribute}");
+
+        // Get all types in an assembly that inherit from a base type
+        var assembly = typeof(Product).Assembly;
+        var repositoryTypes = ReflectionHelper.GetTypesInheritingFrom(assembly, typeof(object));
+        Console.WriteLine($"\nTypes in assembly: {repositoryTypes.Count()}");
+
+        // Invoke a method dynamically
+        var priceProperty = typeof(Product).GetProperty("Price");
+        var priceValue = ReflectionHelper.GetProperty(newProduct, "Price");
+        Console.WriteLine($"Price value: {priceValue}");
+    }
+}
+
+// Example model class for demonstration
+public class Product
+{
+    public int Id { get; set; }
+
+    [Required]
+    public string Name { get; set; } = string.Empty;
+
+    public decimal Price { get; set; }
+    public int StockQuantity { get; set; }
+    public int? CategoryId { get; set; }
+}
+```
+
 ## FileSystemExtensions
 
 `FileSystemExtensions` is a utility class that provides extension methods for safe file system operations. It offers a comprehensive set of methods for directory and file management, including creation, deletion, path manipulation, and size calculations, all with built-in error handling and null/whitespace validation.
