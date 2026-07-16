@@ -19,6 +19,4 @@ class Program
     }
 }
 ```
-
-// rest of README content
 ```
