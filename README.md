@@ -251,4 +251,53 @@ Console.WriteLine($"Created at: {product.CreatedAt}");
 Console.WriteLine($"Updated at: {product.UpdatedAt}");
 ```
 
+## Order
+
+The `Order` model represents a purchase order with details such as the owning user, monetary amounts, status, timestamps, and optional notes or addresses. It provides helper methods for validating the data, calculating the final total after tax and discounts, updating the order status, applying discounts, and cancelling the order when appropriate.
+
+**Example**
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Enums;
+
+// Create a new order
+var order = new Order
+{
+    Id = 1,
+    UserId = 42,
+    OrderNumber = "ORD-001",
+    TotalAmount = 100m,
+    TaxAmount = 10m,
+    DiscountAmount = 5m,
+    ItemCount = 2,
+    ShippingAddress = "123 Main St",
+    BillingAddress = "123 Main St"
+};
+
+// Validate the order
+if (order.Validate())
+{
+    // Calculate the final total (including tax and discount)
+    var finalTotal = order.CalculateFinalTotal();
+    Console.WriteLine($"Final total: {finalTotal:C}");
+
+    // Apply an additional discount
+    order.ApplyDiscount(10m);
+    Console.WriteLine($"Discount applied, new total: {order.CalculateFinalTotal():C}");
+
+    // Update status to shipped
+    order.UpdateStatus(EntityStatus.Shipped);
+    Console.WriteLine($"Status: {order.Status}, ShippedAt: {order.ShippedAt}");
+}
+else
+{
+    Console.WriteLine("Order validation failed.");
+}
+
+// Attempt to cancel (will fail because status is no longer Pending)
+bool cancelled = order.CancelOrder();
+Console.WriteLine($"Order cancelled: {cancelled}");
+```
+
 // ... rest of README content ...
