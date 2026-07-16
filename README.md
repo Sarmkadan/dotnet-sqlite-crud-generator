@@ -637,6 +637,43 @@ class Program
 }
 ```
 
+## DatabaseSettings
+
+`DatabaseSettings` is a configuration class that defines all database-related settings for the SQLite CRUD Generator library. It controls database file location, connection behavior, logging preferences, and automatic database creation. The settings can be configured either through a file path or a custom connection string, with sensible defaults provided for quick setup.
+
+Below is a realistic example of configuring and using `DatabaseSettings` in an application:
+
+```csharp
+using System;
+using DotNet.SQLite.CrudGenerator.Configuration;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Create database settings with default values
+        var settings = new DatabaseSettings
+        {
+            FilePath = "myapp.db",
+            EnableLogging = true,
+            ConnectionTimeout = 60,
+            AutoCreateDatabase = true
+        };
+
+        Console.WriteLine("Database Configuration:");
+        Console.WriteLine($" File Path: {settings.FilePath}");
+        Console.WriteLine($" Connection Timeout: {settings.ConnectionTimeout} seconds");
+        Console.WriteLine($" Enable Logging: {settings.EnableLogging}");
+        Console.WriteLine($" Auto Create Database: {settings.AutoCreateDatabase}");
+        Console.WriteLine($" Validate: {settings.Validate()}");
+
+        // Use custom connection string instead of file path
+        settings.ConnectionString = "Data Source=custom.db;Version=3;Pooling=True;";
+        Console.WriteLine($"\nCustom Connection String: {settings.ConnectionString}");
+    }
+}
+```
+
 ## IConnectionPool
 
 `IConnectionPool` is a lightweight interface that provides a thread-safe pool of SQLite connections with configurable concurrency limits, idle connection cleanup, and comprehensive connection management. It efficiently manages connection lifecycle by reusing idle connections and automatically opening new ones when needed, up to the configured maximum pool size.
