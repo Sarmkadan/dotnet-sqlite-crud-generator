@@ -366,6 +366,87 @@ class Program
 }
 ```
 
+## RepositoryIntegrationTests
+
+`RepositoryIntegrationTests` is a test class that provides integration tests for repository operations against an in-memory SQLite database. It tests CRUD operations for products and users, ensuring database interactions work correctly with proper seeding and cleanup. The class demonstrates how to set up an in-memory database, initialize repositories, and test basic repository operations.
+
+Below is a realistic example of using the repository pattern with the test infrastructure in a console application:
+
+```csharp
+using System;
+using DotNet.SQLite.CrudGenerator.Data;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Tests;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Create in-memory database connection
+        var databaseConnection = new DatabaseConnection("Data Source=:memory:");
+        
+        // Initialize repositories
+        var productRepository = new ConcreteProductRepository(databaseConnection);
+        var userRepository = new ConcreteUserRepository(databaseConnection);
+        
+        // Initialize database and seed required data
+        await databaseConnection.InitializeDatabaseAsync(true);
+        SeedCategories(databaseConnection);
+        
+        // Add a new product
+        var newProduct = new Product
+        {
+            Name = "Premium Coffee",
+            Sku = "PC-001",
+            CategoryId = 1,
+            Price = 12.99m,
+            Cost = 6.50m,
+            StockQuantity = 100,
+            ReorderLevel = 10,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        
+        var addedProduct = await productRepository.AddAsync(newProduct);
+        Console.WriteLine($"Added product with ID: {addedProduct.Id}");
+        
+        // Retrieve the product
+        var retrievedProduct = await productRepository.GetByIdAsync(addedProduct.Id);
+        Console.WriteLine($"Retrieved product: {retrievedProduct?.Name} (${retrievedProduct?.Price})");
+        
+        // Update the product
+        retrievedProduct!.Price = 14.99m;
+        retrievedProduct.UpdatedAt = DateTime.UtcNow;
+        var updateResult = await productRepository.UpdateAsync(retrievedProduct);
+        Console.WriteLine($"Update successful: {updateResult}");
+        
+        // Get all products
+        var allProducts = await productRepository.GetAllAsync();
+        Console.WriteLine($"Total products: {allProducts.Count}");
+        
+        // Delete the product
+        var deleteResult = await productRepository.DeleteAsync(addedProduct.Id);
+        Console.WriteLine($"Delete successful: {deleteResult}");
+        
+        // Cleanup
+        await databaseConnection.DisposeAsync();
+    }
+    
+    private static void SeedCategories(DatabaseConnection connection)
+    {
+        using var command = connection.Connection.CreateCommand();
+        command.CommandText = @"
+        INSERT INTO Categories (Id, Name, DisplayOrder, IsActive, CreatedAt, UpdatedAt)
+        VALUES 
+        (1, 'Category 1', 0, 1, datetime('now'), datetime('now')),
+        (2, 'Category 2', 0, 1, datetime('now'), datetime('now')),
+        (3, 'Category 3', 0, 1, datetime('now'), datetime('now'));";
+        command.ExecuteNonQuery();
+    }
+}
+```
+
 ## JsonFormatter
 
 `JsonFormatter` is a utility class for formatting data to JSON with customizable serialization options. It supports both pretty-printing and compact output, handles circular references, and provides custom type conversions. The formatter includes synchronous and asynchronous methods for formatting single objects or collections, parsing JSON back to objects, and extracting values via JSON paths.
