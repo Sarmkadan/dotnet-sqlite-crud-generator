@@ -506,6 +506,137 @@ class Program
 }
 ```
 
+## DbContextProvider
+
+`DbContextProvider` is a unit of work implementation that manages multiple repositories and database transactions in a coordinated manner. It serves as the central access point for all repositories (Users, Products, Orders, Categories, AuditLogs) and provides transaction management capabilities including begin, commit, and rollback operations. The provider ensures that changes across multiple repositories are committed atomically and provides both synchronous and asynchronous disposal patterns.
+
+The `DbContextProvider` implements `IUnitOfWork` and coordinates database operations across all registered repositories, making it ideal for scenarios requiring transactional integrity across multiple entity types.
+
+Below is a realistic example of using `DbContextProvider` in an application:
+
+```csharp
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Data;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Enums;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup database connection
+        var database = new DatabaseConnection("ecommerce.db");
+        await database.OpenAsync();
+        await database.InitializeDatabaseAsync();
+
+        // Create DbContextProvider instance
+        var dbContext = new DbContextProvider(database);
+
+        try
+        {
+            // Begin a transaction
+            await dbContext.BeginTransactionAsync();
+            Console.WriteLine("Transaction started");
+
+            // Access repositories through the provider
+            var userRepository = dbContext.Users;
+            var productRepository = dbContext.Products;
+            var orderRepository = dbContext.Orders;
+            var categoryRepository = dbContext.Categories;
+
+            // Create a new user
+            var newUser = new User
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                Email = "john.doe@example.com",
+                Username = "johndoe",
+                PasswordHash = "hashed_password_123",
+                IsActive = true,
+                EmailVerified = true
+            };
+            var createdUser = await userRepository.AddAsync(newUser);
+            Console.WriteLine($"Created user with ID: {createdUser.Id}");
+
+            // Create a new category
+            var newCategory = new Category
+            {
+                Name = "Electronics",
+                Description = "Electronic devices and accessories",
+                IsActive = true,
+                ParentCategoryId = null
+            };
+            var createdCategory = await categoryRepository.AddAsync(newCategory);
+            Console.WriteLine($"Created category with ID: {createdCategory.Id}");
+
+            // Create a new product
+            var newProduct = new Product
+            {
+                Name = "Wireless Headphones",
+                Description = "Noise-cancelling wireless headphones",
+                Sku = "AUD-WH-001",
+                Price = 149.99m,
+                Cost = 95.50m,
+                StockQuantity = 50,
+                CategoryId = createdCategory.Id,
+                MinimumStockLevel = 10,
+                IsActive = true
+            };
+            var createdProduct = await productRepository.AddAsync(newProduct);
+            Console.WriteLine($"Created product with ID: {createdProduct.Id}, SKU: {createdProduct.Sku}");
+
+            // Create a new order
+            var newOrder = new Order
+            {
+                UserId = createdUser.Id,
+                OrderDate = DateTime.UtcNow,
+                Status = EntityStatus.Pending,
+                ShippingAddress = "123 Main St, City, Country",
+                Items = new List<OrderItem>
+                {
+                    new OrderItem { ProductId = createdProduct.Id, Quantity = 2, UnitPrice = 149.99m }
+                },
+                Subtotal = 299.98m,
+                TaxAmount = 23.99m,
+                DiscountAmount = 0.00m,
+                ShippingCost = 10.00m
+            };
+            var createdOrder = await orderRepository.AddAsync(newOrder);
+            Console.WriteLine($"Created order with ID: {createdOrder.Id}, Status: {createdOrder.Status}");
+
+            // Save changes across all repositories
+            int changes = await dbContext.SaveChangesAsync();
+            Console.WriteLine($"Saved {changes} changes to database");
+
+            // Commit the transaction
+            await dbContext.CommitTransactionAsync();
+            Console.WriteLine("Transaction committed successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error occurred: {ex.Message}");
+            
+            // Rollback the transaction on error
+            await dbContext.RollbackTransactionAsync();
+            Console.WriteLine("Transaction rolled back due to error");
+            
+            throw;
+        }
+        finally
+        {
+            // Dispose the provider (automatically disposes the database connection)
+            dbContext.Dispose();
+            
+            // Or use async disposal
+            // await dbContext.DisposeAsync();
+        }
+    }
+}
+```
+
 ## IConnectionPool
 
 `IConnectionPool` is a lightweight interface that provides a thread-safe pool of SQLite connections with configurable concurrency limits, idle connection cleanup, and comprehensive connection management. It efficiently manages connection lifecycle by reusing idle connections and automatically opening new ones when needed, up to the configured maximum pool size.
