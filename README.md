@@ -348,6 +348,60 @@ class Program
 }
 ```
 
+## DatabaseConnection
+
+`DatabaseConnection` is a lightweight wrapper around a SQLite database connection that provides connection management, initialization, and basic unit-of-work pattern support. It handles connection pooling, database schema initialization with required tables, and provides both synchronous and asynchronous disposal patterns.
+
+The connection automatically manages the underlying `SqliteConnection` instance and provides convenience methods for opening, closing, and initializing the database. It's designed to be used as a dependency in repositories and services throughout the application.
+
+Below is a realistic example of using `DatabaseConnection` in an application:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Data;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Create a database connection
+        var database = new DatabaseConnection("inventory.db");
+        
+        // Optionally inject a logger
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<DatabaseConnection>();
+        var databaseWithLogging = new DatabaseConnection("inventory.db", logger);
+        
+        // Open the connection
+        await database.OpenAsync();
+        Console.WriteLine("Database connection opened");
+        
+        // Initialize the database with required tables
+        await database.InitializeDatabaseAsync();
+        Console.WriteLine("Database initialized with tables");
+        
+        // Use the connection with repositories
+        var productRepository = new ProductRepository(database);
+        var categoryRepository = new CategoryRepository(database);
+        
+        // Save changes (returns 0 as changes are committed immediately)
+        var changes = await database.SaveChangesAsync();
+        Console.WriteLine("Changes saved");
+        
+        // Close the connection when done
+        database.Close();
+        
+        // Dispose when finished (automatically closes connection)
+        database.Dispose();
+        
+        // Or use async disposal
+        await database.DisposeAsync();
+    }
+}
+```
+
 ## ProductService
 
 `ProductService` is a service class that provides comprehensive product management functionality with inventory tracking, stock management, and pricing operations. It implements business logic for product lifecycle management while delegating data persistence to the underlying repository.
