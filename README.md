@@ -872,6 +872,81 @@ class Program
 }
 ```
 
+## MemoryCacheProvider
+
+`MemoryCacheProvider` is an in-memory caching implementation that provides fast, thread-safe access to cached data with configurable size limits and automatic expiration. It supports both synchronous and asynchronous operations, comprehensive cache statistics, and provides methods for common caching patterns like GetOrSet. The cache automatically tracks metadata such as creation time, last access time, size, and access counts for each entry.
+
+Below is a realistic example of using `MemoryCacheProvider` in an application:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Caching;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup logger
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<MemoryCacheProvider>();
+
+        // Create cache provider with configuration
+        var cacheProvider = new MemoryCacheProvider(
+            maxSizeBytes: 50_000_000, // 50 MB
+            cleanupIntervalSeconds: 600, // 10 minutes
+            logger: logger
+        );
+
+        // Cache a simple value
+        await cacheProvider.SetAsync("app_version", "1.0.0");
+        var version = await cacheProvider.GetAsync<string>("app_version");
+        Console.WriteLine($"App version from cache: {version}");
+
+        // Get or set with automatic expiration
+        var expensiveData = await cacheProvider.GetOrSetAsync(
+            "expensive_query_results",
+            async () => await FetchExpensiveDataAsync(),
+            TimeSpan.FromHours(1)
+        );
+
+        // Check if cache entry exists
+        var exists = await cacheProvider.ExistsAsync("app_version");
+        Console.WriteLine($"Cache entry exists: {exists}");
+
+        // Remove a cache entry
+        var removed = await cacheProvider.RemoveAsync("app_version");
+        Console.WriteLine($"Entry removed: {removed}");
+
+        // Get cache statistics
+        var stats = cacheProvider.GetStatistics();
+        Console.WriteLine($"\nCache Statistics:");
+        Console.WriteLine($" Total Items: {stats.TotalItems}");
+        Console.WriteLine($" Total Size: {stats.TotalSizeBytes / 1024 / 1024} MB");
+        Console.WriteLine($" Max Size: {stats.MaxSizeBytes / 1024 / 1024} MB");
+        Console.WriteLine($" Access Count: {stats.AccessCount}");
+        Console.WriteLine($" Total Hits: {stats.Hits}");
+        Console.WriteLine($" Total Misses: {stats.Misses}");
+
+        // Clear the entire cache
+        await cacheProvider.ClearAsync();
+        Console.WriteLine("Cache cleared");
+
+        // Manual cleanup of expired entries
+        cacheProvider.CleanupExpired();
+        Console.WriteLine("Expired entries cleaned up");
+    }
+
+    static async Task<string> FetchExpensiveDataAsync()
+    {
+        // Simulate expensive operation
+        await Task.Delay(100);
+        return "Expensive data result";
+    }
+}
+```
+
 ## IConnectionPool
 
 `IConnectionPool` is a lightweight interface that provides a thread-safe pool of SQLite connections with configurable concurrency limits, idle connection cleanup, and comprehensive connection management. It efficiently manages connection lifecycle by reusing idle connections and automatically opening new ones when needed, up to the configured maximum pool size.
