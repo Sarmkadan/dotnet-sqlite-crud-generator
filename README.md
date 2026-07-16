@@ -834,6 +834,44 @@ class Program
 }
 ```
 
+## CacheConfiguration
+
+`CacheConfiguration` is a configuration class that defines all caching-related settings for the DotNet SQLite CRUD Generator library. It controls whether caching is enabled, cache size limits, time-to-live for cached items, and cleanup behavior to maintain optimal cache performance.
+
+The configuration supports multiple cache providers including in-memory caching and can be used to optimize application performance by reducing database round-trips for frequently accessed data.
+
+Below is a realistic example of configuring and using `CacheConfiguration` in an application:
+
+```csharp
+using System;
+using DotNet.SQLite.CrudGenerator.Configuration;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Create cache configuration with custom settings
+        var cacheConfig = new CacheConfiguration
+        {
+            Enabled = true,
+            MaxSizeBytes = 100_000_000, // 100 MB
+            DefaultTTL = TimeSpan.FromHours(2),
+            CleanupIntervalSeconds = 300 // 5 minutes
+        };
+
+        Console.WriteLine("Cache Configuration:");
+        Console.WriteLine($" Enabled: {cacheConfig.Enabled}");
+        Console.WriteLine($" Max Size: {cacheConfig.MaxSizeBytes / 1024 / 1024} MB");
+        Console.WriteLine($" Default TTL: {cacheConfig.DefaultTTL.TotalHours} hours");
+        Console.WriteLine($" Cleanup Interval: {cacheConfig.CleanupIntervalSeconds / 60} minutes");
+
+        // Create a memory cache provider from the configuration
+        var provider = CacheConfiguration.CreateProvider(cacheConfig);
+        Console.WriteLine($"\nMemory cache provider created: {provider != null}");
+    }
+}
+```
+
 ## IConnectionPool
 
 `IConnectionPool` is a lightweight interface that provides a thread-safe pool of SQLite connections with configurable concurrency limits, idle connection cleanup, and comprehensive connection management. It efficiently manages connection lifecycle by reusing idle connections and automatically opening new ones when needed, up to the configured maximum pool size.
