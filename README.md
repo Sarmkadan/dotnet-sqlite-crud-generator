@@ -1,38 +1,38 @@
 // existing content ...
 
-## OrderServiceTests
+## MigrationDiffServiceTests
 
-`OrderServiceTests` is a test class that contains unit tests for `OrderService`. It provides various test methods to verify the correctness of order operations, including tests for retrieving, creating, updating, and deleting orders, as well as error handling scenarios. Below is a realistic example of using `OrderServiceTests` in a test class:
+`MigrationDiffServiceTests` is a test class that contains unit tests for `MigrationDiffService`. It provides various test methods to verify the correctness of database schema generation, diff computation, and actual schema retrieval against an in-memory SQLite database. 
+
+Here's an example of using `MigrationDiffServiceTests` in a test class:
 
 ```csharp
 using DotNet.SQLite.CrudGenerator.Tests;
 
-public class OrderServiceTestsExample
+public class MigrationDiffServiceTestsExample : IDisposable
 {
-    [Fact]
-    public async Task TestGetAsync_WithValidId_ReturnsOrderFromRepository()
+    private readonly MigrationDiffServiceTests _test;
+
+    public MigrationDiffServiceTestsExample()
     {
-        // Arrange
-        var test = new OrderServiceTests();
+        _test = new MigrationDiffServiceTests();
+    }
 
-        // Act
-        await test.GetAsync_WithValidId_ReturnsOrderFromRepository();
-
-        // Assert
-        // assertions...
+    public void Dispose()
+    {
+        _test.Dispose();
     }
 
     [Fact]
-    public async Task TestGetAllAsync_ReturnsAllOrdersFromRepository()
+    public void TestGetExpectedSchema_ReturnsCorrectColumnTypes()
     {
         // Arrange
-        var test = new OrderServiceTests();
-
         // Act
-        await test.GetAllAsync_ReturnsAllOrdersFromRepository();
+        var schema = _test.GetExpectedSchema(typeof(_test.SimpleEntity));
 
         // Assert
         // assertions...
     }
 }
 ```
+// ... rest of file content ...
