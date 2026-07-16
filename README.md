@@ -35,7 +35,6 @@ public class MigrationDiffServiceTestsExample : IDisposable
     }
 }
 ```
-// ... rest of file content ...
 
 ## UserServiceTests
 
@@ -64,4 +63,25 @@ public class UserServiceTestsExample
     }
 }
 ```
-// ... rest of file content ...
+
+## GenerationServiceTests
+
+`GenerationServiceTests` is a test class that contains unit tests for the `GenerationService`.  
+It demonstrates how to instantiate the test class, run a test method, and clean up resources. The example below shows a simple usage pattern that compiles and runs the test methods.
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Tests;
+using System.Threading.Tasks;
+
+public class GenerationServiceTestsExample
+{
+    public static async Task Main()
+    {
+        var tests = new GenerationServiceTests();
+        await tests.GenerateRepositoryInterfaceAsync_GeneratesCorrectInterfaceFile();
+        await tests.GenerateMigrationAsync_GeneratesCorrectSqlMigrationFile();
+        await tests.GenerateGrpcServiceAsync_GeneratesCorrectProtoFile();
+        tests.Dispose();
+    }
+}
+```
