@@ -96,4 +96,28 @@ var streamingResult = await products.ImportIntoAsync(
 Console.WriteLine(streamingResult.ToSummary());
 ```
 
+## BulkTransferPipeline
+
+The `BulkTransferPipeline<T>` is a fluent pipeline builder that composes import, validation, transformation, and export stages into a single, cohesive transfer operation. It wraps an underlying `IBulkTransferService<T>` to provide advanced configuration options, such as per-entity transformations, filtering, progress tracking, and automatic retries, streamlining complex data migration and ETL tasks.
+
+Below is a realistic example of configuring and executing a pipeline:
+
+```csharp
+// Configure a bulk transfer pipeline with transformation, filtering, and retries
+var pipeline = BulkTransferPipeline<Product>.Create(bulkTransferService)
+    .WithOptions(new BulkTransferOptions { BatchSize = 500 })
+    .WithTransform(p => {
+        p.Name = p.Name.ToUpper();
+        return p;
+    })
+    .WithFilter(p => p.Price > 0)
+    .WithProgress(new Progress<BulkTransferProgress>(p => Console.WriteLine($"Progress: {p.Processed}")))
+    .OnError(e => Console.Error.WriteLine($"Error on {e.Entity}: {e.Message}"))
+    .WithRetry(3, TimeSpan.FromSeconds(5));
+
+// Execute the pipeline
+var result = await pipeline.ImportFromFileAsync("products.json", ImportFormat.Json);
+Console.WriteLine($"Imported {result.TotalProcessed} items.");
+```
+
 // ... rest of README content ...
