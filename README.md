@@ -765,6 +765,75 @@ class Program
 }
 ```
 
+## DependencyInjection
+
+`DependencyInjection` is a static configuration class that provides extension methods for registering all application services and repositories with the Microsoft.Extensions.DependencyInjection container. It supports multiple configuration approaches including direct connection strings, `DatabaseSettings`, `DotnetSqliteCrudGeneratorOptions`, `IConfiguration`, and `IOptions<T>` patterns, making it suitable for various application types from console apps to ASP.NET Core web applications.
+
+The class registers:
+- Database connection and connection pooling
+- Unit of work pattern implementation (`DbContextProvider`)
+- All repository implementations (User, Product, Order, Category, AuditLog)
+- All service classes (UserService, ProductService, OrderService, GenerationService, etc.)
+- Logging infrastructure
+
+Below is a realistic example of using `DependencyInjection` in a console application:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Configuration;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Configure services using connection string
+        var services = new ServiceCollection();
+        services.AddApplicationServices("Data Source=app.db;Version=3;");
+        
+        // Or configure services using DatabaseSettings
+        var settings = new DatabaseSettings
+        {
+            FilePath = "production.db",
+            ConnectionTimeout = 60,
+            AutoCreateDatabase = true,
+            EnableLogging = true
+        };
+        services.AddApplicationServices(settings);
+        
+        // Or configure services using IConfiguration (from appsettings.json)
+        // services.AddApplicationServices(builder.Configuration);
+        
+        // Or configure services using IOptions pattern
+        // services.AddApplicationServices(options => 
+        // {
+        //     options.Database.FilePath = "options.db";
+        //     options.Database.ConnectionTimeout = 30;
+        // });
+        
+        // Build service provider
+        var serviceProvider = services.BuildServiceProvider();
+        
+        // Initialize database with required tables
+        await serviceProvider.InitializeDatabaseAsync();
+        
+        // Resolve services from DI container
+        var userService = serviceProvider.GetRequiredService<UserService>();
+        var productService = serviceProvider.GetRequiredService<ProductService>();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger<Program>();
+        
+        logger.LogInformation("Services registered and database initialized successfully!");
+        
+        // Use services...
+    }
+}
+```
+
 ## IConnectionPool
 
 `IConnectionPool` is a lightweight interface that provides a thread-safe pool of SQLite connections with configurable concurrency limits, idle connection cleanup, and comprehensive connection management. It efficiently manages connection lifecycle by reusing idle connections and automatically opening new ones when needed, up to the configured maximum pool size.
