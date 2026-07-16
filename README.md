@@ -721,6 +721,58 @@ class Program
 }
 ```
 
+## ConnectionPoolConfiguration
+
+`ConnectionPoolConfiguration` is a configuration class that defines all parameters for the SQLite connection pool, including pool size limits, timeouts, and cleanup behavior. It provides validation to ensure all settings are within acceptable ranges and can be bound directly from configuration files using the `SectionName` constant.
+
+The configuration controls:
+- Minimum and maximum pool sizes
+- How long idle connections are retained before cleanup
+- How long connection acquisition calls will wait for an available connection
+- How frequently the pool performs cleanup sweeps
+- Whether detailed diagnostic logging is enabled
+
+Below is a realistic example of configuring and using `ConnectionPoolConfiguration` in an application:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Configuration;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup logger
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<ConnectionPool>();
+
+        // Configure connection pool settings
+        var config = new ConnectionPoolConfiguration
+        {
+            MinPoolSize = 2,
+            MaxPoolSize = 15,
+            IdleTimeout = TimeSpan.FromMinutes(10),
+            AcquireTimeout = TimeSpan.FromSeconds(45),
+            CleanupInterval = TimeSpan.FromMinutes(2),
+            EnableDiagnostics = true
+        };
+
+        // Validate configuration before use
+        config.Validate();
+
+        Console.WriteLine("Connection pool configuration:");
+        Console.WriteLine($" Min Pool Size: {config.MinPoolSize}");
+        Console.WriteLine($" Max Pool Size: {config.MaxPoolSize}");
+        Console.WriteLine($" Idle Timeout: {config.IdleTimeout.TotalMinutes} minutes");
+        Console.WriteLine($" Acquire Timeout: {config.AcquireTimeout.TotalSeconds} seconds");
+        Console.WriteLine($" Cleanup Interval: {config.CleanupInterval.TotalMinutes} minutes");
+        Console.WriteLine($" Diagnostics Enabled: {config.EnableDiagnostics}");
+    }
+}
+```
+
 ## Repository
 
 `Repository<T, TKey>` is a generic base class that provides a complete implementation of the repository pattern for SQLite databases. It handles all CRUD operations (Create, Read, Update, Delete) with built-in caching, connection management, and comprehensive logging through `ILogger`.
