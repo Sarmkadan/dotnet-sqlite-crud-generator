@@ -34,4 +34,3 @@ Console.WriteLine($"Timestamp: {auditLog.Timestamp}");
 ```
 
 // ... rest of README content ...
-```
