@@ -1123,6 +1123,84 @@ class Program
 }
 ```
 
+## StringExtensions
+
+`StringExtensions` is a utility class that provides extension methods for string manipulation including case conversions, validation, and transformations. It's used throughout the codebase for naming conventions, data formatting, and text processing.
+
+The class includes methods for converting between different case styles (PascalCase, camelCase, snake_case, kebab-case), string validation, whitespace manipulation, and text transformations like pluralization, truncation, and slug generation.
+
+Below is a realistic example of using `StringExtensions` in an application:
+
+```csharp
+using System;
+using DotNet.SQLite.CrudGenerator.Utilities;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        string input = "user_first_name";
+        
+        // Case conversions
+        string pascalCase = input.ToPascalCase();
+        Console.WriteLine($"PascalCase: {pascalCase}"); // "UserFirstName"
+        
+        string camelCase = input.ToCamelCase();
+        Console.WriteLine($"camelCase: {camelCase}"); // "userFirstName"
+        
+        string snakeCase = input.ToSnakeCase();
+        Console.WriteLine($"snake_case: {snakeCase}"); // "user_first_name"
+        
+        string kebabCase = input.ToKebabCase();
+        Console.WriteLine($"kebab-case: {kebabCase}"); // "user-first-name"
+        
+        // Pluralization
+        string product = "product";
+        string products = product.Pluralize();
+        Console.WriteLine($"Plural: {products}"); // "products"
+        
+        // Truncation
+        string longText = "This is a very long text that needs to be truncated";
+        string truncated = longText.Truncate(20, addEllipsis: true);
+        Console.WriteLine($"Truncated: {truncated}"); // "This is a very lon..."
+        
+        // Validation
+        string? nullString = null;
+        bool isNullOrWhiteSpace = nullString.IsNullOrWhiteSpace();
+        Console.WriteLine($"Is null or whitespace: {isNullOrWhiteSpace}"); // true
+        
+        string whitespaceString = "   ";
+        bool isWhitespace = whitespaceString.IsNullOrWhiteSpace();
+        Console.WriteLine($"Is whitespace: {isWhitespace}"); // true
+        
+        // Remove whitespace
+        string spacedText = "Hello   World  Text";
+        string noSpaces = spacedText.RemoveWhitespace();
+        Console.WriteLine($"No spaces: {noSpaces}"); // "HelloWorldText"
+        
+        // ToSlug
+        string title = "My Awesome Blog Post Title!";
+        string slug = title.ToSlug();
+        Console.WriteLine($"Slug: {slug}"); // "my-awesome-blog-post-title"
+        
+        // Repeat
+        string repeatMe = "abc";
+        string repeated = repeatMe.Repeat(3);
+        Console.WriteLine($"Repeated: {repeated}"); // "abcabcabc"
+        
+        // MatchesPattern
+        string email = "test@example.com";
+        bool isEmail = email.MatchesPattern(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+        Console.WriteLine($"Is email: {isEmail}"); // true
+        
+        // FirstWord
+        string sentence = "This is a test sentence";
+        string firstWord = sentence.FirstWord();
+        Console.WriteLine($"First word: {firstWord}"); // "This"
+    }
+}
+```
+
 ## ConnectionPoolConfiguration
 
 `ConnectionPoolConfiguration` is a configuration class that defines all parameters for the SQLite connection pool, including pool size limits, timeouts, and cleanup behavior. It provides validation to ensure all settings are within acceptable ranges and can be bound directly from configuration files using the `SectionName` constant.
