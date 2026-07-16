@@ -506,6 +506,90 @@ class Program
 }
 ```
 
+## IConnectionPool
+
+`IConnectionPool` is a lightweight interface that provides a thread-safe pool of SQLite connections with configurable concurrency limits, idle connection cleanup, and comprehensive connection management. It efficiently manages connection lifecycle by reusing idle connections and automatically opening new ones when needed, up to the configured maximum pool size.
+
+The pool maintains statistics about connection usage, timeouts, and pool metrics, and provides a clean disposal mechanism through `IAsyncDisposable`. Connections are acquired via `AcquireAsync()` and should always be used within a `using` statement or `await using` declaration to ensure proper return to the pool.
+
+Below is a realistic example of using `IConnectionPool` in an application:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Data;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup logger
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<ConnectionPool>();
+
+        // Configure connection pool
+        var config = new ConnectionPoolConfiguration
+        {
+            MaxPoolSize = 10,
+            MinPoolSize = 2,
+            IdleTimeout = TimeSpan.FromMinutes(5),
+            AcquireTimeout = TimeSpan.FromSeconds(30),
+            CleanupInterval = TimeSpan.FromMinutes(1),
+            EnableDiagnostics = true
+        };
+
+        // Create connection pool
+        var pool = new ConnectionPool("Data Source=app.db", config, logger);
+
+        // Acquire a connection from the pool
+        await using (var pooledConnection = await pool.AcquireAsync())
+        {
+            var connection = pooledConnection.Connection;
+            
+            // Use the connection for database operations
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM Products";
+            var count = await command.ExecuteScalarAsync();
+            Console.WriteLine($"Total products: {count}");
+        }
+        // Connection automatically returned to pool when disposed
+
+        // Acquire another connection
+        await using (var pooledConnection2 = await pool.AcquireAsync())
+        {
+            var connection = pooledConnection2.Connection;
+            
+            // Perform database operations
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT Name, Price FROM Products WHERE Price > @price";
+            command.Parameters.AddWithValue("@price", 100.00m);
+            
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                Console.WriteLine($"{reader["Name"]} - ${reader["Price"]}");
+            }
+        }
+
+        // Get pool statistics
+        var stats = pool.GetStatistics();
+        Console.WriteLine($"\nPool Statistics:");
+        Console.WriteLine($" Total Connections: {stats.TotalConnections}");
+        Console.WriteLine($" Available Connections: {stats.AvailableConnections}");
+        Console.WriteLine($" Active Connections: {stats.ActiveConnections}");
+        Console.WriteLine($" Max Pool Size: {stats.MaxPoolSize}");
+        Console.WriteLine($" Min Pool Size: {stats.MinPoolSize}");
+        Console.WriteLine($" Total Acquire Count: {stats.TotalAcquireCount}");
+        Console.WriteLine($" Total Timeout Count: {stats.TotalTimeoutCount}");
+
+        // Dispose the pool when done
+        await pool.DisposeAsync();
+    }
+}
+```
+
 ## Repository
 
 `Repository<T, TKey>` is a generic base class that provides a complete implementation of the repository pattern for SQLite databases. It handles all CRUD operations (Create, Read, Update, Delete) with built-in caching, connection management, and comprehensive logging through `ILogger`.
