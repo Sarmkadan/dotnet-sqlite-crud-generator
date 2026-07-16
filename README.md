@@ -1031,6 +1031,98 @@ class Program
 }
 ```
 
+## FileSystemExtensions
+
+`FileSystemExtensions` is a utility class that provides extension methods for safe file system operations. It offers a comprehensive set of methods for directory and file management, including creation, deletion, path manipulation, and size calculations, all with built-in error handling and null/whitespace validation.
+
+The class is designed to prevent common file system issues by providing safe alternatives to standard .NET file system operations, returning boolean indicators for success/failure rather than throwing exceptions for expected conditions like missing files or directories.
+
+Below is a realistic example of using `FileSystemExtensions` in an application:
+
+
+
+```csharp
+using System;
+using System.IO;
+using DotNet.SQLite.CrudGenerator.Utilities;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        string basePath = "/tmp/myapp";
+        string tempDir = Path.Combine(basePath, "temp");
+        string dataFile = Path.Combine(tempDir, "data.txt");
+        string logDir = Path.Combine(basePath, "logs");
+        
+        // Safely create directory if it doesn't exist
+        bool dirCreated = tempDir.CreateDirectoryIfNotExists();
+        Console.WriteLine($"Directory created: {dirCreated}");
+        
+        // Create a file and write some data
+        File.WriteAllText(dataFile, "Sample data content");
+        Console.WriteLine($"File size: {dataFile.GetFileSize()} bytes");
+        Console.WriteLine($"File size formatted: {dataFile.GetFileSizeFormatted()}");
+        
+        // Check if file has specific extension
+        bool hasTxtExtension = dataFile.HasExtension("txt", "csv", "json");
+        Console.WriteLine($"Has .txt extension: {hasTxtExtension}");
+        
+        // Get extension without dot
+        string extension = dataFile.GetExtensionWithoutDot();
+        Console.WriteLine($"Extension without dot: {extension}");
+        
+        // Check if path is absolute
+        bool isAbsolute = tempDir.IsAbsolutePath();
+        Console.WriteLine($"Is absolute path: {isAbsolute}");
+        
+        // Combine multiple path segments
+        string combinedPath = basePath.CombinePaths("src", "utils", "FileSystemExtensions.cs");
+        Console.WriteLine($"Combined path: {combinedPath}");
+        
+        // Safely delete file if it exists
+        bool fileDeleted = dataFile.DeleteFileIfExists();
+        Console.WriteLine($"File deleted: {fileDeleted}");
+        
+        // Safely delete directory if it exists
+        bool dirDeleted = tempDir.DeleteDirectoryIfExists();
+        Console.WriteLine($"Directory deleted: {dirDeleted}");
+        
+        // Check if directory is empty
+        bool isEmpty = logDir.IsEmpty();
+        Console.WriteLine($"Directory is empty: {isEmpty}");
+        
+        // Recursively get files with specific extensions
+        // First create some test structure
+        Directory.CreateDirectory(logDir);
+        File.WriteAllText(Path.Combine(logDir, "app.log"), "Log entry 1");
+        File.WriteAllText(Path.Combine(logDir, "error.log"), "Error entry");
+        File.WriteAllText(Path.Combine(logDir, "config.txt"), "Config data");
+        
+        var logFiles = logDir.GetFilesRecursively("log");
+        Console.WriteLine($"Found {logFiles.Count()} .log files:");
+        foreach (var file in logFiles)
+        {
+            Console.WriteLine($"  - {Path.GetFileName(file)}");
+        }
+        
+        // Copy a directory recursively
+        string sourceDir = Path.Combine(basePath, "source");
+        string destDir = Path.Combine(basePath, "destination");
+        Directory.CreateDirectory(sourceDir);
+        File.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "Content 1");
+        File.WriteAllText(Path.Combine(sourceDir, "file2.cs"), "Content 2");
+        
+        sourceDir.CopyDirectory(destDir, overwrite: true);
+        Console.WriteLine($"Directory copied: {Directory.Exists(destDir)}");
+        
+        // Cleanup
+        destDir.DeleteDirectoryIfExists();
+        logDir.DeleteDirectoryIfExists();
+    }
+}
+```
+
 ## ConnectionPoolConfiguration
 
 `ConnectionPoolConfiguration` is a configuration class that defines all parameters for the SQLite connection pool, including pool size limits, timeouts, and cleanup behavior. It provides validation to ensure all settings are within acceptable ranges and can be bound directly from configuration files using the `SectionName` constant.
