@@ -1031,6 +1031,103 @@ class Program
 }
 ```
 
+## PerformanceMonitor
+
+`PerformanceMonitor` is a performance tracking utility that monitors and records application metrics including operation execution times, success/failure rates, memory usage, and throughput. It provides real-time monitoring capabilities through scoped operations and comprehensive reporting features.
+
+The monitor tracks individual operations with detailed statistics such as execution count, average/min/max response times, success rates, and last execution timestamp. It also provides system memory information and generates detailed performance reports that can be used for performance analysis and optimization.
+
+Below is a realistic example of using `PerformanceMonitor` in an application:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Utilities;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Create performance monitor instance
+        var performanceMonitor = new PerformanceMonitor();
+
+        // Track a simple operation
+        using (var scope = performanceMonitor.StartOperation("DatabaseQuery"))
+        {
+            // Simulate database operation
+            await Task.Delay(150);
+            Console.WriteLine("Database query completed");
+        }
+
+        // Track an HTTP request operation
+        using (var httpScope = performanceMonitor.StartOperation("HttpRequest"))
+        {
+            try
+            {
+                // Simulate HTTP request
+                await Task.Delay(250);
+                Console.WriteLine("HTTP request completed successfully");
+            }
+            catch
+            {
+                httpScope.MarkFailure();
+                throw;
+            }
+        }
+
+        // Track a file operation
+        using (var fileScope = performanceMonitor.StartOperation("FileRead"))
+        {
+            // Simulate file read
+            await Task.Delay(75);
+            Console.WriteLine("File read completed");
+        }
+
+        // Get metrics for a specific operation
+        var dbMetrics = performanceMonitor.GetMetrics("DatabaseQuery");
+        if (dbMetrics != null)
+        {
+            Console.WriteLine($"\nDatabaseQuery Metrics:");
+            Console.WriteLine($"  Executions: {dbMetrics.ExecutionCount}");
+            Console.WriteLine($"  Success Rate: {dbMetrics.SuccessRate:F1}%");
+            Console.WriteLine($"  Avg Time: {dbMetrics.AverageTime:F2}ms");
+            Console.WriteLine($"  Min/Max: {dbMetrics.MinTime}/{dbMetrics.MaxTime}ms");
+            Console.WriteLine($"  Last Run: {dbMetrics.LastExecutedAt:yyyy-MM-dd HH:mm:ss}");
+        }
+
+        // Get all operation metrics
+        var allMetrics = performanceMonitor.GetAllMetrics();
+        Console.WriteLine($"\nAll Operations ({allMetrics.Count()} tracked):");
+        foreach (var metric in allMetrics)
+        {
+            Console.WriteLine($"  {metric.OperationName}: {metric.ExecutionCount} calls, " +
+                           $"{metric.AverageTime:F2}ms avg, " +
+                           $"{metric.SuccessRate:F1}% success");
+        }
+
+        // Get system memory information
+        var memoryInfo = performanceMonitor.GetMemoryInfo();
+        Console.WriteLine($"\nMemory Usage:");
+        Console.WriteLine($"  Working Set: {memoryInfo.WorkingSetMB} MB");
+        Console.WriteLine($"  Private Memory: {memoryInfo.PrivateMemoryMB} MB");
+        Console.WriteLine($"  GC Memory: {memoryInfo.GCTotalMemoryMB} MB");
+        Console.WriteLine($"  Thread Count: {memoryInfo.ThreadCount}");
+
+        // Generate comprehensive performance report
+        var report = performanceMonitor.GetPerformanceReport();
+        Console.WriteLine($"\n{report}");
+
+        // Reset specific operation metrics
+        performanceMonitor.ResetOperation("FileRead");
+        Console.WriteLine("\nFileRead metrics reset");
+
+        // Reset all metrics
+        performanceMonitor.Reset();
+        Console.WriteLine("All metrics cleared");
+    }
+}
+```
+
 ## FileSystemExtensions
 
 `FileSystemExtensions` is a utility class that provides extension methods for safe file system operations. It offers a comprehensive set of methods for directory and file management, including creation, deletion, path manipulation, and size calculations, all with built-in error handling and null/whitespace validation.
