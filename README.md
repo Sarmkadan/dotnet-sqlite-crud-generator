@@ -1,8 +1,32 @@
-// existing content ...
+# DotNet SQLite CRUD Generator
 
-## MigrationDiffServiceTests
+This project is a .NET tool that generates a complete CRUD (Create, Read, Update, Delete) API for SQLite databases, including:
 
-`MigrationDiffServiceTests` is a test class that contains unit tests for `MigrationDiffService`. It provides various test methods to verify the correctness of database schema generation, diff computation, and actual schema retrieval against an in-memory SQLite database. 
+- Entity models
+- Repository interfaces and implementations
+- Service layer
+- gRPC services
+- Database migrations
+- Unit tests
+
+## Features
+
+- Automatic code generation from database schema
+- Support for multiple output formats (C# classes, SQL migrations, gRPC services)
+- Customizable templates and naming conventions
+- Built-in unit tests for generated code
+- SQLite-specific optimizations
+
+## Usage
+
+See [USAGE.md](USAGE.md) for detailed instructions.
+
+## Test Documentation
+
+
+### MigrationDiffServiceTests
+
+`MigrationDiffServiceTests` is a test class that contains unit tests for `MigrationDiffService`. It provides various test methods to verify the correctness of database schema generation, diff computation, and actual schema retrieval against an in-memory SQLite database.
 
 Here's an example of using `MigrationDiffServiceTests` in a test class:
 
@@ -38,8 +62,7 @@ public class MigrationDiffServiceTestsExample : IDisposable
 
 ## UserServiceTests
 
-`UserServiceTests` is a test class that verifies the behavior of **UserService** by using a mocked `IRepository<User, int>`.  
-It contains async test methods that cover the most common service operations: retrieving a user by id (both existing and non‑existent), fetching all users, creating a new user, updating an existing user, and deleting a user.
+`UserServiceTests` is a test class that verifies the behavior of **UserService** by using a mocked `IRepository<User, int>`. It contains async test methods that cover the most common service operations: retrieving a user by id (both existing and non‑existent), fetching all users, creating a new user, updating an existing user, and deleting a user.
 
 ```csharp
 using System.Threading.Tasks;
@@ -66,7 +89,7 @@ public class UserServiceTestsExample
 
 ## GenerationServiceTests
 
-`GenerationServiceTests` is a test class that contains unit tests for the `GenerationService`.  
+`GenerationServiceTests` is a test class that contains unit tests for the `GenerationService`.
 It demonstrates how to instantiate the test class, run a test method, and clean up resources. The example below shows a simple usage pattern that compiles and runs the test methods.
 
 ```csharp
@@ -82,6 +105,54 @@ public class GenerationServiceTestsExample
         await tests.GenerateMigrationAsync_GeneratesCorrectSqlMigrationFile();
         await tests.GenerateGrpcServiceAsync_GeneratesCorrectProtoFile();
         tests.Dispose();
+    }
+}
+```
+
+## StringExtensionsTests
+
+`StringExtensionsTests` is a test class that contains unit tests for the `StringExtensions` utility class, verifying various string manipulation and formatting operations such as PascalCase conversion, camelCase conversion, pluralization, truncation, slug generation, and snake_case conversion.
+
+Here's an example demonstrating how to use the `StringExtensions` methods based on the actual test cases:
+
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Utilities;
+
+public class StringExtensionsExample
+{
+    public static void Main()
+    {
+        // PascalCase conversion
+        var pascalResult = "user_profile_id".ToPascalCase();
+        Console.WriteLine(pascalResult); // Output: UserProfileId
+        
+        // camelCase conversion
+        var camelResult = "first_name".ToCamelCase();
+        Console.WriteLine(camelResult); // Output: firstName
+        
+        // Pluralization
+        var pluralResult = "category".Pluralize();
+        Console.WriteLine(pluralResult); // Output: categories
+        
+        // Truncation with ellipsis
+        var truncatedResult = "This is a long product description".Truncate(20, addEllipsis: true);
+        Console.WriteLine(truncatedResult); // Output: This is a long produ...
+        
+        // Slug generation
+        var slugResult = "My Product Name 2024".ToSlug();
+        Console.WriteLine(slugResult); // Output: my-product-name-2024
+        
+        // snake_case conversion
+        var snakeResult = "StockQuantity".ToSnakeCase();
+        Console.WriteLine(snakeResult); // Output: stock_quantity
+        
+        // Null/empty handling
+        var nullResult = ((string?)null).ToPascalCase();
+        Console.WriteLine(nullResult); // Output: (null)
+        
+        var emptyResult = "".ToSnakeCase();
+        Console.WriteLine(emptyResult); // Output: (empty string)
     }
 }
 ```
