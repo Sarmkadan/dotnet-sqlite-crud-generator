@@ -242,6 +242,153 @@ using DotNet.SQLite.CrudGenerator.Formatters;
 
 class Program
 {
+    static void Main(string[] args)
+    {
+        // Create formatter with pretty printing enabled and XML declaration omitted
+        var formatter = new XmlFormatter(pretty: true, omitDeclaration: true);
+
+        // Format a single object to XML
+        var product = new Product { Id = 1, Name = "Test Product", Price = 10.99m, CreatedDate = DateTime.Now };
+        var xml = formatter.Format(product);
+        Console.WriteLine("Single Product XML:");
+        Console.WriteLine(xml);
+
+        // Format a collection to XML
+        var products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Test Product 1", Price = 10.99m, CreatedDate = DateTime.Now },
+            new Product { Id = 2, Name = "Test Product 2", Price = 9.99m, CreatedDate = DateTime.Now },
+        };
+        var xmlCollection = formatter.Format(products);
+        Console.WriteLine("\nProduct Collection XML:");
+        Console.WriteLine(xmlCollection);
+
+        // Parse XML back to object
+        var parsedProduct = formatter.Parse<Product>(xml);
+        Console.WriteLine($"\nParsed Product: {parsedProduct?.Name}");
+
+        // Parse XML collection back to objects
+        var parsedProducts = formatter.ParseCollection<Product>(xmlCollection);
+        Console.WriteLine("\nParsed Products:");
+        foreach (var p in parsedProducts ?? new List<Product>())
+        {
+            Console.WriteLine($" - Product {p.Id}: {p.Name} (${p.Price})");
+        }
+
+        // Get XML value via XPath
+        var priceValue = formatter.GetXmlValue(product, "//Price");
+        Console.WriteLine($"\nPrice from XPath: {priceValue}");
+
+        // Add XML attribute to an object
+        formatter.AddXmlAttribute(product, "Description", "Premium quality product");
+        Console.WriteLine("\nProduct with added attribute:");
+        Console.WriteLine(formatter.Format(product));
+
+        // Async formatting
+        var asyncXml = await formatter.FormatAsync(product);
+        Console.WriteLine("\nAsync formatted XML:");
+        Console.WriteLine(asyncXml);
+    }
+}
+
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public DateTime CreatedDate { get; set; }
+}
+```
+
+## JsonFormatter
+
+`JsonFormatter` is a utility class for formatting data to JSON with customizable serialization options. It supports both pretty-printing and compact output, handles circular references, and provides custom type conversions. The formatter includes synchronous and asynchronous methods for formatting single objects or collections, parsing JSON back to objects, and extracting values via JSON paths.
+
+Below is a realistic example of using `JsonFormatter` in a console application:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using DotNet.SQLite.CrudGenerator.Formatters;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Create formatter with pretty printing enabled and null values ignored
+        var formatter = new JsonFormatter(pretty: true, ignoreNull: true);
+
+        // Format a single object to JSON
+        var product = new Product
+        {
+            Id = 1,
+            Name = "Premium Coffee",
+            Price = 12.99m,
+            CreatedDate = DateTime.UtcNow,
+            Description = "Organic Arabica beans"
+        };
+        
+        var json = formatter.Format(product);
+        Console.WriteLine("Single Product JSON:");
+        Console.WriteLine(json);
+
+        // Format a collection to JSON
+        var products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Premium Coffee", Price = 12.99m, CreatedDate = DateTime.UtcNow },
+            new Product { Id = 2, Name = "Green Tea", Price = 8.50m, CreatedDate = DateTime.UtcNow },
+            new Product { Id = 3, Name = "Black Tea", Price = 7.25m, CreatedDate = DateTime.UtcNow }
+        };
+        
+        var jsonCollection = formatter.Format(products);
+        Console.WriteLine("\nProduct Collection JSON:");
+        Console.WriteLine(jsonCollection);
+
+        // Parse JSON back to object
+        var parsedProduct = formatter.Parse<Product>(json);
+        Console.WriteLine($"\nParsed Product: {parsedProduct?.Name} (${parsedProduct?.Price})");
+
+        // Parse JSON collection back to objects
+        var parsedProducts = formatter.ParseCollection<Product>(jsonCollection);
+        Console.WriteLine("\nParsed Products:");
+        foreach (var p in parsedProducts ?? new List<Product>()) 
+        {
+            Console.WriteLine($" - Product {p.Id}: {p.Name} (${p.Price})");
+        }
+
+        // Get JSON value via path
+        var priceValue = formatter.GetJsonPath(product, "price");
+        Console.WriteLine($"\nPrice from path: {priceValue}");
+
+        // Parse as JsonDocument for advanced JSON manipulation
+        var jsonDoc = formatter.ParseAsDocument(json);
+        Console.WriteLine("\nJSON Document Root Element:");
+        Console.WriteLine(jsonDoc.RootElement.GetRawText());
+
+        // Async formatting
+        var asyncJson = await formatter.FormatAsync(product);
+        Console.WriteLine("\nAsync formatted JSON:");
+        Console.WriteLine(asyncJson);
+    }
+}
+
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public string? Description { get; set; }
+}
+```
+
+```csharp
+using System;
+using System.Collections.Generic;
+using DotNet.SQLite.CrudGenerator.Formatters;
+
+class Program
+{
 static void Main(string[] args)
 {
 // Create formatter with pretty printing enabled and XML declaration omitted
