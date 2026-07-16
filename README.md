@@ -195,4 +195,60 @@ Console.WriteLine($"Created at: {rootCategory.CreatedAt}");
 Console.WriteLine($"Updated at: {rootCategory.UpdatedAt}");
 ```
 
+## Product
+
+`Product` represents a product entity with comprehensive inventory management, pricing, and profitability tracking capabilities. It includes properties for product identification (SKU), categorization, pricing information, stock management, and business logic methods for inventory operations and profit calculations.
+
+
+The class supports validation, stock management operations (adding/removing stock), profit margin calculations, and low stock detection, making it suitable for inventory systems and e-commerce applications.
+
+
+
+**Example**
+
+```csharp
+// Create a new product
+var product = new Product
+{
+    Name = "Premium Wireless Headphones",
+    Description = "Noise-cancelling wireless headphones with 30-hour battery life",
+    Sku = "AUD-PWH-001",
+    CategoryId = 5,
+    Price = 199.99m,
+    Cost = 120.50m,
+    StockQuantity = 45,
+    ReorderLevel = 10,
+    Unit = "piece",
+    IsActive = true
+};
+
+// Validate the product
+bool isValid = product.Validate();
+Console.WriteLine($"Product is valid: {isValid}");
+
+// Calculate profit margin
+decimal profitMargin = product.GetProfitMarginPercentage();
+Console.WriteLine($"Profit margin: {profitMargin:F2}%");
+
+// Check if stock is low
+bool isLowStock = product.IsLowStock();
+Console.WriteLine($"Is low stock: {isLowStock}");
+
+// Add stock
+product.AddStock(25);
+Console.WriteLine($"Stock after addition: {product.StockQuantity}");
+
+// Remove stock
+product.RemoveStock(10);
+Console.WriteLine($"Stock after removal: {product.StockQuantity}");
+
+// Deactivate the product
+product.Deactivate();
+Console.WriteLine($"Product active status: {product.IsActive}");
+
+// Check timestamps
+Console.WriteLine($"Created at: {product.CreatedAt}");
+Console.WriteLine($"Updated at: {product.UpdatedAt}");
+```
+
 // ... rest of README content ...
