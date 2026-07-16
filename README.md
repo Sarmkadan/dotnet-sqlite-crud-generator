@@ -87,4 +87,92 @@ await workerService.StopAsync(TimeSpan.FromSeconds(10));
 scheduledRunner.Stop();
 ```
 
+## BackgroundTaskQueue
+
+`BackgroundTaskQueue` is a thread-safe queue implementation for managing and executing background tasks asynchronously. It provides priority-based task scheduling, execution tracking, and comprehensive statistics about task performance. The queue supports multiple worker threads and maintains a history of task executions with automatic cleanup of old records.
+
+Below is a realistic example of using `BackgroundTaskQueue` directly:
+
+```csharp
+// Create a task queue
+var taskQueue = new BackgroundTaskQueue();
+
+// Enqueue a high-priority task
+var highPriorityTask = new BackgroundTask
+{
+    Name = "Generate Report",
+    Action = async (cancellationToken) =>
+    {
+        Console.WriteLine("Generating report...");
+        await Task.Delay(2000, cancellationToken);
+        Console.WriteLine("Report generation completed");
+    },
+    MaxRetries = 2
+};
+
+await taskQueue.EnqueueAsync(highPriorityTask, TaskPriority.High);
+
+// Enqueue a normal-priority task
+var normalTask = new BackgroundTask
+{
+    Name = "Send Email Notifications",
+    Action = async (cancellationToken) =>
+    {
+        Console.WriteLine("Sending notifications...");
+        await Task.Delay(1000, cancellationToken);
+        Console.WriteLine("Notifications sent");
+    }
+};
+
+await taskQueue.EnqueueAsync(normalTask);
+
+// Process tasks from the queue
+var cancellationTokenSource = new CancellationTokenSource();
+var processingTask = Task.Run(async () =>
+{
+    while (!cancellationTokenSource.Token.IsCancellationRequested)
+    {
+        var task = await taskQueue.DequeueAsync(cancellationTokenSource.Token);
+        if (task != null)
+        {
+            try
+            {
+                await task.Action(cancellationTokenSource.Token);
+                await taskQueue.RecordExecutionAsync(task.Id.ToString(), success: true);
+                task.CompletedAt = DateTime.UtcNow;
+                Console.WriteLine($"Task '{task.Name}' completed successfully");
+            }
+            catch (Exception ex)
+            {
+                await taskQueue.RecordExecutionAsync(task.Id.ToString(), success: false, error: ex.Message);
+                task.Error = ex.Message;
+                Console.WriteLine($"Task '{task.Name}' failed: {ex.Message}");
+            }
+        }
+    }
+});
+
+// Wait for some tasks to complete
+await Task.Delay(TimeSpan.FromSeconds(5));
+
+// Get queue statistics
+var stats = taskQueue.GetStatistics();
+Console.WriteLine($"Queue length: {taskQueue.GetQueueLength()}");
+Console.WriteLine($"Pending tasks: {stats.PendingTasks}");
+Console.WriteLine($"Total executed: {stats.TotalExecuted}");
+Console.WriteLine($"Successful tasks: {stats.SuccessfulTasks}");
+Console.WriteLine($"Failed tasks: {stats.FailedTasks}");
+
+// Get execution history
+var history = taskQueue.GetExecutionHistory();
+foreach (var record in history)
+{
+    Console.WriteLine($"Task {record.TaskId} executed at {record.ExecutedAt}: {(record.Success ? "Success" : "Failed")}");
+}
+
+// Cleanup
+cancellationTokenSource.Cancel();
+await processingTask;
+```
+
 // ... rest of README content ...
