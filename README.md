@@ -20,5 +20,5 @@ class Program
 }
 ```
 
-// ... rest of README content ...
+// rest of README content
 ```
