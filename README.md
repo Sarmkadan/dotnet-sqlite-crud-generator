@@ -149,4 +149,52 @@ class Program
 }
 ```
 
+## AuditTrailFilter
+
+`AuditTrailFilter` provides a flexible way to query audit trail entries with support for filtering by entity type, entity ID, user ID, operation type, and date ranges. It supports pagination through the `Limit` property and can be used with the `AuditTrailService` to retrieve filtered audit logs.
+
+Below is a realistic example of using `AuditTrailFilter` with `AuditTrailService`:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Enums;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup database connection and service
+        var database = new DatabaseConnection("audit.db");
+        var auditService = new AuditTrailService(database);
+
+        // Create a filter for audit entries from the last 7 days
+        var filter = new AuditTrailFilter
+        {
+            EntityType = "Product",
+            OperationType = OperationType.Update,
+            From = DateTime.UtcNow.AddDays(-7),
+            To = DateTime.UtcNow,
+            Limit = 200
+        };
+
+        // Query audit trail
+        var auditEntries = await auditService.QueryAsync(filter);
+        
+        Console.WriteLine($"Found {auditEntries.Count} audit entries for Product updates in the last 7 days:");
+        foreach (var entry in auditEntries)
+        {
+            Console.WriteLine($"  {entry.Timestamp:yyyy-MM-dd HH:mm:ss} - {entry.OperationType}: " +
+                           $"User {entry.ChangedByUserId} changed Product {entry.EntityId}");
+        }
+
+        // Get summary statistics
+        var summary = await auditService.GetSummaryAsync();
+        Console.WriteLine($"\nTotal audit entries: {summary.TotalEntries}");
+        Console.WriteLine($"Operations: {string.Join(", ", summary.ByOperation.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
+    }
+}
+```
+
 // ... rest of README content ...
