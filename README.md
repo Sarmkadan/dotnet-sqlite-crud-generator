@@ -57,4 +57,55 @@ public class MyService
 }
 ```
 
+## RateLimitingMiddleware
+
+`RateLimitingMiddleware` is a middleware component that implements rate limiting using a sliding window algorithm to track request counts per client. It prevents abuse by limiting requests to a configured threshold per time window, providing protection against excessive API usage.
+
+The middleware tracks request counts per client identity and automatically cleans up expired requests. It can be configured with custom request limits and time windows.
+
+Below is a realistic example of using `RateLimitingMiddleware` in a request pipeline:
+
+```csharp
+// Configure middleware with 50 requests per 30-second window
+services.AddSingleton<RateLimitingMiddleware>(new RateLimitingMiddleware(requestsPerWindow: 50, windowSeconds: 30));
+
+// Use middleware in pipeline
+app.Use(async (context, next) =>
+{
+    var middleware = context.RequestServices.GetRequiredService<RateLimitingMiddleware>();
+    var result = await middleware.ExecuteAsync<MyRequest, MyResponse>(
+        request,
+        async req =>
+        {
+            // Your actual request handling logic here
+            return new MiddlewareResult
+            {
+                Success = true,
+                Message = "Request processed successfully",
+                Data = responseData
+            };
+        }
+    );
+
+    if (!result.Success)
+    {
+        context.Response.StatusCode = 429; // Too Many Requests
+        await context.Response.WriteAsync(result.Message ?? "Rate limit exceeded");
+    }
+});
+
+// Monitor rate limiting statistics
+var stats = middleware.GetStatistics();
+Console.WriteLine($"Total clients tracked: {stats.TotalClients}");
+foreach (var client in stats.ClientLimits)
+{
+    Console.WriteLine($"Client {client.Key}: {client.Value.RequestCount} requests, " +
+                     $"Allowed: {client.Value.IsAllowed}, " +
+                     $"Resets at: {client.Value.ResetTime}");
+}
+
+// Reset all rate limits (e.g., during maintenance)
+middleware.ResetLimits();
+```
+
 // ... rest of README content ...
