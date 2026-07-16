@@ -120,4 +120,29 @@ var result = await pipeline.ImportFromFileAsync("products.json", ImportFormat.Js
 Console.WriteLine($"Imported {result.TotalProcessed} items.");
 ```
 
+## BulkTransferProgress
+
+`BulkTransferProgress` is an immutable record that captures a snapshot of a bulk‑transfer operation at a configurable reporting interval. It provides counts of processed, succeeded and failed records, byte‑level throughput information, timing data, and helper properties such as `PercentComplete`, `Throughput` and `EstimatedTimeRemaining`.
+
+**Example**
+
+```csharp
+// Simulate a progress snapshot after processing 2 500 records
+var progress = new BulkTransferProgress(
+    ProcessedCount: 2_500,
+    TotalCount: 10_000,
+    SucceededCount: 2_450,
+    FailedCount: 50,
+    BytesTransferred: 12_345_678,
+    StartedAt: DateTime.UtcNow.AddSeconds(-30),
+    CurrentBatch: 4);
+
+// Write a human‑readable line to the console (uses overridden ToString())
+Console.WriteLine(progress);
+Console.WriteLine($"Complete: {progress.PercentComplete}%");
+Console.WriteLine($"Throughput: {progress.Throughput} rec/s");
+if (progress.EstimatedTimeRemaining.HasValue)
+    Console.WriteLine($"ETA: {progress.EstimatedTimeRemaining}");
+```
+
 // ... rest of README content ...
