@@ -435,6 +435,191 @@ class Program
         // Get inventory statistics
         var stats = await productService.GetInventoryStatsAsync();
         Console.WriteLine($"Inventory Stats:");
+        Console.WriteLine($" Total Products: {stats.TotalProducts}");
+        Console.WriteLine($" Total Units: {stats.TotalUnitsInStock}");
+        Console.WriteLine($" Total Value: ${stats.TotalInventoryValue}");
+        Console.WriteLine($" Low Stock Items: {stats.LowStockCount}");
+        Console.WriteLine($" Average Stock: {stats.AverageStockLevel}");
+
+        // Validate a product
+        var isValid = productService.Validate(createdProduct);
+        Console.WriteLine($"Product validation: {isValid}");
+
+        // Delete a product
+        await productService.DeleteAsync(createdProduct.Id);
+        Console.WriteLine("Product deleted successfully");
+    }
+}
+```
+
+## Repository
+
+`Repository<T, TKey>` is a generic base class that provides a complete implementation of the repository pattern for SQLite databases. It handles all CRUD operations (Create, Read, Update, Delete) with built-in caching, connection management, and comprehensive logging through `ILogger`.
+
+The repository automatically manages entity persistence to the SQLite database table named after the entity type (e.g., `Product` → `Products` table), handles primary key operations, and maintains an in-memory cache for improved performance on read operations.
+
+Below is a realistic example of using a concrete repository implementation (e.g., `ProductRepository`) in an application:
+
+```csharp
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Data;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup database connection
+        var database = new DatabaseConnection("products.db");
+        
+        // Create repository instance with logging
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<ProductRepository>();
+        var productRepository = new ProductRepository(database, logger);
+
+        // Create and add a new product
+        var newProduct = new Product
+        {
+            Name = "Wireless Headphones",
+            Description = "High-quality wireless headphones with noise cancellation",
+            Sku = "AUD-WH-001",
+            Price = 149.99m,
+            Cost = 95.50m,
+            StockQuantity = 100,
+            CategoryId = 1
+        };
+
+        var createdProduct = await productRepository.AddAsync(newProduct);
+        Console.WriteLine($"Created product with ID: {createdProduct.Id}");
+
+        // Get a product by ID (from cache if available)
+        var fetchedProduct = await productRepository.GetByIdAsync(createdProduct.Id);
+        Console.WriteLine($"Fetched product: {fetchedProduct?.Name} - ${fetchedProduct?.Price}");
+
+        // Get all products (cached after first call)
+        var allProducts = await productRepository.GetAllAsync();
+        Console.WriteLine($"Total products: {allProducts.Count()}");
+
+        // Find products using predicate
+        var expensiveProducts = await productRepository.FindAsync(p => p.Price > 100);
+        Console.WriteLine($"Expensive products (>$100): {expensiveProducts.Count()}");
+
+        // Count products
+        var totalProducts = await productRepository.CountAsync();
+        Console.WriteLine($"Total products in database: {totalProducts}");
+
+        // Update a product
+        fetchedProduct!.Price = 139.99m;
+        var updateSuccess = await productRepository.UpdateAsync(fetchedProduct);
+        Console.WriteLine($"Update successful: {updateSuccess}");
+
+        // Check if product exists
+        var exists = await productService.ExistsAsync(createdProduct.Id);
+        Console.WriteLine($"Product exists: {exists}");
+
+        // Add multiple products at once
+        var productsToAdd = new[]
+        {
+            new Product { Name = "Bluetooth Speaker", Sku = "AUD-BS-002", Price = 59.99m, StockQuantity = 75 },
+            new Product { Name = "Smart Watch", Sku = "AUD-SW-003", Price = 199.99m, StockQuantity = 50 }
+        };
+        var addedProducts = await productRepository.AddRangeAsync(productsToAdd);
+        Console.WriteLine($"Added {addedProducts.Count()} products in bulk");
+
+        // Delete a product by ID
+        var deleteSuccess = await productRepository.DeleteAsync(createdProduct.Id);
+        Console.WriteLine($"Delete successful: {deleteSuccess}");
+
+        // Delete multiple products
+        var idsToDelete = new[] { 2, 3 };
+        var deletedCount = await productRepository.DeleteRangeAsync(idsToDelete);
+        Console.WriteLine($"Deleted {deletedCount} products");
+    }
+}
+```
+
+```csharp
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Data;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup database connection and repositories
+        var database = new DatabaseConnection("inventory.db");
+        var productRepository = new ProductRepository(database);
+        var categoryRepository = new CategoryRepository(database);
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<ProductService>();
+
+        // Create ProductService instance
+        var productService = new ProductService(productRepository, categoryRepository);
+
+        // Create a new product
+        var newProduct = new Product
+        {
+            Name = "Premium Wireless Headphones",
+            Description = "Noise-cancelling wireless headphones with 30-hour battery",
+            Sku = "AUD-PWH-001",
+            Price = 199.99m,
+            Cost = 120.50m,
+            StockQuantity = 50,
+            CategoryId = 1,
+            MinimumStockLevel = 10
+        };
+
+        var createdProduct = await productService.CreateAsync(newProduct);
+        Console.WriteLine($"Created product with ID: {createdProduct.Id}, SKU: {createdProduct.Sku}");
+
+        // Get a product by ID
+        var fetchedProduct = await productService.GetAsync(createdProduct.Id);
+        Console.WriteLine($"Fetched product: {fetchedProduct?.Name} - ${fetchedProduct?.Price}");
+
+        // Get all products
+        var allProducts = await productService.GetAllAsync();
+        Console.WriteLine($"Total products in system: {allProducts.Count()}");
+
+        // Update a product
+        fetchedProduct!.Price = 189.99m;
+        await productService.UpdateAsync(fetchedProduct);
+        Console.WriteLine("Product price updated");
+
+        // Restock inventory
+        var restockedProduct = await productService.RestockProductAsync(createdProduct.Id, 25);
+        Console.WriteLine($"Restocked. New stock level: {restockedProduct.StockQuantity}");
+
+        // Sell inventory
+        var soldProduct = await productService.SellProductAsync(createdProduct.Id, 5);
+        Console.WriteLine($"Sold 5 units. Remaining stock: {soldProduct.StockQuantity}");
+
+        // Check if product exists
+        var exists = await productService.ExistsAsync(createdProduct.Id);
+        Console.WriteLine($"Product exists: {exists}");
+
+        // Get products by category
+        var categoryProducts = await productService.GetByCategoryAsync(1);
+        Console.WriteLine($"Products in category 1: {categoryProducts.Count()}");
+
+        // Get low stock products
+        var lowStockProducts = await productService.GetLowStockProductsAsync();
+        Console.WriteLine($"Low stock products: {lowStockProducts.Count()}");
+
+        // Calculate inventory value
+        var inventoryValue = await productService.GetInventoryValueAsync();
+        Console.WriteLine($"Total inventory value: ${inventoryValue}");
+
+        // Get inventory statistics
+        var stats = await productService.GetInventoryStatsAsync();
+        Console.WriteLine($"Inventory Stats:");
         Console.WriteLine($"  Total Products: {stats.TotalProducts}");
         Console.WriteLine($"  Total Units: {stats.TotalUnitsInStock}");
         Console.WriteLine($"  Total Value: ${stats.TotalInventoryValue}");
