@@ -366,6 +366,78 @@ class Program
 }
 ```
 
+## ProductServiceTests
+
+`ProductServiceTests` is a test class that verifies CRUD operations and business logic for product management using mocked repositories. It tests methods like `GetAsync`, `GetAllAsync`, and `ExistsAsync` to ensure proper validation and repository interaction. The class demonstrates how to mock repository dependencies and test service layer behavior.
+
+Below is a realistic example of using the `ProductService` with mocked repositories in a console application:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Interfaces;
+using NSubstitute;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Create mock repositories
+        var productRepoMock = Substitute.For<IRepository<Product, int>>();
+        var categoryRepoMock = Substitute.For<IRepository<Category, int>>();
+        
+        // Create ProductService with mocked repositories
+        var productService = new ProductService(productRepoMock, categoryRepoMock);
+        
+        // Mock repository responses
+        var testProduct = new Product
+        {
+            Id = 1,
+            Name = "Premium Coffee",
+            Sku = "PC-001",
+            CategoryId = 1,
+            Price = 12.99m,
+            Cost = 6.50m,
+            StockQuantity = 100,
+            ReorderLevel = 10,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        
+        var productsList = new List<Product>
+        {
+            new() { Id = 1, Name = "Premium Coffee", Sku = "PC-001", CategoryId = 1, Price = 12.99m },
+            new() { Id = 2, Name = "Green Tea", Sku = "GT-002", CategoryId = 1, Price = 8.50m }
+        };
+        
+        productRepoMock.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(testProduct);
+        productRepoMock.GetAllAsync(Arg.Any<CancellationToken>()).Returns(productsList);
+        productRepoMock.ExistsAsync(1, Arg.Any<CancellationToken>()).Returns(true);
+        
+        // Test GetAsync with valid ID
+        var product = await productService.GetAsync(1);
+        Console.WriteLine($"Retrieved product: {product?.Name} (${product?.Price})");
+        
+        // Test GetAllAsync
+        var allProducts = (await productService.GetAllAsync()).ToList();
+        Console.WriteLine($"Total products: {allProducts.Count}");
+        
+        // Test ExistsAsync
+        var exists = await productService.ExistsAsync(1);
+        Console.WriteLine($"Product exists: {exists}");
+        
+        // Verify repository calls
+        await productRepoMock.Received(1).GetByIdAsync(1, Arg.Any<CancellationToken>());
+        await productRepoMock.Received(1).GetAllAsync(Arg.Any<CancellationToken>());
+        await productRepoMock.Received(1).ExistsAsync(1, Arg.Any<CancellationToken>());
+    }
+}
+```
+
 ## RepositoryIntegrationTests
 
 `RepositoryIntegrationTests` is a test class that provides integration tests for repository operations against an in-memory SQLite database. It tests CRUD operations for products and users, ensuring database interactions work correctly with proper seeding and cleanup. The class demonstrates how to set up an in-memory database, initialize repositories, and test basic repository operations.
