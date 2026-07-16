@@ -261,3 +261,89 @@ class Program
 ```
 
 // ... rest of README content ...
+
+## UserService
+
+`UserService` is a service class that provides comprehensive user management functionality including CRUD operations, authentication, password management, user status control, and activity monitoring. It implements validation, logging, and business logic for user-related operations while delegating data persistence to the underlying repository.
+
+The service handles user creation with duplicate email detection, password authentication, account deactivation/reactivation, email verification, and provides summary statistics about user activity. All operations are logged and validated according to business rules.
+
+Below is a realistic example of using `UserService` in an application:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Data;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup database connection and repository
+        var database = new DatabaseConnection("users.db");
+        var userRepository = new UserRepository(database);
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<UserService>();
+        
+        // Create UserService instance
+        var userService = new UserService(userRepository, logger);
+        
+        // Create a new user
+        var newUser = new User
+        {
+            FirstName = "John",
+            LastName = "Doe",
+            Email = "john.doe@example.com",
+            PasswordHash = "hashed_password_123",
+            IsActive = true,
+            EmailVerified = false
+        };
+        
+        var createdUser = await userService.CreateAsync(newUser);
+        Console.WriteLine($"Created user with ID: {createdUser.Id}");
+        
+        // Authenticate user
+        var authenticatedUser = await userService.AuthenticateAsync(
+            "john.doe@example.com", 
+            "hashed_password_123"
+        );
+        
+        if (authenticatedUser != null)
+        {
+            Console.WriteLine($"Authenticated user: {authenticatedUser.Email}");
+            
+            // Update user
+            authenticatedUser.LastName = "Smith";
+            await userService.UpdateAsync(authenticatedUser);
+            
+            // Verify email
+            await userService.VerifyEmailAsync(createdUser.Id);
+            
+            // Get user activity summary
+            var summary = await userService.GetActivitySummaryAsync();
+            Console.WriteLine($"Total users: {summary.TotalUsers}, Active: {summary.ActiveUsers}, Verified: {summary.VerifiedEmails}");
+            
+            // Deactivate user
+            await userService.DeactivateUserAsync(createdUser.Id);
+            
+            // Reset password
+            await userService.ResetPasswordAsync(createdUser.Id, "new_hashed_password_456");
+            
+            // Check if user exists
+            var exists = await userService.ExistsAsync(createdUser.Id);
+            Console.WriteLine($"User exists: {exists}");
+            
+            // Get all users
+            var allUsers = await userService.GetAllAsync();
+            Console.WriteLine($"Total users in system: {allUsers.Count()}");
+            
+            // Delete user
+            await userService.DeleteAsync(createdUser.Id);
+            Console.WriteLine("User deleted successfully");
+        }
+    }
+}
+```
