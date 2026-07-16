@@ -1040,6 +1040,181 @@ The class is designed to prevent common file system issues by providing safe alt
 Below is a realistic example of using `FileSystemExtensions` in an application:
 
 
+```csharp
+using System;
+using System.IO;
+using DotNet.SQLite.CrudGenerator.Utilities;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        string basePath = "/tmp/myapp";
+        string tempDir = Path.Combine(basePath, "temp");
+        string dataFile = Path.Combine(tempDir, "data.txt");
+        string logDir = Path.Combine(basePath, "logs");
+
+        // Safely create directory if it doesn't exist
+        bool dirCreated = tempDir.CreateDirectoryIfNotExists();
+        Console.WriteLine($"Directory created: {dirCreated}");
+
+        // Create a file and write some data
+        File.WriteAllText(dataFile, "Sample data content");
+        Console.WriteLine($"File size: {dataFile.GetFileSize()} bytes");
+        Console.WriteLine($"File size formatted: {dataFile.GetFileSizeFormatted()}");
+
+        // Check if file has specific extension
+        bool hasTxtExtension = dataFile.HasExtension("txt", "csv", "json");
+        Console.WriteLine($"Has .txt extension: {hasTxtExtension}");
+
+        // Get extension without dot
+        string extension = dataFile.GetExtensionWithoutDot();
+        Console.WriteLine($"Extension without dot: {extension}");
+
+        // Check if path is absolute
+        bool isAbsolute = tempDir.IsAbsolutePath();
+        Console.WriteLine($"Is absolute path: {isAbsolute}");
+
+        // Combine multiple path segments
+        string combinedPath = basePath.CombinePaths("src", "utils", "FileSystemExtensions.cs");
+        Console.WriteLine($"Combined path: {combinedPath}");
+
+        // Safely delete file if it exists
+        bool fileDeleted = dataFile.DeleteFileIfExists();
+        Console.WriteLine($"File deleted: {fileDeleted}");
+
+        // Safely delete directory if it exists
+        bool dirDeleted = tempDir.DeleteDirectoryIfExists();
+        Console.WriteLine($"Directory deleted: {dirDeleted}");
+
+        // Check if directory is empty
+        bool isEmpty = logDir.IsEmpty();
+        Console.WriteLine($"Directory is empty: {isEmpty}");
+
+        // Recursively get files with specific extensions
+        // First create some test structure
+        Directory.CreateDirectory(logDir);
+        File.WriteAllText(Path.Combine(logDir, "app.log"), "Log entry 1");
+        File.WriteAllText(Path.Combine(logDir, "error.log"), "Error entry");
+        File.WriteAllText(Path.Combine(logDir, "config.txt"), "Config data");
+
+        var logFiles = logDir.GetFilesRecursively("log");
+        Console.WriteLine($"Found {logFiles.Count()} .log files:");
+        foreach (var file in logFiles)
+        {
+            Console.WriteLine($" - {Path.GetFileName(file)}");
+        }
+
+        // Copy a directory recursively
+        string sourceDir = Path.Combine(basePath, "source");
+        string destDir = Path.Combine(basePath, "destination");
+        Directory.CreateDirectory(sourceDir);
+        File.WriteAllText(Path.Combine(sourceDir, "file1.txt"), "Content 1");
+        File.WriteAllText(Path.Combine(sourceDir, "file2.cs"), "Content 2");
+
+        sourceDir.CopyDirectory(destDir, overwrite: true);
+        Console.WriteLine($"Directory copied: {Directory.Exists(destDir)}");
+
+        // Cleanup
+        destDir.DeleteDirectoryIfExists();
+        logDir.DeleteDirectoryIfExists();
+    }
+}
+```
+
+## DateTimeExtensions
+
+`DateTimeExtensions` is a utility class that provides extension methods for DateTime operations. It offers comprehensive date/time calculations, formatting, comparisons, and utility functions for working with dates and times in .NET applications.
+
+The class includes methods for checking if dates are in the past or future, getting the beginning/end of days, months, quarters, and years, finding next/previous occurrences of days of the week, calculating ages, rounding dates, and formatting dates as ISO 8601 or human-readable relative time strings.
+
+Below is a realistic example of using `DateTimeExtensions` in an application:
+
+```csharp
+using System;
+using DotNet.SQLite.CrudGenerator.Utilities;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        DateTime now = DateTime.UtcNow;
+        DateTime tomorrow = now.AddDays(1);
+        DateTime yesterday = now.AddDays(-1);
+        DateTime birthDate = new DateTime(1990, 5, 15);
+
+        // Check if dates are in past or future
+        Console.WriteLine($"Yesterday is in past: {yesterday.IsInPast()}");
+        Console.WriteLine($"Tomorrow is in future: {tomorrow.IsInFuture()}");
+
+        // Get beginning and end of day
+        DateTime startOfDay = now.BeginningOfDay();
+        DateTime endOfDay = now.EndOfDay();
+        Console.WriteLine($"Start of day: {startOfDay:yyyy-MM-dd HH:mm:ss}");
+        Console.WriteLine($"End of day: {endOfDay:yyyy-MM-dd HH:mm:ss}");
+
+        // Get first and last day of month
+        DateTime firstDayOfMonth = now.FirstDayOfMonth();
+        DateTime lastDayOfMonth = now.LastDayOfMonth();
+        Console.WriteLine($"First day of month: {firstDayOfMonth:yyyy-MM-dd}");
+        Console.WriteLine($"Last day of month: {lastDayOfMonth:yyyy-MM-dd}");
+
+        // Get first and last day of quarter
+        DateTime firstDayOfQuarter = now.FirstDayOfQuarter();
+        DateTime lastDayOfQuarter = now.LastDayOfQuarter();
+        Console.WriteLine($"First day of quarter: {firstDayOfQuarter:yyyy-MM-dd}");
+        Console.WriteLine($"Last day of quarter: {lastDayOfQuarter:yyyy-MM-dd}");
+
+        // Get first and last day of year
+        DateTime firstDayOfYear = now.FirstDayOfYear();
+        DateTime lastDayOfYear = now.LastDayOfYear();
+        Console.WriteLine($"First day of year: {firstDayOfYear:yyyy-MM-dd}");
+        Console.WriteLine($"Last day of year: {lastDayOfYear:yyyy-MM-dd}");
+
+        // Find next Monday and previous Friday
+        DateTime nextMonday = now.NextOccurrenceOf(DayOfWeek.Monday);
+        DateTime previousFriday = now.PreviousOccurrenceOf(DayOfWeek.Friday);
+        Console.WriteLine($"Next Monday: {nextMonday:yyyy-MM-dd (dddd)}");
+        Console.WriteLine($"Previous Friday: {previousFriday:yyyy-MM-dd (dddd)}");
+
+        // Format dates
+        string formatted = now.Format("yyyy-MM-dd HH:mm:ss");
+        Console.WriteLine($"Formatted date: {formatted}");
+
+        // Get relative time
+        string relativeTime = now.AddHours(-2).ToRelativeTime();
+        Console.WriteLine($"Relative time: {relativeTime}");
+
+        // Check same day
+        bool sameDay = now.IsSameDay(DateTime.UtcNow);
+        Console.WriteLine($"Same day: {sameDay}");
+
+        // Check weekend/weekday
+        Console.WriteLine($"Is weekend: {now.IsWeekend()}");
+        Console.WriteLine($"Is weekday: {now.IsWeekday()}");
+
+        // Calculate age
+        int age = birthDate.GetAge();
+        Console.WriteLine($"Age as of today: {age} years");
+
+        // Round to nearest hour
+        DateTime rounded = now.RoundToNearest(TimeSpan.FromHours(1));
+        Console.WriteLine($"Rounded to nearest hour: {rounded:yyyy-MM-dd HH:mm:ss}");
+
+        // Convert to ISO 8601
+        string iso8601 = now.ToIso8601();
+        Console.WriteLine($"ISO 8601 format: {iso8601}");
+
+        // Check if date is between two dates
+        bool isBetween = now.IsBetween(now.AddDays(-1), now.AddDays(1));
+        Console.WriteLine($"Is between dates: {isBetween}");
+    }
+}
+```
+
+Below is a realistic example of using `FileSystemExtensions` in an application:
+
+
 
 ```csharp
 using System;
