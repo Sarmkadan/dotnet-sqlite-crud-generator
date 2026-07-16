@@ -300,6 +300,72 @@ public class Product
 }
 ```
 
+## ConfigurationTests
+
+`ConfigurationTests` is a test class that validates the configuration settings for the SQLite CRUD Generator library. It tests various configuration classes including `DatabaseSettings`, `ConnectionPoolConfiguration`, `CacheConfiguration`, and `ApplicationConfiguration` to ensure they handle edge cases properly and throw appropriate exceptions for invalid configurations.
+
+Below is a realistic example of using the configuration classes in a console application:
+
+```csharp
+using System;
+using DotNet.SQLite.CrudGenerator.Configuration;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Database settings with file path containing spaces
+        var dbSettings = new DatabaseSettings
+        {
+            FilePath = "path with spaces/test database.db"
+        };
+        Console.WriteLine($"Connection string: {dbSettings.ConnectionString}");
+        // OUTPUT: Connection string: Data Source="path with spaces/test database.db";
+
+        // Database settings with file path containing Unicode characters
+        var unicodeDbSettings = new DatabaseSettings
+        {
+            FilePath = "path/with/unicode/データベース.db"
+        };
+        Console.WriteLine($"Unicode connection string: {unicodeDbSettings.ConnectionString}");
+        // OUTPUT: Unicode connection string: Data Source="path/with/unicode/データベース.db";
+
+        // Connection pool configuration with valid settings
+        var poolConfig = new ConnectionPoolConfiguration
+        {
+            MinPoolSize = 1,
+            MaxPoolSize = 10,
+            IdleTimeout = TimeSpan.FromMinutes(5),
+            AcquireTimeout = TimeSpan.FromSeconds(30),
+            CleanupInterval = TimeSpan.FromMinutes(1),
+            EnableDiagnostics = true
+        };
+        poolConfig.Validate();
+        Console.WriteLine("Connection pool configuration is valid");
+
+        // Cache configuration with valid settings
+        var cacheConfig = new CacheConfiguration
+        {
+            Enabled = true,
+            MaxSizeBytes = 10_000_000,
+            DefaultTTL = TimeSpan.FromMinutes(30),
+            CleanupIntervalSeconds = 300
+        };
+        Console.WriteLine($"Cache enabled: {cacheConfig.Enabled}, Max size: {cacheConfig.MaxSizeBytes} bytes");
+
+        // Application configuration with all settings
+        var appConfig = new ApplicationConfiguration
+        {
+            Database = new DatabaseSettings { ConnectionString = "Data Source=app.db" },
+            Cache = new CacheConfiguration { MaxSizeBytes = 5_000_000 },
+            BackgroundWorker = new BackgroundWorkerConfiguration { WorkerCount = 4 }
+        };
+        appConfig.Validate();
+        Console.WriteLine("Application configuration is valid");
+    }
+}
+```
+
 ## JsonFormatter
 
 `JsonFormatter` is a utility class for formatting data to JSON with customizable serialization options. It supports both pretty-printing and compact output, handles circular references, and provides custom type conversions. The formatter includes synchronous and asynchronous methods for formatting single objects or collections, parsing JSON back to objects, and extracting values via JSON paths.
