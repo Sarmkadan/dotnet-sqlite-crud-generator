@@ -42,6 +42,7 @@ app.Use(async (context, next) =>
         await context.Response.WriteAsync(result.Message ?? "Request failed");
     }
 });
+```
 
 ## GenerateGrpcAttribute
 
@@ -106,6 +107,46 @@ foreach (var client in stats.ClientLimits)
 
 // Reset all rate limits (e.g., during maintenance)
 middleware.ResetLimits();
+```
+
+## ValidateCommand
+
+`ValidateCommand` validates model definitions and database schema, checking naming conventions, required attributes, and constructor presence. It reports warnings or errors and can run in a strict mode where warnings are treated as errors.
+
+Typical usage creates an instance of the command and invokes `ExecuteAsync`. After execution you can work with `ValidationResult` objects that expose details such as the model name, property name, message, and severity. The custom `RequiredAttribute` can be applied to model properties to indicate mandatory reference‑type fields.
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.CLI;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Create the command
+        var validateCommand = new ValidateCommand();
+
+        // Run validation (no command‑line arguments in this example)
+        int exitCode = await validateCommand.ExecuteAsync(Array.Empty<string>());
+        Console.WriteLine($"Validation finished with exit code {exitCode}");
+
+        // Example of inspecting a validation result
+        var result = new ValidationResult
+        {
+            ModelName   = "User",
+            PropertyName = "email",
+            Message      = "Property name should start with uppercase letter",
+            Severity     = ValidationSeverity.Warning
+        };
+
+        // Demonstrate the custom RequiredAttribute
+        var required = new RequiredAttribute();
+
+        Console.WriteLine(
+            $"Result: {result.ModelName}.{result.PropertyName} - {result.Message} ({result.Severity})");
+    }
+}
 ```
 
 // ... rest of README content ...
