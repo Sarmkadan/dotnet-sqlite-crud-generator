@@ -347,3 +347,107 @@ class Program
     }
 }
 ```
+
+## ProductService
+
+`ProductService` is a service class that provides comprehensive product management functionality with inventory tracking, stock management, and pricing operations. It implements business logic for product lifecycle management while delegating data persistence to the underlying repository.
+
+The service handles product creation with validation and duplicate SKU detection, inventory restocking and sales operations, category-based product queries, low stock monitoring, and inventory valuation. All operations are validated according to business rules and maintain audit trails through the repository layer.
+
+Below is a realistic example of using `ProductService` in an application:
+
+```csharp
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Data;
+using Microsoft.Extensions.Logging;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup database connection and repositories
+        var database = new DatabaseConnection("inventory.db");
+        var productRepository = new ProductRepository(database);
+        var categoryRepository = new CategoryRepository(database);
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<ProductService>();
+
+        // Create ProductService instance
+        var productService = new ProductService(productRepository, categoryRepository);
+
+        // Create a new product
+        var newProduct = new Product
+        {
+            Name = "Premium Wireless Headphones",
+            Description = "Noise-cancelling wireless headphones with 30-hour battery",
+            Sku = "AUD-PWH-001",
+            Price = 199.99m,
+            Cost = 120.50m,
+            StockQuantity = 50,
+            CategoryId = 1,
+            MinimumStockLevel = 10
+        };
+
+        var createdProduct = await productService.CreateAsync(newProduct);
+        Console.WriteLine($"Created product with ID: {createdProduct.Id}, SKU: {createdProduct.Sku}");
+
+        // Get a product by ID
+        var fetchedProduct = await productService.GetAsync(createdProduct.Id);
+        Console.WriteLine($"Fetched product: {fetchedProduct?.Name} - ${fetchedProduct?.Price}");
+
+        // Get all products
+        var allProducts = await productService.GetAllAsync();
+        Console.WriteLine($"Total products in system: {allProducts.Count()}");
+
+        // Update a product
+        fetchedProduct!.Price = 189.99m;
+        await productService.UpdateAsync(fetchedProduct);
+        Console.WriteLine("Product price updated");
+
+        // Restock inventory
+        var restockedProduct = await productService.RestockProductAsync(createdProduct.Id, 25);
+        Console.WriteLine($"Restocked. New stock level: {restockedProduct.StockQuantity}");
+
+        // Sell inventory
+        var soldProduct = await productService.SellProductAsync(createdProduct.Id, 5);
+        Console.WriteLine($"Sold 5 units. Remaining stock: {soldProduct.StockQuantity}");
+
+        // Check if product exists
+        var exists = await productService.ExistsAsync(createdProduct.Id);
+        Console.WriteLine($"Product exists: {exists}");
+
+        // Get products by category
+        var categoryProducts = await productService.GetByCategoryAsync(1);
+        Console.WriteLine($"Products in category 1: {categoryProducts.Count()}");
+
+        // Get low stock products
+        var lowStockProducts = await productService.GetLowStockProductsAsync();
+        Console.WriteLine($"Low stock products: {lowStockProducts.Count()}");
+
+        // Calculate inventory value
+        var inventoryValue = await productService.GetInventoryValueAsync();
+        Console.WriteLine($"Total inventory value: ${inventoryValue}");
+
+        // Get inventory statistics
+        var stats = await productService.GetInventoryStatsAsync();
+        Console.WriteLine($"Inventory Stats:");
+        Console.WriteLine($"  Total Products: {stats.TotalProducts}");
+        Console.WriteLine($"  Total Units: {stats.TotalUnitsInStock}");
+        Console.WriteLine($"  Total Value: ${stats.TotalInventoryValue}");
+        Console.WriteLine($"  Low Stock Items: {stats.LowStockCount}");
+        Console.WriteLine($"  Average Stock: {stats.AverageStockLevel}");
+
+        // Validate a product
+        var isValid = productService.Validate(createdProduct);
+        Console.WriteLine($"Product validation: {isValid}");
+
+        // Delete a product
+        await productService.DeleteAsync(createdProduct.Id);
+        Console.WriteLine("Product deleted successfully");
+    }
+}
+```
