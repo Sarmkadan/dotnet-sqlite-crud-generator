@@ -82,3 +82,106 @@ public class AuditStatistics
 }
 ```
 // ... rest of README content ...
+
+## NamingConventionHelper
+
+`NamingConventionHelper` is a utility class for applying consistent naming conventions across different contexts (C#, SQL, gRPC, and API endpoints). It provides methods to convert between naming conventions, validate property names, and extract naming information for display purposes.
+
+Below is a realistic example of using `NamingConventionHelper` in a console application:
+
+```csharp
+using System;
+using System.Reflection;
+using DotNet.SQLite.CrudGenerator.Utilities;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Example entity type
+        var productType = typeof(Product);
+        
+        // Get SQLite column type for a property type
+        string sqlType = NamingConventionHelper.GetSqlType(typeof(int));
+        Console.WriteLine($"SQL type for int: {sqlType}"); // OUTPUT: INTEGER
+        
+        string nullableSqlType = NamingConventionHelper.GetSqlType(typeof(int?));
+        Console.WriteLine($"SQL type for int?: {nullableSqlType}"); // OUTPUT: INTEGER
+        
+        // Convert C# property names to SQL column names
+        string sqlColumn = NamingConventionHelper.ToCSharpToSqlConvention("UserId");
+        Console.WriteLine($"C# 'UserId' to SQL: {sqlColumn}"); // OUTPUT: user_id
+        
+        string sqlColumn2 = NamingConventionHelper.ToCSharpToSqlConvention("FirstName");
+        Console.WriteLine($"C# 'FirstName' to SQL: {sqlColumn2}"); // OUTPUT: first_name
+        
+        // Convert SQL column names to C# property names
+        string csharpProperty = NamingConventionHelper.ToSqlToCSharpConvention("user_id");
+        Console.WriteLine($"SQL 'user_id' to C#: {csharpProperty}"); // OUTPUT: UserId
+        
+        string csharpProperty2 = NamingConventionHelper.ToSqlToCSharpConvention("first_name");
+        Console.WriteLine($"SQL 'first_name' to C#: {csharpProperty2}"); // OUTPUT: FirstName
+        
+        // Get database table name for a type
+        string tableName = NamingConventionHelper.GetTableName(typeof(Product));
+        Console.WriteLine($"Table name for Product: {tableName}"); // OUTPUT: products
+        
+        string singularTableName = NamingConventionHelper.GetTableName(typeof(Product), false);
+        Console.WriteLine($"Singular table name for Product: {singularTableName}"); // OUTPUT: product
+        
+        // Get database column name for a property
+        var idProperty = typeof(Product).GetProperty("Id")!;
+        string columnName = NamingConventionHelper.GetColumnName(idProperty);
+        Console.WriteLine($"Column name for Product.Id: {columnName}"); // OUTPUT: id
+        
+        // Get gRPC service name
+        string grpcService = NamingConventionHelper.GetGrpcServiceName("ProductService");
+        Console.WriteLine($"gRPC service name: {grpcService}"); // OUTPUT: ProductService
+        
+        string grpcService2 = NamingConventionHelper.GetGrpcServiceName("Product");
+        Console.WriteLine($"gRPC service name: {grpcService2}"); // OUTPUT: ProductService
+        
+        // Get gRPC message name
+        string grpcMessage = NamingConventionHelper.GetGrpcMessageName("ProductMessage");
+        Console.WriteLine($"gRPC message name: {grpcMessage}"); // OUTPUT: ProductMessage
+        
+        string grpcMessage2 = NamingConventionHelper.GetGrpcMessageName("Product");
+        Console.WriteLine($"gRPC message name: {grpcMessage2}"); // OUTPUT: ProductMessage
+        
+        // Get API endpoint
+        string apiEndpoint = NamingConventionHelper.GetApiEndpoint(typeof(Product));
+        Console.WriteLine($"API endpoint: {apiEndpoint}"); // OUTPUT: /api/v1/products
+        
+        string apiEndpoint2 = NamingConventionHelper.GetApiEndpoint(typeof(Product), "v2");
+        Console.WriteLine($"API endpoint (v2): {apiEndpoint2}"); // OUTPUT: /api/v2/products
+        
+        // Validate property name
+        bool isValid = NamingConventionHelper.IsValidPropertyName("UserId");
+        Console.WriteLine($"Is 'UserId' valid: {isValid}"); // OUTPUT: True
+        
+        bool isInvalid = NamingConventionHelper.IsValidPropertyName("123Invalid");
+        Console.WriteLine($"Is '123Invalid' valid: {isInvalid}"); // OUTPUT: False
+        
+        // Get naming convention info for display
+        var conventionInfo = NamingConventionHelper.GetConventionInfo(typeof(Product));
+        Console.WriteLine($"Entity: {conventionInfo.EntityName}");
+        Console.WriteLine($"Table: {conventionInfo.TableName}");
+        Console.WriteLine($"API Endpoint: {conventionInfo.ApiEndpoint}");
+        Console.WriteLine($"gRPC Service: {conventionInfo.GrpcServiceName}");
+        Console.WriteLine("Properties:");
+        foreach (var prop in conventionInfo.Properties)
+        {
+            Console.WriteLine($"  - {prop.PropertyName} -> {prop.ColumnName} ({prop.Type})");
+        }
+    }
+}
+
+// Example entity class
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public DateTime CreatedDate { get; set; }
+}
+```
