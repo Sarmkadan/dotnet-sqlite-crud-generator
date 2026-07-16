@@ -674,6 +674,97 @@ class Program
 }
 ```
 
+## DotnetSqliteCrudGeneratorOptions
+
+`DotnetSqliteCrudGeneratorOptions` is the root configuration class for the DotNet SQLite CRUD Generator application. It consolidates all configuration options into a single class that provides centralized access to application settings through the IOptions pattern. This class serves as the main entry point for configuring the entire CRUD generator system.
+
+The options class includes configuration for database settings, connection pooling, caching, event bus, HTTP client, webhooks, and background workers. All properties are optional with sensible defaults to ensure the application runs without requiring extensive configuration in development environments.
+
+Below is a realistic example of configuring and using `DotnetSqliteCrudGeneratorOptions` in a .NET application:
+
+```csharp
+using System;
+using DotNet.SQLite.CrudGenerator.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+class Program
+{
+  static void Main(string[] args)
+  {
+    // Create options with custom configuration
+    var options = new DotnetSqliteCrudGeneratorOptions
+    {
+      Database = new DatabaseSettings
+      {
+        FilePath = "production.db",
+        ConnectionTimeout = 60,
+        AutoCreateDatabase = true,
+        EnableLogging = true
+      },
+      ConnectionPool = new ConnectionPoolConfiguration
+      {
+        MinPoolSize = 2,
+        MaxPoolSize = 20,
+        IdleTimeout = TimeSpan.FromMinutes(10),
+        AcquireTimeout = TimeSpan.FromSeconds(45),
+        CleanupInterval = TimeSpan.FromMinutes(2),
+        EnableDiagnostics = true
+      },
+      Cache = new CacheConfiguration
+      {
+        Enabled = true,
+        MaxSizeBytes = 50_000_000, // 50 MB
+        DefaultTTL = TimeSpan.FromHours(1),
+        CleanupIntervalSeconds = 600
+      },
+      EventBus = new EventBusConfiguration
+      {
+        Enabled = true,
+        MaxEventHistory = 5000,
+        PersistEvents = true
+      },
+      HttpClient = new HttpClientConfiguration
+      {
+        ConnectionLimit = 20,
+        DefaultTimeout = TimeSpan.FromSeconds(60),
+        MaxRetries = 5,
+        RetryDelayMs = 2000
+      },
+      Webhook = new WebhookConfiguration
+      {
+        Enabled = true,
+        MaxRetries = 5,
+        RetryDelayMs = 10000,
+        MaxDeliveryHistorySize = 5000
+      },
+      BackgroundWorker = new BackgroundWorkerConfiguration
+      {
+        Enabled = true,
+        WorkerCount = 4,
+        MaxQueueSize = 2000,
+        TaskTimeoutSeconds = 600,
+        MaxRetries = 5
+      }
+    };
+
+    // Validate configuration
+    options.Validate();
+    Console.WriteLine("Configuration validated successfully!");
+
+    // Use default configuration if needed
+    var defaultOptions = DotnetSqliteCrudGeneratorOptions.CreateDefault();
+    Console.WriteLine($"\nDefault database file: {defaultOptions.Database.FilePath}");
+    Console.WriteLine($"Default connection pool size: {defaultOptions.ConnectionPool.MinPoolSize}-{defaultOptions.ConnectionPool.MaxPoolSize}");
+    Console.WriteLine($"Default cache enabled: {defaultOptions.Cache.Enabled}");
+
+    // Example of using in DI container
+    var services = new ServiceCollection();
+    services.AddSingleton(options);
+    services.AddSingleton(_ => DotnetSqliteCrudGeneratorOptions.CreateDefault());
+  }
+}
+```
+
 ## IConnectionPool
 
 `IConnectionPool` is a lightweight interface that provides a thread-safe pool of SQLite connections with configurable concurrency limits, idle connection cleanup, and comprehensive connection management. It efficiently manages connection lifecycle by reusing idle connections and automatically opening new ones when needed, up to the configured maximum pool size.
