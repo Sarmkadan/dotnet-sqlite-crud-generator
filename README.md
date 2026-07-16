@@ -184,4 +184,49 @@ public class Product
     public decimal Price { get; set; }
     public DateTime CreatedDate { get; set; }
 }
+
+## CsvFormatter
+
+`CsvFormatter` is a utility class for formatting data to CSV (Comma-Separated Values). It handles escaping, quoting, and custom delimiters, and supports both single objects and collections. Below is a realistic example of using `CsvFormatter` in a console application:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using DotNet.SQLite.CrudGenerator.Formatters;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        var formatter = new CsvFormatter();
+        var product = new Product { Id = 1, Name = "Test Product", Price = 10.99m, CreatedDate = DateTime.Now };
+        var csv = formatter.Format(product);
+        Console.WriteLine(csv);
+
+        var products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Test Product 1", Price = 10.99m, CreatedDate = DateTime.Now },
+            new Product { Id = 2, Name = "Test Product 2", Price = 9.99m, CreatedDate = DateTime.Now },
+        };
+        csv = formatter.Format(products);
+        Console.WriteLine(csv);
+
+        var parsedProduct = formatter.Parse<Product>(csv);
+        Console.WriteLine($"Parsed Product: {parsedProduct.Name}");
+
+        var parsedProducts = formatter.ParseCollection<Product>(csv);
+        foreach (var p in parsedProducts)
+        {
+            Console.WriteLine($"Parsed Product: {p.Name}");
+        }
+    }
+}
+
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+    public DateTime CreatedDate { get; set; }
+}
 ```
