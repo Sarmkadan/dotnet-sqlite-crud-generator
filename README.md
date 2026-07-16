@@ -153,6 +153,69 @@ class Program
 
 `AuditTrailFilter` provides a flexible way to query audit trail entries with support for filtering by entity type, entity ID, user ID, operation type, and date ranges. It supports pagination through the `Limit` property and can be used with the `AuditTrailService` to retrieve filtered audit logs.
 
+## ColumnInfo
+
+`ColumnInfo` is an immutable record that represents a column in a database table, capturing its name, SQLite data type, nullability constraint, and whether it serves as a primary key. It is used throughout the migration system to compare model schemas with actual database schemas.
+
+Below is a realistic example of creating and using `ColumnInfo` instances when working with the migration diff service:
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Data;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup database connection and migration service
+        var database = new DatabaseConnection("inventory.db");
+        var migrationService = new MigrationDiffService(database);
+
+        // Create ColumnInfo instances representing expected columns
+        var idColumn = new ColumnInfo(
+            Name: "Id",
+            SqliteType: "INTEGER",
+            NotNull: true,
+            IsPrimaryKey: true
+        );
+
+        var nameColumn = new ColumnInfo(
+            Name: "Name",
+            SqliteType: "TEXT",
+            NotNull: true,
+            IsPrimaryKey: false
+        );
+
+        var priceColumn = new ColumnInfo(
+            Name: "Price",
+            SqliteType: "REAL",
+            NotNull: false,
+            IsPrimaryKey: false
+        );
+
+        // Store expected schema in a dictionary
+        var expectedSchema = new Dictionary<string, ColumnInfo>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Id", idColumn },
+            { "Name", nameColumn },
+            { "Price", priceColumn }
+        };
+
+        // Get actual schema from database
+        var actualSchema = await migrationService.GetActualSchemaAsync("Products");
+
+        // Compare schemas or build migration scripts...
+        Console.WriteLine("Expected columns:");
+        foreach (var col in expectedSchema.Values)
+        {
+            Console.WriteLine($"  {col.Name} ({col.SqliteType}) {(col.NotNull ? "NOT NULL" : "NULL")} {(col.IsPrimaryKey ? "[PK]" : "")}");
+        }
+    }
+}
+```
+
 Below is a realistic example of using `AuditTrailFilter` with `AuditTrailService`:
 
 ```csharp
