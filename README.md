@@ -452,6 +452,127 @@ class Program
 }
 ```
 
+## OrderService
+
+`OrderService` is a service class that provides comprehensive order management functionality including CRUD operations, order lifecycle management, user-specific order queries, and order status transitions. It implements business logic for order processing while delegating data persistence to the underlying repository.
+
+The service handles order creation with validation and user verification, order status updates (pending → shipped → delivered), user-specific order queries, and order metrics calculation. All operations are validated according to business rules and maintain audit trails through the repository layer.
+
+Below is a realistic example of using `OrderService` in an application:
+
+```csharp
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Data;
+using DotNet.SQLite.CrudGenerator.Enums;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Setup database connections and repositories
+        var database = new DatabaseConnection("orders.db");
+        var orderRepository = new OrderRepository(database);
+        var userRepository = new UserRepository(database);
+        var auditLogRepository = new AuditLogRepository(database);
+
+        // Create OrderService instance
+        var orderService = new OrderService(orderRepository, userRepository, auditLogRepository);
+
+        // Create a new user first (orders require a valid user)
+        var newUser = new User
+        {
+            FirstName = "Jane",
+            LastName = "Smith",
+            Email = "jane.smith@example.com",
+            PasswordHash = "hashed_password_789",
+            IsActive = true,
+            EmailVerified = true
+        };
+        
+        var userRepositoryForUser = new UserRepository(database);
+        var createdUser = await userRepositoryForUser.AddAsync(newUser);
+        Console.WriteLine($"Created user with ID: {createdUser.Id}");
+
+        // Create a new order
+        var newOrder = new Order
+        {
+            UserId = createdUser.Id,
+            OrderDate = DateTime.UtcNow,
+            Status = EntityStatus.Pending,
+            ShippingAddress = "123 Main St, City, Country",
+            Items = new List<OrderItem>
+            {
+                new OrderItem { ProductId = 1, Quantity = 2, UnitPrice = 99.99m },
+                new OrderItem { ProductId = 2, Quantity = 1, UnitPrice = 49.99m }
+            },
+            Subtotal = 249.97m,
+            TaxAmount = 19.99m,
+            DiscountAmount = 5.00m,
+            ShippingCost = 10.00m
+        };
+
+        var createdOrder = await orderService.CreateAsync(newOrder);
+        Console.WriteLine($"Created order with ID: {createdOrder.Id}, Status: {createdOrder.Status}");
+
+        // Get an order by ID
+        var fetchedOrder = await orderService.GetAsync(createdOrder.Id);
+        Console.WriteLine($"Fetched order: Order #{fetchedOrder?.Id}, Total: ${fetchedOrder?.CalculateFinalTotal()}");
+
+        // Get all orders
+        var allOrders = await orderService.GetAllAsync();
+        Console.WriteLine($"Total orders in system: {allOrders.Count()}");
+
+        // Get orders for a specific user
+        var userOrders = await orderService.GetUserOrdersAsync(createdUser.Id);
+        Console.WriteLine($"User has {userOrders.Count()} orders");
+
+        // Get pending orders
+        var pendingOrders = await orderService.GetPendingOrdersAsync();
+        Console.WriteLine($"Total pending orders: {pendingOrders.Count()}");
+
+        // Ship an order
+        var shipSuccess = await orderService.ShipOrderAsync(createdOrder.Id, "TRK123456789");
+        Console.WriteLine($"Order shipped successfully: {shipSuccess}");
+
+        // Mark an order as delivered
+        var deliverSuccess = await orderService.MarkDeliveredAsync(createdOrder.Id);
+        Console.WriteLine($"Order marked as delivered: {deliverSuccess}");
+
+        // Check if order exists
+        var exists = await orderService.ExistsAsync(createdOrder.Id);
+        Console.WriteLine($"Order exists: {exists}");
+
+        // Get order metrics
+        var metrics = await orderService.GetMetricsAsync();
+        Console.WriteLine($"Order Metrics:");
+        Console.WriteLine($" Total Orders: {metrics.TotalOrders}");
+        Console.WriteLine($" Pending Orders: {metrics.PendingOrders}");
+        Console.WriteLine($" Delivered Orders: {metrics.DeliveredOrders}");
+        Console.WriteLine($" Total Revenue: ${metrics.TotalRevenue}");
+        Console.WriteLine($" Average Order Value: ${metrics.AverageOrderValue:F2}");
+        Console.WriteLine($" Average Tax Amount: ${metrics.AverageTaxAmount:F2}");
+        Console.WriteLine($" Total Discounts: ${metrics.TotalDiscounts}");
+
+        // Validate an order
+        var isValid = orderService.Validate(createdOrder);
+        Console.WriteLine($"Order validation: {isValid}");
+
+        // Update an order
+        fetchedOrder!.Status = EntityStatus.Pending;
+        await orderService.UpdateAsync(fetchedOrder);
+        Console.WriteLine("Order status updated");
+
+        // Delete an order
+        await orderService.DeleteAsync(createdOrder.Id);
+        Console.WriteLine("Order deleted successfully");
+    }
+}
+```
+
 ## DataExportService
 
 `DataExportService` is a service class that provides functionality for exporting entity data to various formats including JSON, CSV, and XML. It supports both string-based exports and direct file/stream output, making it suitable for web APIs, file-based exports, and data migration scenarios.
