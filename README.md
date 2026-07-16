@@ -262,6 +262,100 @@ class Program
 
 // ... rest of README content ...
 
+## TypeExtensions
+
+`TypeExtensions` is a utility class that provides extension methods for type inspection and manipulation. It offers comprehensive reflection utilities for analyzing types and their properties, making it ideal for code generation, serialization, and dynamic type handling scenarios.
+
+The class includes methods for checking type characteristics (simple types, numeric types, interfaces, abstract classes), type conversion (to SQL types), and type metadata extraction (properties with attributes, element types, underlying types, all interfaces).
+
+Below is a realistic example of using `TypeExtensions` in an application:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
+using DotNet.SQLite.CrudGenerator.Utilities;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Get all simple types from a model
+        var modelType = typeof(Product);
+        
+        Console.WriteLine("Simple type properties:");
+        foreach (var property in modelType.GetProperties()
+                   .Where(p => p.PropertyType.IsSimpleType()))
+        {
+            Console.WriteLine($" - {property.Name}: {property.PropertyType.Name}");
+        }
+        
+        // Check if a type is numeric
+        bool isNumeric = typeof(decimal).IsNumericType();
+        Console.WriteLine($"\nIs decimal a numeric type: {isNumeric}");
+        
+        // Convert C# type to SQL type
+        string sqlType = typeof(int).ToSqlType();
+        Console.WriteLine($"C# int converts to SQL: {sqlType}");
+        
+        // Get default value for a type
+        var defaultValue = typeof(int).GetDefaultValue();
+        Console.WriteLine($"Default int value: {defaultValue}");
+        
+        // Check if type is enumerable
+        bool isEnumerable = typeof(List<string>).IsEnumerableType();
+        Console.WriteLine($"\nIs List<string> enumerable: {isEnumerable}");
+        
+        // Get element type from enumerable
+        var elementType = typeof(List<string>).GetElementType();
+        Console.WriteLine($"Element type of List<string>: {elementType?.Name}");
+        
+        // Get underlying type from nullable
+        var underlyingType = typeof(int?).GetUnderlyingType();
+        Console.WriteLine($"\nUnderlying type of int?: {underlyingType.Name}");
+        
+        // Get all interfaces implemented by a type
+        var interfaces = typeof(List<string>).GetAllInterfaces();
+        Console.WriteLine($"Interfaces implemented by List<string>:");
+        foreach (var iface in interfaces)
+        {
+            Console.WriteLine($" - {iface.Name}");
+        }
+        
+        // Get properties with specific attribute
+        var requiredProperties = modelType.GetProperties<RequiredAttribute>();
+        Console.WriteLine($"\nProperties with [Required] attribute:");
+        foreach (var prop in requiredProperties)
+        {
+            Console.WriteLine($" - {prop.Name}");
+        }
+        
+        // Get type name as it appears in C# code
+        string typeName = typeof(Dictionary<string, int>).GetTypeName();
+        Console.WriteLine($"\nType name: {typeName}");
+        
+        // Check if type is interface or abstract class
+        Console.WriteLine($"\nIs IDisposable an interface: {typeof(IDisposable).IsInterface()}");
+        Console.WriteLine($"Is Stream abstract: {typeof(System.IO.Stream).IsAbstractClass()}");
+    }
+}
+
+// Example model class for demonstration
+public class Product
+{
+    public int Id { get; set; }
+    
+    [Required]
+    public string Name { get; set; } = string.Empty;
+    
+    public decimal Price { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public List<string> Tags { get; set; } = new();
+    public int? CategoryId { get; set; }
+}
+```
+
 ## UserService
 
 `UserService` is a service class that provides comprehensive user management functionality including CRUD operations, authentication, password management, user status control, and activity monitoring. It implements validation, logging, and business logic for user-related operations while delegating data persistence to the underlying repository.
