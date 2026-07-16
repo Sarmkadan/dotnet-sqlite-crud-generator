@@ -451,3 +451,106 @@ class Program
     }
 }
 ```
+
+## DataExportService
+
+`DataExportService` is a service class that provides functionality for exporting entity data to various formats including JSON, CSV, and XML. It supports both string-based exports and direct file/stream output, making it suitable for web APIs, file-based exports, and data migration scenarios.
+
+The service handles formatting through specialized formatters and provides reporting capabilities to track export metadata such as entity name, item count, and export timestamp.
+
+Below is a realistic example of using `DataExportService` in an application:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Models;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        // Create DataExportService instance
+        var exportService = new DataExportService();
+
+        // Sample data - list of products
+        var products = new List<Product>
+        {
+            new Product
+            {
+                Id = 1,
+                Name = "Wireless Headphones",
+                Sku = "AUD-WH-001",
+                Price = 99.99m,
+                StockQuantity = 100
+            },
+            new Product
+            {
+                Id = 2,
+                Name = "Bluetooth Speaker",
+                Sku = "AUD-BS-002",
+                Price = 59.99m,
+                StockQuantity = 75
+            },
+            new Product
+            {
+                Id = 3,
+                Name = "Smart Watch",
+                Sku = "AUD-SW-003",
+                Price = 149.99m,
+                StockQuantity = 50
+            }
+        };
+
+        // Export as JSON string
+        var jsonExport = await exportService.ExportAsJsonAsync(products);
+        Console.WriteLine("JSON Export:");
+        Console.WriteLine(jsonExport);
+        Console.WriteLine();
+
+        // Export as CSV string
+        var csvExport = await exportService.ExportAsCsvAsync(products);
+        Console.WriteLine("CSV Export:");
+        Console.WriteLine(csvExport);
+        Console.WriteLine();
+
+        // Export as XML string
+        var xmlExport = await exportService.ExportAsXmlAsync(products);
+        Console.WriteLine("XML Export:");
+        Console.WriteLine(xmlExport);
+        Console.WriteLine();
+
+        // Generate export report
+        var report = exportService.GenerateExportReport(products, "Products");
+        Console.WriteLine($"Export Report: {report}");
+        Console.WriteLine($"  Entity: {report.EntityName}");
+        Console.WriteLine($"  Items: {report.ItemCount}");
+        Console.WriteLine($"  Formats: {string.Join(", ", report.AvailableFormats)}");
+        Console.WriteLine($"  Sample: {report.SampleItem}");
+
+        // Export to file (JSON format)
+        var filePath = "./exports/products_export.json";
+        var exportSuccess = await exportService.ExportToFileAsync(
+            products,
+            filePath,
+            ExportFormat.Json
+        );
+        Console.WriteLine($"File export to {filePath}: {(exportSuccess ? "Success" : "Failed")}");
+
+        // Export to stream (CSV format)
+        using (var memoryStream = new MemoryStream())
+        {
+            await exportService.ExportToStreamAsync(products, memoryStream, ExportFormat.Csv);
+            memoryStream.Position = 0;
+            using (var reader = new StreamReader(memoryStream))
+            {
+                var streamContent = await reader.ReadToEndAsync();
+                Console.WriteLine("Stream export (first 100 chars):");
+                Console.WriteLine(streamContent.Substring(0, Math.Min(100, streamContent.Length)));
+            }
+        }
+    }
+}
+```
