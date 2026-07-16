@@ -36,3 +36,32 @@ public class MigrationDiffServiceTestsExample : IDisposable
 }
 ```
 // ... rest of file content ...
+
+## UserServiceTests
+
+`UserServiceTests` is a test class that verifies the behavior of **UserService** by using a mocked `IRepository<User, int>`.  
+It contains async test methods that cover the most common service operations: retrieving a user by id (both existing and non‑existent), fetching all users, creating a new user, updating an existing user, and deleting a user.
+
+```csharp
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Interfaces;
+using NSubstitute;
+
+public class UserServiceTestsExample
+{
+    public static async Task Main()
+    {
+        var tests = new UserServiceTests();
+
+        await tests.GetAsync_WithValidId_ReturnsUserFromRepository();
+        await tests.GetAsync_WithNonExistentId_ReturnsNull();
+        await tests.GetAllAsync_ReturnsAllUsersFromRepository();
+        await tests.CreateAsync_AddsUserThroughRepository();
+        await tests.UpdateAsync_UpdatesUserThroughRepository();
+        await tests.DeleteAsync_DeletesUserThroughRepository();
+    }
+}
+```
+// ... rest of file content ...
