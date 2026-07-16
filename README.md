@@ -80,6 +80,100 @@ Console.WriteLine($"Total subscriptions: {statistics.TotalSubscriptions}");
 Console.WriteLine($"Total events published: {statistics.TotalEventsPublished}");
 ```
 
+## BulkImportExportEngine
+
+The `BulkImportExportEngine<T>` class is a production-grade engine for high-performance bulk data transfer operations, supporting both import and export functionality with full streaming support, configurable batching, real-time progress reporting, and optional durable checkpointing. It implements the `IBulkTransferService<T>` interface, making it suitable for direct injection or construction via `BulkTransferPipeline<T>`.
+
+
+
+Here's a realistic example of using the `BulkImportExportEngine<T>` for bulk data operations:
+
+```csharp
+// Define your entity model
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public int StockQuantity { get; set; }
+}
+
+// Setup required services
+var repository = new Repository<Product>(connectionString);
+var exportService = new DataExportService();
+var options = new BulkTransferOptions
+{
+    BatchSize = 1000,
+    BatchTimeout = TimeSpan.FromSeconds(30),
+    EnableProgressReporting = true
+};
+
+// Create the engine
+var engine = new BulkImportExportEngine<Product>(repository, exportService, options);
+
+// Example 1: Import from JSON file
+var importResult = await engine.ImportFromFileAsync(
+    "products.json",
+    ImportFormat.Json,
+    progress => Console.WriteLine($"Imported {progress.Processed} of {progress.Total} items")
+);
+
+Console.WriteLine($"Imported {importResult.Succeeded} products successfully");
+Console.WriteLine($"Failed: {importResult.Failed}");
+if (importResult.Errors.Any())
+{
+    Console.WriteLine("Errors occurred:");
+    foreach (var error in importResult.Errors)
+    {
+        Console.WriteLine($"- Row {error.RowNumber}: {error.Message}");
+    }
+}
+
+// Example 2: Export to CSV file
+var exportResult = await engine.ExportToFileAsync(
+    "products-backup.csv",
+    ExportFormat.Csv,
+    progress => Console.WriteLine($"Exported {progress.Processed} of {progress.Total} items")
+);
+
+Console.WriteLine($"Exported {exportResult.TotalExported} products to CSV");
+Console.WriteLine($"File size: {exportResult.BytesWritten} bytes");
+
+// Example 3: Stream entities for processing
+await foreach (var product in engine.StreamEntitiesAsync())
+{
+    // Process each entity as it streams from the database
+    Console.WriteLine($"Processing product: {product.Name}");
+}
+
+// Example 4: Transfer data between formats
+using var sourceStream = File.OpenRead("products-backup.json");
+using var destinationStream = File.Create("products-backup-converted.csv");
+
+var transferResult = await engine.TransferAsync(
+    sourceStream,
+    ImportFormat.Json,
+    destinationStream,
+    ExportFormat.Csv,
+    transform: product => new Product
+    {
+        Id = product.Id,
+        Name = product.Name.ToUpper(),
+        Price = product.Price * 1.1m, // Apply 10% markup
+        StockQuantity = product.StockQuantity
+    }
+);
+
+Console.WriteLine($"Transfer completed: {transferResult.ImportResult.Succeeded} imported, {transferResult.ExportResult.TotalExported} exported");
+
+// Example 5: Get transfer statistics
+var stats = engine.GetStatistics();
+Console.WriteLine($"Total imports: {stats.TotalImports}");
+Console.WriteLine($"Total exports: {stats.TotalExports}");
+Console.WriteLine($"Total records imported: {stats.TotalRecordsImported}");
+Console.WriteLine($"Total records exported: {stats.TotalRecordsExported}");
+```
+
 ## WebhookHandler
 
 The `WebhookHandler` class provides a robust mechanism for sending event notifications to external webhook endpoints. It handles payload serialization, HTTP request execution with retry logic, response validation, and comprehensive delivery tracking with statistics.
