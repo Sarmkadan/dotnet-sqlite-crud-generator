@@ -197,6 +197,103 @@ public class GenerationServiceTestsExample
 }
 ```
 
+## EventBusValidation
+
+`EventBusValidation` is a static utility class that provides validation helpers for domain events and event bus related types. It offers methods to validate `DomainEvent`, `EventEnvelope`, and `EventBusStatistics` instances, ensuring consistent error handling when event validation fails.
+
+The class provides three main patterns for each validation scenario:
+- `Validate()` methods that return a list of validation problems
+- `IsValid()` methods that return a boolean indicating validity  
+- `EnsureValid()` methods that throw exceptions when validation fails
+
+Here's a realistic example demonstrating how to use `EventBusValidation` in an event publishing scenario:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Events;
+using System;
+
+public class EventBusExample
+{
+    public static void Main()
+    {
+        // Create a valid domain event
+        var validEvent = new DomainEvent(
+            aggregateId: Guid.NewGuid(),
+            eventName: "UserCreated",
+            occurredAt: DateTime.UtcNow,
+            data: new { UserId = 42, Username = "john_doe" }
+        );
+
+        // Validate using IsValid() pattern
+        if (validEvent.IsValid())
+        {
+            Console.WriteLine("Domain event is valid");
+        }
+        else
+        {
+            var problems = validEvent.Validate();
+            Console.WriteLine($"Validation failed: {string.Join(", ", problems)}");
+        }
+
+        // Validate using Validate() pattern
+        var envelope = new EventEnvelope(
+            eventId: Guid.NewGuid(),
+            eventTypeName: "UserCreated",
+            timestamp: DateTime.UtcNow,
+            data: validEvent
+        );
+
+        var envelopeProblems = envelope.Validate();
+        if (envelopeProblems.Count > 0)
+        {
+            Console.WriteLine("Event envelope validation errors:");
+            foreach (var problem in envelopeProblems)
+            {
+                Console.WriteLine($"- {problem}");
+            }
+        }
+
+        // Validate using EnsureValid() pattern for immediate failure
+        try
+        {
+            var invalidEvent = new DomainEvent(
+                aggregateId: Guid.Empty, // Invalid: empty GUID
+                eventName: "", // Invalid: empty name
+                occurredAt: DateTime.MinValue, // Invalid: default DateTime
+                data: null
+            );
+            
+            invalidEvent.EnsureValid(); // This will throw
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Validation failed as expected: {ex.Message}");
+        }
+
+        // Create valid statistics
+        var stats = new EventBusStatistics
+        {
+            RegisteredEventTypes = 15,
+            TotalSubscriptions = 42,
+            TotalEventsPublished = 1000,
+            Subscriptions = new Dictionary<string, int>
+            {
+                { "UserCreated", 10 },
+                { "OrderPlaced", 15 },
+                { "PaymentProcessed", 17 }
+            }
+        };
+
+        // Validate statistics
+        if (stats.IsValid())
+        {
+            Console.WriteLine("Event bus statistics are valid");
+            Console.WriteLine($"Total events published: {stats.TotalEventsPublished}");
+        }
+    }
+}
+```
+
 ## CachingIntegrationTests
 
 `CachingIntegrationTests` is a test class that contains integration tests for the `MemoryCacheProvider` caching implementation. It verifies that the cache provider correctly stores, retrieves, expires, and manages items according to the configured eviction policy and TTL settings.
