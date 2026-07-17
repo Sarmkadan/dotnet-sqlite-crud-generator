@@ -39,9 +39,7 @@ public static class RepositoryJsonExtensions
 
         var options = indented
             ? new JsonSerializerOptions(_jsonOptions)
-            {
-                WriteIndented = true
-            }
+            { WriteIndented = true }
             : _jsonOptions;
 
         return JsonSerializer.Serialize(value, options);
@@ -54,12 +52,12 @@ public static class RepositoryJsonExtensions
     /// <typeparam name="TKey">The key type of the repository.</typeparam>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized Repository instance, or null if the JSON is empty or whitespace.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static Repository<T, TKey>? FromJson<T, TKey>(string json)
         where T : class
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
+        ArgumentNullException.ThrowIfNull(json);
 
         if (string.IsNullOrWhiteSpace(json))
         {
@@ -77,7 +75,7 @@ public static class RepositoryJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized Repository instance, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson<T, TKey>(string json, out Repository<T, TKey>? value)
         where T : class
     {
@@ -93,7 +91,7 @@ public static class RepositoryJsonExtensions
         try
         {
             value = JsonSerializer.Deserialize<Repository<T, TKey>>(json, _jsonOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
