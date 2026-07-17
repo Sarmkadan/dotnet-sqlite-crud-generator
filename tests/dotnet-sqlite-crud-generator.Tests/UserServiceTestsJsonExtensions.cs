@@ -14,13 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Tests;
 /// </summary>
 public static class UserServiceTestsJsonExtensions
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReferenceHandler = ReferenceHandler.IgnoreCycles
-    };
+    private static readonly JsonSerializerOptions _jsonOptions = CreateJsonSerializerOptions();
 
     /// <summary>
     /// Serializes the <see cref="UserServiceTests"/> instance to a JSON string.
@@ -33,11 +27,11 @@ public static class UserServiceTestsJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
-
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(
+            value,
+            indented
+                ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
+                : _jsonOptions);
     }
 
     /// <summary>
@@ -76,4 +70,13 @@ public static class UserServiceTestsJsonExtensions
             return false;
         }
     }
+
+    private static JsonSerializerOptions CreateJsonSerializerOptions()
+        => new(JsonSerializerDefaults.Web)
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            ReferenceHandler = ReferenceHandler.IgnoreCycles
+        };
 }
