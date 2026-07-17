@@ -15,70 +15,75 @@ namespace DotNet.SQLite.CrudGenerator.Services;
 /// </summary>
 public static class ProductServiceJsonExtensions
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { } }
-    };
+	private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
+	{
+		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+		WriteIndented = false,
+		TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { } }
+	};
 
-    /// <summary>
-    /// Serializes the ProductService instance to a JSON string.
-    /// </summary>
-    /// <param name="value">The ProductService instance to serialize.</param>
-    /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
-    /// <returns>A JSON string representation of the ProductService.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this ProductService value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
+	/// <summary>
+	/// Serializes the ProductService instance to a JSON string.
+	/// </summary>
+	/// <param name="value">The ProductService instance to serialize.</param>
+	/// <param name="indented">Whether to format the JSON with indentation for readability.</param>
+	/// <returns>A JSON string representation of the ProductService.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+	public static string ToJson(this ProductService value, bool indented = false)
+	{
+		ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
+		var options = indented
+			? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
+			: _jsonOptions;
 
-        return JsonSerializer.Serialize(value, options);
-    }
+		return JsonSerializer.Serialize(value, options);
+	}
 
-    /// <summary>
-    /// Deserializes a JSON string to a ProductService instance.
-    /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized ProductService instance, or null if the JSON is null or empty.</returns>
-    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
-    public static ProductService? FromJson(string json)
-    {
-        if (string.IsNullOrEmpty(json))
-        {
-            return null;
-        }
+	/// <summary>
+	/// Deserializes a JSON string to a ProductService instance.
+	/// </summary>
+	/// <param name="json">The JSON string to deserialize.</param>
+	/// <returns>The deserialized ProductService instance if the JSON is valid; otherwise, null.</returns>
+	/// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+	public static ProductService? FromJson(string json)
+	{
+		ArgumentNullException.ThrowIfNull(json);
 
-        return JsonSerializer.Deserialize<ProductService>(json, _jsonOptions);
-    }
+		if (string.IsNullOrEmpty(json))
+		{
+			return null;
+		}
 
-    /// <summary>
-    /// Attempts to deserialize a JSON string to a ProductService instance.
-    /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized ProductService instance if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise, false.</returns>
-    public static bool TryFromJson(string json, out ProductService? value)
-    {
-        value = null;
+		return JsonSerializer.Deserialize<ProductService>(json, _jsonOptions);
+	}
 
-        if (string.IsNullOrEmpty(json))
-        {
-            return false;
-        }
+	/// <summary>
+	/// Attempts to deserialize a JSON string to a ProductService instance.
+	/// </summary>
+	/// <param name="json">The JSON string to deserialize.</param>
+	/// <param name="value">Receives the deserialized ProductService instance if successful.</param>
+	/// <returns>True if deserialization succeeded; otherwise, false.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+	public static bool TryFromJson(string json, out ProductService? value)
+	{
+		ArgumentNullException.ThrowIfNull(json);
+		value = null;
 
-        try
-        {
-            value = JsonSerializer.Deserialize<ProductService>(json, _jsonOptions);
-            return true;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
-    }
+		if (string.IsNullOrEmpty(json))
+		{
+			return false;
+		}
+
+		try
+		{
+			value = JsonSerializer.Deserialize<ProductService>(json, _jsonOptions);
+			return true;
+		}
+		catch (JsonException)
+		{
+			return false;
+		}
+	}
 }
