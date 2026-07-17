@@ -228,4 +228,71 @@ public class StringExtensionsExample
         Console.WriteLine(emptyResult); // Output: (empty string)
     }
 }
+
+## AuditTrailServiceTests
+
+`AuditTrailServiceTests` is a test class that contains unit tests for the `AuditTrailService` class. It verifies that audit trail entries are correctly persisted, queried, and managed in the database. The test class demonstrates various scenarios including recording operations, querying by filters, entity-specific trails, and summary statistics.
+
+
+
+Here's an example of using `AuditTrailServiceTests` to demonstrate audit trail functionality:
+
+
+```csharp
+using System;
+using System.Threading.Tasks;
+using DotNet.SQLite.CrudGenerator.Tests;
+using DotNet.SQLite.CrudGenerator.Enums;
+
+public class AuditTrailExample : IDisposable
+{
+    private readonly AuditTrailServiceTests _test;
+
+    public AuditTrailExample()
+    {
+        _test = new AuditTrailServiceTests();
+    }
+
+    public void Dispose()
+    {
+        _test.Dispose();
+    }
+
+    public async Task ExampleUsage()
+    {
+        // Record a create operation
+        await _test._sut.RecordAsync("Product", 1, OperationType.Create, 42, 
+            newValues: "{\"Name\":\"Widget\"}");
+
+        // Record an update operation with before/after objects
+        var before = new { Id = 1, Name = "Old Product" };
+        var after = new { Id = 1, Name = "New Product" };
+        await _test._sut.RecordAsync(1, OperationType.Update, 42, before, after);
+
+        // Query all operations for a specific entity
+        var productTrail = await _test._sut.GetEntityTrailAsync("Product", 1);
+        Console.WriteLine($"Found {productTrail.Count} operations for Product 1");
+
+        // Query with filter
+        var createOperations = await _test._sut.QueryAsync(new AuditTrailFilter 
+        {
+            EntityType = "Product",
+            OperationType = OperationType.Create
+        });
+        Console.WriteLine($"Found {createOperations.Count} create operations");
+
+        // Get recent operations with limit
+        var recent = await _test._sut.GetRecentAsync(limit: 10);
+        Console.WriteLine($"Found {recent.Count} recent operations");
+
+        // Get summary statistics
+        var summary = await _test._sut.GetSummaryAsync();
+        Console.WriteLine($"Total entries: {summary.TotalEntries}");
+        Console.WriteLine($"Operations by type: {string.Join(", ", summary.ByOperation.Keys)}");
+
+        // Purge old entries
+        var deletedCount = await _test._sut.PurgeAsync(DateTime.UtcNow.AddDays(-30));
+        Console.WriteLine($"Deleted {deletedCount} old entries");
+    }
+}
 ```
