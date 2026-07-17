@@ -4,8 +4,8 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace DotNet.SQLite.CrudGenerator.Exceptions;
 
@@ -19,21 +19,21 @@ public static class GenerationExceptionValidation
     /// </summary>
     /// <param name="value">The exception to validate.</param>
     /// <returns>A list of validation errors; empty if the exception is valid.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> Validate(this GenerationException? value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
         var errors = new List<string>();
 
-        if (value.GenerationType is { Length: 0 })
+        if (string.IsNullOrEmpty(value.GenerationType))
         {
-            errors.Add("GenerationType cannot be an empty string.");
+            errors.Add("GenerationType must be specified.");
         }
 
-        if (value.SourceEntity is { Length: 0 })
+        if (string.IsNullOrEmpty(value.SourceEntity))
         {
-            errors.Add("SourceEntity cannot be an empty string.");
+            errors.Add("SourceEntity must be specified.");
         }
 
         if (value.LineNumber is <= 0)
@@ -47,20 +47,17 @@ public static class GenerationExceptionValidation
     /// <summary>
     /// Determines whether the specified <see cref="GenerationException"/> is valid.
     /// </summary>
-    /// <param name="value">The exception to check.</param>
+    /// <param name="value">The exception to validate.</param>
     /// <returns><see langword="true"/> if the exception is valid; otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static bool IsValid(this GenerationException? value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-        return value.Validate().Count == 0;
-    }
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
+    public static bool IsValid(this GenerationException? value) =>
+        value is not null && value.Validate().Count == 0;
 
     /// <summary>
     /// Ensures that the specified <see cref="GenerationException"/> is valid.
     /// </summary>
     /// <param name="value">The exception to validate.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown when the exception is invalid, containing a list of validation errors.</exception>
     public static void EnsureValid(this GenerationException? value)
     {
@@ -71,7 +68,7 @@ public static class GenerationExceptionValidation
         if (errors.Count > 0)
         {
             throw new ArgumentException(
-                $"GenerationException is invalid. Validation errors: {string.Join(" ", errors)}",
+                $"GenerationException is invalid. Validation errors: {string.Join("; ", errors)}",
                 nameof(value));
         }
     }
