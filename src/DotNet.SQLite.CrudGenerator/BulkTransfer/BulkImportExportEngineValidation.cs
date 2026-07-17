@@ -19,6 +19,20 @@ namespace DotNet.SQLite.CrudGenerator.BulkTransfer;
 public static class BulkImportExportEngineValidation
 {
     /// <summary>
+    /// Adds an error message if the specified value is negative.
+    /// </summary>
+    /// <param name="errors">The list of error messages to add to.</param>
+    /// <param name="value">The value to check.</param>
+    /// <param name="propertyName">The name of the property being validated.</param>
+    private static void AddIfNegative(ICollection<string> errors, long value, string propertyName)
+    {
+        if (value < 0)
+        {
+            errors.Add($"{propertyName} cannot be negative.");
+        }
+    }
+
+    /// <summary>
     /// Validates the specified bulk import/export engine and returns a list of human-readable
     /// validation problems. Returns an empty list if the engine is valid.
     /// </summary>
@@ -32,82 +46,32 @@ public static class BulkImportExportEngineValidation
 
         var errors = new List<string>();
 
-        // Validate repository (should not be null)
-        // Note: We can't directly access the private field, so we rely on the public API
-        // The constructor already validates this, so we just check the engine itself
 
-        // Validate options (if available)
-        // The options are validated in the constructor, so we check if they're reasonable
+        var stats = value.GetStatistics();
 
         // Validate statistics (should have reasonable values)
-        var stats = value.GetStatistics();
-        if (stats.TotalImports < 0)
-        {
-            errors.Add("Statistics.TotalImports cannot be negative.");
-        }
-
-        if (stats.TotalExports < 0)
-        {
-            errors.Add("Statistics.TotalExports cannot be negative.");
-        }
-
-        if (stats.TotalRecordsImported < 0)
-        {
-            errors.Add("Statistics.TotalRecordsImported cannot be negative.");
-        }
-
-        if (stats.TotalRecordsExported < 0)
-        {
-            errors.Add("Statistics.TotalRecordsExported cannot be negative.");
-        }
-
-        if (stats.TotalErrors < 0)
-        {
-            errors.Add("Statistics.TotalErrors cannot be negative.");
-        }
-
-        if (stats.TotalBytesTransferred < 0)
-        {
-            errors.Add("Statistics.TotalBytesTransferred cannot be negative.");
-        }
+        AddIfNegative(errors, stats.TotalImports, nameof(stats.TotalImports));
+        AddIfNegative(errors, stats.TotalExports, nameof(stats.TotalExports));
+        AddIfNegative(errors, stats.TotalRecordsImported, nameof(stats.TotalRecordsImported));
+        AddIfNegative(errors, stats.TotalRecordsExported, nameof(stats.TotalRecordsExported));
+        AddIfNegative(errors, stats.TotalErrors, nameof(stats.TotalErrors));
+        AddIfNegative(errors, stats.TotalBytesTransferred, nameof(stats.TotalBytesTransferred));
 
         // Validate last progress (if available)
         if (stats.LastProgress is not null)
         {
-            if (stats.LastProgress.ProcessedCount < 0)
-            {
-                errors.Add("Statistics.LastProgress.ProcessedCount cannot be negative.");
-            }
-
-            if (stats.LastProgress.TotalCount < 0)
-            {
-                errors.Add("Statistics.LastProgress.TotalCount cannot be negative.");
-            }
-
-            if (stats.LastProgress.SucceededCount < 0)
-            {
-                errors.Add("Statistics.LastProgress.SucceededCount cannot be negative.");
-            }
-
-            if (stats.LastProgress.FailedCount < 0)
-            {
-                errors.Add("Statistics.LastProgress.FailedCount cannot be negative.");
-            }
-
-            if (stats.LastProgress.BytesTransferred < 0)
-            {
-                errors.Add("Statistics.LastProgress.BytesTransferred cannot be negative.");
-            }
+            AddIfNegative(errors, stats.LastProgress.ProcessedCount, nameof(stats.LastProgress.ProcessedCount));
+            AddIfNegative(errors, stats.LastProgress.TotalCount, nameof(stats.LastProgress.TotalCount));
+            AddIfNegative(errors, stats.LastProgress.SucceededCount, nameof(stats.LastProgress.SucceededCount));
+            AddIfNegative(errors, stats.LastProgress.FailedCount, nameof(stats.LastProgress.FailedCount));
+            AddIfNegative(errors, stats.LastProgress.BytesTransferred, nameof(stats.LastProgress.BytesTransferred));
 
             if (stats.LastProgress.StartedAt == default)
             {
                 errors.Add("Statistics.LastProgress.StartedAt cannot be default(DateTime).");
             }
 
-            if (stats.LastProgress.CurrentBatch < 0)
-            {
-                errors.Add("Statistics.LastProgress.CurrentBatch cannot be negative.");
-            }
+            AddIfNegative(errors, stats.LastProgress.CurrentBatch, nameof(stats.LastProgress.CurrentBatch));
         }
 
         return errors.AsReadOnly();
@@ -119,8 +83,10 @@ public static class BulkImportExportEngineValidation
     /// <typeparam name="T">The entity type managed by the engine.</typeparam>
     /// <param name="value">The engine to check.</param>
     /// <returns><see langword="true"/> if the engine is valid; otherwise, <see langword="false"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static bool IsValid<T>(this BulkImportExportEngine<T> value) where T : class
     {
+        ArgumentNullException.ThrowIfNull(value);
         return Validate(value).Count == 0;
     }
 
@@ -138,6 +104,7 @@ public static class BulkImportExportEngineValidation
 
         var errors = Validate(value);
 
+            ArgumentNullException.ThrowIfNull(errors);
         if (errors.Count == 0)
         {
             return;
