@@ -431,6 +431,89 @@ public class Product
 }
 ```
 
+## DependencyInjectionJsonExtensions
+
+`DependencyInjectionJsonExtensions` is a static utility class that provides System.Text.Json serialization extensions for dependency injection configuration. It enables converting `DatabaseSettings` and `DotnetSqliteCrudGeneratorOptions` objects to/from JSON format with camelCase property naming and null value handling.
+
+The extension methods support both regular deserialization and safe try-pattern deserialization, making it easy to work with configuration in JSON format for dependency injection setup.
+
+Here's a realistic example demonstrating how to use `DependencyInjectionJsonExtensions` for serializing and deserializing configuration:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Configuration;
+using System;
+
+public class DependencyInjectionConfigExample
+{
+    public static void Main()
+    {
+        // Create database settings
+        var dbSettings = new DatabaseSettings
+        {
+            FilePath = @"/var/data/myapp.db",
+            ConnectionString = "Data Source=/var/data/myapp.db;Version=3;",
+            EnableLogging = true,
+            ConnectionTimeout = 30,
+            AutoCreateDatabase = true
+        };
+
+        // Serialize to JSON (compact format)
+        string json = dbSettings.ToJson();
+        Console.WriteLine("Serialized database settings:");
+        Console.WriteLine(json);
+        
+        // Serialize to indented JSON (readable format)
+        string indentedJson = dbSettings.ToJson(indented: true);
+        Console.WriteLine("\nIndented JSON:");
+        Console.WriteLine(indentedJson);
+
+        // Deserialize from JSON
+        var deserializedSettings = DependencyInjectionJsonExtensions.FromJsonToDatabaseSettings(json);
+        Console.WriteLine($"\nDeserialized settings - FilePath: {deserializedSettings?.FilePath}");
+
+        // Safe deserialization using try-pattern
+        string invalidJson = "{ invalid json";
+        bool success = DependencyInjectionJsonExtensions.TryFromJsonToDatabaseSettings(invalidJson, out var result);
+        Console.WriteLine($"\nSafe deserialization of invalid JSON: {(success ? "Success" : "Failed (as expected)")}");
+
+        // Create generator options
+        var options = new DotnetSqliteCrudGeneratorOptions
+        {
+            Namespace = "MyApp.Data",
+            GenerateMigrations = true,
+            GenerateServices = true,
+            GenerateGrpc = false,
+            ConnectionTimeout = 60,
+            EnableLogging = true
+        };
+
+        // Serialize options to JSON
+        string optionsJson = options.ToJson();
+        Console.WriteLine("\nSerialized generator options:");
+        Console.WriteLine(optionsJson);
+
+        // Deserialize options from JSON
+        var deserializedOptions = DependencyInjectionJsonExtensions.FromJsonToOptions(optionsJson);
+        Console.WriteLine($"\nDeserialized options - Namespace: {deserializedOptions?.Namespace}");
+
+        // Example with connection pool configuration
+        var poolConfig = new ConnectionPoolConfiguration
+        {
+            MinPoolSize = 5,
+            MaxPoolSize = 100,
+            IdleTimeoutMs = 300000,
+            AcquireTimeoutMs = 30000,
+            CleanupIntervalMs = 60000,
+            EnableDiagnostics = true
+        };
+
+        string poolJson = poolConfig.ToJson();
+        Console.WriteLine("\nSerialized connection pool configuration:");
+        Console.WriteLine(poolJson);
+    }
+}
+```
+
 
 ## OrderValidation
 
