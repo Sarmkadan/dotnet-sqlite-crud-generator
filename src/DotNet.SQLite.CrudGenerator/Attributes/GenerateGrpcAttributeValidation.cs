@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace DotNet.SQLite.CrudGenerator.Attributes;
 
@@ -19,7 +18,7 @@ public static class GenerateGrpcAttributeValidation
     /// </summary>
     /// <param name="value">The attribute to validate.</param>
     /// <returns>A list of validation errors; empty if valid.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> Validate(this GenerateGrpcAttribute value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -44,7 +43,7 @@ public static class GenerateGrpcAttributeValidation
     /// </summary>
     /// <param name="value">The attribute to check.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <see langword="null"/>.</exception>
     public static bool IsValid(this GenerateGrpcAttribute value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -57,7 +56,7 @@ public static class GenerateGrpcAttributeValidation
     /// Ensures that the specified <see cref="GenerateGrpcAttribute"/> is valid.
     /// </summary>
     /// <param name="value">The attribute to validate.</param>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown if the attribute is not valid.</exception>
     public static void EnsureValid(this GenerateGrpcAttribute value)
     {
