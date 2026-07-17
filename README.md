@@ -431,7 +431,154 @@ public class Product
 }
 ```
 
-## CachingIntegrationTests
+
+## OrderValidation
+
+`OrderValidation` is a static utility class that provides comprehensive validation helpers for the `Order` entity. It offers methods to validate order state, final total calculations, and business rules for shipping and cancellation operations, ensuring consistent error handling throughout the order lifecycle.
+
+The class provides three main patterns for each validation scenario:
+- `Validate*()` methods that return a list of validation problems
+- `IsValid*()` methods that return a boolean indicating validity
+- `Ensure*Valid()` methods that throw exceptions when validation fails
+
+Here's a realistic example demonstrating how to use `OrderValidation` in an order processing scenario:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Enums;
+using System;
+
+public class OrderProcessingExample
+{
+    public static void Main()
+    {
+        // Create a valid order
+        var order = new Order
+        {
+            UserId = 42,
+            OrderNumber = "ORD-2024-00123",
+            Status = EntityStatus.Pending,
+            TotalAmount = 199.99m,
+            TaxAmount = 19.99m,
+            DiscountAmount = 5.00m,
+            ItemCount = 3,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-10),
+            UpdatedAt = DateTime.UtcNow.AddMinutes(-5),
+            ShippingAddress = "123 Main St, Anytown, USA 12345",
+            BillingAddress = "123 Main St, Anytown, USA 12345",
+            Notes = "Express delivery"
+        };
+
+        // Validate complete order state
+        if (order.IsValid())
+        {
+            Console.WriteLine("Order is valid and ready for processing");
+        }
+        else
+        {
+            var problems = order.ValidateAll();
+            Console.WriteLine("Order validation errors:");
+            foreach (var problem in problems)
+            {
+                Console.WriteLine($"- {problem}");
+            }
+        }
+
+        // Validate final total calculation
+        if (order.IsFinalTotalValid())
+        {
+            Console.WriteLine($"Final total is correct: {order.CalculateFinalTotal():C}");
+        }
+        else
+        {
+            var errors = order.ValidateFinalTotal();
+            Console.WriteLine("Final total validation errors:");
+            foreach (var error in errors)
+            {
+                Console.WriteLine($"- {error}");
+            }
+        }
+
+        // Check if order can be shipped using validation pattern
+        if (order.CanShip())
+        {
+            Console.WriteLine("Order can be shipped");
+        }
+        else
+        {
+            var errors = order.ValidateCanShip();
+            Console.WriteLine("Order cannot be shipped:");
+            foreach (var error in errors)
+            {
+                Console.WriteLine($"- {error}");
+            }
+        }
+
+        // Check if order can be cancelled using validation pattern
+        if (order.CanCancel())
+        {
+            Console.WriteLine("Order can be cancelled");
+        }
+        else
+        {
+            var errors = order.ValidateCanCancel();
+            Console.WriteLine("Order cannot be cancelled:");
+            foreach (var error in errors)
+            {
+                Console.WriteLine($"- {error}");
+            }
+        }
+
+        // Use EnsureValid pattern for immediate failure
+        try
+        {
+            var invalidOrder = new Order
+            {
+                UserId = 0, // Invalid: zero user ID
+                OrderNumber = "", // Invalid: empty order number
+                Status = EntityStatus.Pending,
+                TotalAmount = -100, // Invalid: negative amount
+                TaxAmount = 0,
+                DiscountAmount = 0,
+                ItemCount = 0, // Invalid: zero items
+                CreatedAt = DateTime.UtcNow.AddDays(-1),
+                UpdatedAt = DateTime.UtcNow.AddDays(-2), // Invalid: updated before created
+                ShippingAddress = "", // Invalid: empty shipping address
+                BillingAddress = "", // Invalid: empty billing address
+                Notes = new string('x', 600) // Invalid: too long
+            };
+
+            invalidOrder.EnsureValid(); // This will throw
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Order validation failed as expected:{Environment.NewLine}{ex.Message}");
+        }
+
+        // Use EnsureCanShip pattern for immediate shipping validation
+        try
+        {
+            var nonPendingOrder = new Order
+            {
+                UserId = 1,
+                OrderNumber = "ORD-123",
+                Status = EntityStatus.Shipped, // Invalid: already shipped
+                TotalAmount = 100,
+                ItemCount = 1,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                ShippingAddress = "123 Main St"
+            };
+
+            nonPendingOrder.EnsureCanShip(); // This will throw
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Shipping validation failed as expected:{Environment.NewLine}{ex.Message}");
+        }
+    }
+}
+```## CachingIntegrationTests
 
 `CachingIntegrationTests` is a test class that contains integration tests for the `MemoryCacheProvider` caching implementation. It verifies that the cache provider correctly stores, retrieves, expires, and manages items according to the configured eviction policy and TTL settings.
 
@@ -618,3 +765,4 @@ public class AuditTrailExample : IDisposable
     }
 }
 ```
+
