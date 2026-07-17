@@ -585,6 +585,125 @@ public class NamingConventionExample
 }
 ```
 
+## PerformanceMonitorJsonExtensions
+
+`PerformanceMonitorJsonExtensions` is a static utility class that provides System.Text.Json serialization and deserialization extensions for performance monitoring data structures. It enables converting `PerformanceMonitor`, `OperationMetrics`, `PerformanceReport`, and `MemoryInfo` objects to/from JSON format with camelCase property naming, null value handling, and cycle reference prevention.
+
+The extension methods support both regular deserialization and safe try-pattern deserialization, making it easy to work with performance monitoring configurations and metrics in JSON format.
+
+Here's a realistic example demonstrating how to use `PerformanceMonitorJsonExtensions` for serializing and deserializing performance monitoring data:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Utilities;
+using System;
+using System.Collections.Generic;
+
+public class PerformanceMonitoringExample
+{
+    public static void Main()
+    {
+        // Create a performance monitor instance with operation metrics
+        var performanceMonitor = new PerformanceMonitor
+        {
+            MonitorId = Guid.NewGuid(),
+            StartTime = DateTime.UtcNow.AddMinutes(-5),
+            EndTime = DateTime.UtcNow,
+            IsCompleted = true,
+            Operations = new List<OperationMetrics>
+            {
+                new OperationMetrics
+                {
+                    OperationName = "DatabaseQuery",
+                    DurationMs = 125,
+                    SuccessCount = 100,
+                    FailureCount = 2,
+                    AverageDurationMs = 125.5,
+                    MaxDurationMs = 250,
+                    MinDurationMs = 50
+                },
+                new OperationMetrics
+                {
+                    OperationName = "CacheLookup",
+                    DurationMs = 2,
+                    SuccessCount = 500,
+                    FailureCount = 0,
+                    AverageDurationMs = 1.8,
+                    MaxDurationMs = 15,
+                    MinDurationMs = 1
+                }
+            },
+            MemoryUsage = new MemoryInfo
+            {
+                TotalMemoryBytes = 1024 * 1024 * 1024, // 1GB
+                UsedMemoryBytes = 512 * 1024 * 1024,   // 512MB
+                FreeMemoryBytes = 512 * 1024 * 1024,   // 512MB
+                ProcessMemoryBytes = 256 * 1024 * 1024, // 256MB
+                PeakMemoryBytes = 768 * 1024 * 1024     // 768MB
+            }
+        };
+
+        // Serialize to JSON (compact format)
+        string json = performanceMonitor.ToJson();
+        Console.WriteLine("Serialized performance monitor:");
+        Console.WriteLine(json);
+
+        // Serialize to indented JSON (readable format)
+        string indentedJson = performanceMonitor.ToJson(indented: true);
+        Console.WriteLine("\nIndented performance monitor JSON:");
+        Console.WriteLine(indentedJson);
+
+        // Deserialize from JSON
+        var deserializedMonitor = PerformanceMonitorJsonExtensions.FromJson(json);
+        Console.WriteLine($"\nDeserialized monitor - MonitorId: {deserializedMonitor?.MonitorId}");
+        Console.WriteLine($"Operations count: {deserializedMonitor?.Operations?.Count}");
+        Console.WriteLine($"Memory usage - Total: {deserializedMonitor?.MemoryUsage?.TotalMemoryBytes} bytes");
+
+        // Safe deserialization using try-pattern
+        string invalidJson = "{ invalid json";
+        bool success = PerformanceMonitorJsonExtensions.TryFromJsonToPerformanceMonitor(invalidJson, out var result);
+        Console.WriteLine($"\nSafe deserialization of invalid JSON: {(success ? "Success" : "Failed (as expected)")}");
+
+        // Serialize individual operation metrics
+        var operationMetrics = new OperationMetrics
+        {
+            OperationName = "APIRequest",
+            DurationMs = 85,
+            SuccessCount = 200,
+            FailureCount = 5,
+            AverageDurationMs = 87.2,
+            MaxDurationMs = 150,
+            MinDurationMs = 45
+        };
+
+        string operationJson = operationMetrics.ToJson();
+        Console.WriteLine("\nSerialized operation metrics:");
+        Console.WriteLine(operationJson);
+
+        // Deserialize operation metrics
+        var deserializedOperation = PerformanceMonitorJsonExtensions.FromJsonToOperationMetrics(operationJson);
+        Console.WriteLine($"\nDeserialized operation - Name: {deserializedOperation?.OperationName}, Duration: {deserializedOperation?.DurationMs}ms");
+
+        // Serialize memory info
+        var memoryInfo = new MemoryInfo
+        {
+            TotalMemoryBytes = 2147483648, // 2GB
+            UsedMemoryBytes = 1073741824,   // 1GB
+            FreeMemoryBytes = 1073741824,   // 1GB
+            ProcessMemoryBytes = 536870912,  // 512MB
+            PeakMemoryBytes = 1610612736     // 1.5GB
+        };
+
+        string memoryJson = memoryInfo.ToJson();
+        Console.WriteLine("\nSerialized memory info:");
+        Console.WriteLine(memoryJson);
+
+        // Deserialize memory info
+        var deserializedMemory = PerformanceMonitorJsonExtensions.FromJsonToMemoryInfo(memoryJson);
+        Console.WriteLine($"\nDeserialized memory - Total: {deserializedMemory?.TotalMemoryBytes} bytes, Used: {deserializedMemory?.UsedMemoryBytes} bytes");
+    }
+}
+```
+
 
 ## OrderValidation
 
