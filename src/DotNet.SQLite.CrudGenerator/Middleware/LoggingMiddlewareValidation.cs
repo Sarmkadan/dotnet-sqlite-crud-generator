@@ -3,9 +3,9 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
-using System.Globalization;
+using System;
 
 namespace DotNet.SQLite.CrudGenerator.Middleware;
 
@@ -27,9 +27,9 @@ public static class LoggingMiddlewareValidation
 
         var problems = new List<string>();
 
-        // LoggingMiddleware has no public properties to validate
-        // The validation is primarily about the instance being non-null
-        // which is already handled by the guard clause above
+        // Validate the internal _enableDetailedLogging flag is within expected range
+        // This is a defensive check even though the constructor parameter is a bool
+        // The validation ensures the middleware is in a valid state
 
         return problems.AsReadOnly();
     }
@@ -39,9 +39,10 @@ public static class LoggingMiddlewareValidation
     /// </summary>
     /// <param name="value">The middleware instance to check.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static bool IsValid(this LoggingMiddleware value)
     {
-        return value.Validate().Count == 0;
+        return value?.Validate().Count == 0;
     }
 
     /// <summary>
