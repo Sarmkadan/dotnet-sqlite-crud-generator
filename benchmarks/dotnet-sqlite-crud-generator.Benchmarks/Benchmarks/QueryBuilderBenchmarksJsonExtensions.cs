@@ -7,7 +7,6 @@
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 
 namespace DotNet.SQLite.CrudGenerator.Benchmarks;
 
@@ -21,6 +20,7 @@ public static class QueryBuilderBenchmarksJsonExtensions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,
+        PropertyNameCaseInsensitive = true,
         ReferenceHandler = ReferenceHandler.IgnoreCycles
     };
 
@@ -37,9 +37,7 @@ public static class QueryBuilderBenchmarksJsonExtensions
 
         var options = indented
             ? new JsonSerializerOptions(_jsonOptions)
-            {
-                WriteIndented = true
-            }
+            { WriteIndented = true }
             : _jsonOptions;
 
         return JsonSerializer.Serialize(value, options);
@@ -49,13 +47,10 @@ public static class QueryBuilderBenchmarksJsonExtensions
     /// Deserializes a JSON string to a <see cref="QueryBuilderBenchmarks"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized <see cref="QueryBuilderBenchmarks"/> instance, or null if the JSON is empty or whitespace.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <returns>The deserialized <see cref="QueryBuilderBenchmarks"/> instance, or null if the JSON is null or whitespace.</returns>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static QueryBuilderBenchmarks? FromJson(string json)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json);
-
         if (string.IsNullOrWhiteSpace(json))
         {
             return null;
