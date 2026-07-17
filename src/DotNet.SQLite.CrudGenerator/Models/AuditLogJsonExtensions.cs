@@ -27,7 +27,7 @@ public static class AuditLogJsonExtensions
     /// <param name="value">The audit log entry to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
     /// <returns>A JSON string representation of the audit log entry.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
     public static string ToJson(this AuditLog value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -39,8 +39,8 @@ public static class AuditLogJsonExtensions
     /// Deserializes an audit log entry from a JSON string.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized audit log entry, or null if the JSON is null or empty.</returns>
-    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
+    /// <returns>The deserialized audit log entry, or <see langword="null"/> if the JSON is <see langword="null"/>, whitespace, or empty.</returns>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized into an <see cref="AuditLog"/> instance.</exception>
     public static AuditLog? FromJson(string json)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -55,8 +55,9 @@ public static class AuditLogJsonExtensions
     /// Attempts to deserialize an audit log entry from a JSON string.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized audit log entry if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <param name="value">Receives the deserialized audit log entry if successful; otherwise, <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if deserialization succeeded; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="json"/> is <see langword="null"/>.</exception>
     public static bool TryFromJson(string json, out AuditLog? value)
     {
         value = null;
@@ -68,8 +69,8 @@ public static class AuditLogJsonExtensions
 
         try
         {
-            value = JsonSerializer.Deserialize<AuditLog>(json, _jsonOptions)!;
-            return true;
+            value = JsonSerializer.Deserialize<AuditLog>(json, _jsonOptions);
+            return value is not null;
         }
         catch (JsonException)
         {
@@ -80,13 +81,7 @@ public static class AuditLogJsonExtensions
     /// <summary>
     /// Gets the JSON serializer options with indentation enabled.
     /// </summary>
-    /// <returns>Configured JsonSerializerOptions with indentation.</returns>
-    private static JsonSerializerOptions GetIndentedOptions()
-    {
-        var options = new JsonSerializerOptions(_jsonOptions)
-        {
-            WriteIndented = true
-        };
-        return options;
-    }
+    /// <returns>Configured <see cref="JsonSerializerOptions"/> with indentation enabled.</returns>
+    private static JsonSerializerOptions GetIndentedOptions() =>
+        new(_jsonOptions) { WriteIndented = true };
 }
