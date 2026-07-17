@@ -20,8 +20,11 @@ public static class ConfigurationExceptionValidation
     /// </summary>
     /// <param name="configName">The configuration name to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> Validate(string? configName)
     {
+        ArgumentNullException.ThrowIfNull(configName);
+
         var problems = new List<string>();
 
         if (string.IsNullOrWhiteSpace(configName))
@@ -37,18 +40,19 @@ public static class ConfigurationExceptionValidation
     /// </summary>
     /// <param name="configName">The configuration name to validate.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValid(string? configName)
-    {
-        return Validate(configName).Count == 0;
-    }
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
+    public static bool IsValid(string? configName) => Validate(configName).Count == 0;
 
     /// <summary>
     /// Ensures that the specified configuration name is valid.
     /// </summary>
     /// <param name="configName">The configuration name to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown when the configuration name is invalid.</exception>
     public static void EnsureValid(string? configName)
     {
+        ArgumentNullException.ThrowIfNull(configName);
+
         var problems = Validate(configName);
         if (problems.Count > 0)
         {
@@ -62,8 +66,11 @@ public static class ConfigurationExceptionValidation
     /// <param name="configName">The name of the configuration.</param>
     /// <param name="value">The configuration value to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> Validate(string? configName, string? value)
     {
+        ArgumentNullException.ThrowIfNull(configName);
+
         var problems = new List<string>();
 
         if (string.IsNullOrWhiteSpace(configName))
@@ -85,19 +92,20 @@ public static class ConfigurationExceptionValidation
     /// <param name="configName">The name of the configuration.</param>
     /// <param name="value">The configuration value to validate.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValid(string? configName, string? value)
-    {
-        return Validate(configName, value).Count == 0;
-    }
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
+    public static bool IsValid(string? configName, string? value) => Validate(configName, value).Count == 0;
 
     /// <summary>
     /// Ensures that the specified configuration value is valid.
     /// </summary>
     /// <param name="configName">The name of the configuration.</param>
     /// <param name="value">The configuration value to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown when the configuration value is invalid.</exception>
     public static void EnsureValid(string? configName, string? value)
     {
+        ArgumentNullException.ThrowIfNull(configName);
+
         var problems = Validate(configName, value);
         if (problems.Count > 0)
         {
@@ -110,8 +118,11 @@ public static class ConfigurationExceptionValidation
     /// </summary>
     /// <param name="connectionStringName">The connection string name to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="connectionStringName"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> ValidateConnectionString(string? connectionStringName)
     {
+        ArgumentNullException.ThrowIfNull(connectionStringName);
+
         var problems = new List<string>();
 
         if (string.IsNullOrWhiteSpace(connectionStringName))
@@ -127,18 +138,19 @@ public static class ConfigurationExceptionValidation
     /// </summary>
     /// <param name="connectionStringName">The connection string name to validate.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValidConnectionString(string? connectionStringName)
-    {
-        return ValidateConnectionString(connectionStringName).Count == 0;
-    }
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="connectionStringName"/> is <see langword="null"/>.</exception>
+    public static bool IsValidConnectionString(string? connectionStringName) => ValidateConnectionString(connectionStringName).Count == 0;
 
     /// <summary>
     /// Ensures that the specified connection string name is valid.
     /// </summary>
     /// <param name="connectionStringName">The connection string name to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="connectionStringName"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown when the connection string name is invalid.</exception>
     public static void EnsureValidConnectionString(string? connectionStringName)
     {
+        ArgumentNullException.ThrowIfNull(connectionStringName);
+
         var problems = ValidateConnectionString(connectionStringName);
         if (problems.Count > 0)
         {
@@ -151,8 +163,11 @@ public static class ConfigurationExceptionValidation
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="filePath"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> ValidateFilePath(string? filePath)
     {
+        ArgumentNullException.ThrowIfNull(filePath);
+
         var problems = new List<string>();
 
         if (string.IsNullOrWhiteSpace(filePath))
@@ -172,18 +187,19 @@ public static class ConfigurationExceptionValidation
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValidFilePath(string? filePath)
-    {
-        return ValidateFilePath(filePath).Count == 0;
-    }
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="filePath"/> is <see langword="null"/>.</exception>
+    public static bool IsValidFilePath(string? filePath) => ValidateFilePath(filePath).Count == 0;
 
     /// <summary>
     /// Ensures that the specified file path is valid.
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="filePath"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown when the file path is invalid.</exception>
     public static void EnsureValidFilePath(string? filePath)
     {
+        ArgumentNullException.ThrowIfNull(filePath);
+
         var problems = ValidateFilePath(filePath);
         if (problems.Count > 0)
         {
@@ -213,10 +229,7 @@ public static class ConfigurationExceptionValidation
     /// </summary>
     /// <param name="timeoutValue">The timeout value in milliseconds to validate.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValidTimeout(int timeoutValue)
-    {
-        return ValidateTimeout(timeoutValue).Count == 0;
-    }
+    public static bool IsValidTimeout(int timeoutValue) => ValidateTimeout(timeoutValue).Count == 0;
 
     /// <summary>
     /// Ensures that the specified timeout value is valid.
@@ -238,8 +251,11 @@ public static class ConfigurationExceptionValidation
     /// <param name="configName">The name of the configuration.</param>
     /// <param name="timeoutValue">The timeout value in milliseconds to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> Validate(string? configName, int timeoutValue)
     {
+        ArgumentNullException.ThrowIfNull(configName);
+
         var problems = new List<string>();
 
         if (string.IsNullOrWhiteSpace(configName))
@@ -261,19 +277,20 @@ public static class ConfigurationExceptionValidation
     /// <param name="configName">The name of the configuration.</param>
     /// <param name="timeoutValue">The timeout value in milliseconds to validate.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValid(string? configName, int timeoutValue)
-    {
-        return Validate(configName, timeoutValue).Count == 0;
-    }
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
+    public static bool IsValid(string? configName, int timeoutValue) => Validate(configName, timeoutValue).Count == 0;
 
     /// <summary>
     /// Ensures that the specified timeout configuration is valid.
     /// </summary>
     /// <param name="configName">The name of the configuration.</param>
     /// <param name="timeoutValue">The timeout value in milliseconds to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown when the timeout configuration is invalid.</exception>
     public static void EnsureValid(string? configName, int timeoutValue)
     {
+        ArgumentNullException.ThrowIfNull(configName);
+
         var problems = Validate(configName, timeoutValue);
         if (problems.Count > 0)
         {
