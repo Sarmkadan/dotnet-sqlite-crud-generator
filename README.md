@@ -514,6 +514,77 @@ public class DependencyInjectionConfigExample
 }
 ```
 
+## NamingConventionHelperJsonExtensions
+
+`NamingConventionHelperJsonExtensions` is a static utility class that provides System.Text.Json serialization and deserialization extensions for naming convention data structures. It enables converting `NamingConventionInfo` and `PropertyConventionInfo` objects to/from JSON format with camelCase property naming and null value handling.
+
+The extension methods support both regular deserialization and safe try-pattern deserialization, making it easy to work with naming convention configurations in JSON format.
+
+Here's a realistic example demonstrating how to use `NamingConventionHelperJsonExtensions` for serializing and deserializing naming conventions:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Utilities;
+using System;
+
+public class NamingConventionExample
+{
+    public static void Main()
+    {
+        // Create a naming convention info for entity naming
+        var entityConvention = new NamingConventionInfo
+        {
+            EntityPrefix = "tbl",
+            EntitySuffix = "Entity",
+            UsePascalCase = true,
+            PluralizeEntityNames = true,
+            IncludeSchemaPrefix = false
+        };
+
+        // Serialize to JSON (compact format)
+        string entityJson = entityConvention.ToJson();
+        Console.WriteLine("Serialized entity naming convention:");
+        Console.WriteLine(entityJson);
+
+        // Serialize to indented JSON (readable format)
+        string indentedEntityJson = entityConvention.ToJson(indented: true);
+        Console.WriteLine("\nIndented entity naming convention JSON:");
+        Console.WriteLine(indentedEntityJson);
+
+        // Deserialize from JSON
+        var deserializedConvention = NamingConventionHelperJsonExtensions.FromJsonToNamingConventionInfo(entityJson);
+        Console.WriteLine($"\nDeserialized convention - EntityPrefix: {deserializedConvention?.EntityPrefix}");
+
+        // Create a property naming convention
+        var propertyConvention = new PropertyConventionInfo
+        {
+            PropertyPrefix = "prop",
+            PropertySuffix = "Field",
+            UseCamelCase = true,
+            IncludeTypeInName = true,
+            UseUnderscoreSeparators = false
+        };
+
+        // Serialize property convention to JSON
+        string propertyJson = propertyConvention.ToJson();
+        Console.WriteLine("\nSerialized property naming convention:");
+        Console.WriteLine(propertyJson);
+
+        // Deserialize property convention from JSON
+        var deserializedPropertyConvention = NamingConventionHelperJsonExtensions.FromJsonToPropertyConventionInfo(propertyJson);
+        Console.WriteLine($"\nDeserialized property convention - PropertyPrefix: {deserializedPropertyConvention?.PropertyPrefix}");
+
+        // Safe deserialization using try-pattern for entity convention
+        string invalidEntityJson = "{ invalid json";
+        bool entitySuccess = NamingConventionHelperJsonExtensions.TryFromJson(invalidEntityJson, out var entityResult);
+        Console.WriteLine($"\nSafe deserialization of invalid entity JSON: {(entitySuccess ? "Success" : "Failed (as expected)")}");
+
+        // Safe deserialization using try-pattern for property convention
+        bool propertySuccess = NamingConventionHelperJsonExtensions.TryFromJson(invalidEntityJson, out var propertyResult);
+        Console.WriteLine($"Safe deserialization of invalid property JSON: {(propertySuccess ? "Success" : "Failed (as expected)")}");
+    }
+}
+```
+
 
 ## OrderValidation
 
