@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace DotNet.SQLite.CrudGenerator.Benchmarks;
 
@@ -29,47 +28,32 @@ public static class RepositoryBenchmarksValidation
 
         var problems = new List<string>();
 
-        // Validate that Setup has been called (database and repositories initialized)
-        try
+        // Validate that repositories are initialized (Setup has been called)
+        if (value.GetType().GetField("_productRepository", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(value) is null)
         {
-            // Check if Setup method exists and can be invoked
-            // Since we can't directly access private fields, we validate by attempting
-            // to use the benchmark in a way that would fail if not properly initialized
-            var setupMethod = value.Setup;
-        }
-        catch
-        {
-            problems.Add("Setup method is not available or not properly initialized.");
+            problems.Add("Product repository is not initialized. Setup() method has not been called.");
         }
 
-        // Validate that Dispose has been called or is available
-        try
+        if (value.GetType().GetField("_userRepository", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(value) is null)
         {
-            var disposeMethod = value.Dispose;
-        }
-        catch
-        {
-            problems.Add("Dispose method is not available.");
+            problems.Add("User repository is not initialized. Setup() method has not been called.");
         }
 
-        // Validate that SaveChangesAsync is available
-        try
+        // Validate that sample data is initialized
+        if (value.GetType().GetField("_sampleProduct", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(value) is null)
         {
-            var saveChangesMethod = value.SaveChangesAsync;
-        }
-        catch
-        {
-            problems.Add("SaveChangesAsync method is not available.");
+            problems.Add("Sample product data is not initialized. Setup() method has not been called.");
         }
 
-        // Validate that Cleanup is available
-        try
+        if (value.GetType().GetField("_sampleUser", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(value) is null)
         {
-            var cleanupMethod = value.Cleanup;
+            problems.Add("Sample user data is not initialized. Setup() method has not been called.");
         }
-        catch
+
+        // Validate that database connection is initialized
+        if (value.GetType().GetField("_database", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(value) is null)
         {
-            problems.Add("Cleanup method is not available.");
+            problems.Add("Database connection is not initialized. Setup() method has not been called.");
         }
 
         return problems.AsReadOnly();
