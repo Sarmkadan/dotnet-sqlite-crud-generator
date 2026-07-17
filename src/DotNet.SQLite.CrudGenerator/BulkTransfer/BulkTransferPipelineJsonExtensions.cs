@@ -56,12 +56,9 @@ public static class BulkTransferPipelineJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
-
-        return JsonSerializer.Deserialize<BulkTransferPipeline<T>>(json, _jsonOptions);
+        return string.IsNullOrWhiteSpace(json)
+            ? null
+            : JsonSerializer.Deserialize<BulkTransferPipeline<T>>(json, _jsonOptions);
     }
 
     /// <summary>
@@ -71,14 +68,12 @@ public static class BulkTransferPipelineJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized pipeline instance if successful; otherwise, <c>null</c>.</param>
     /// <returns><c>true</c> if deserialization succeeded; otherwise, <c>false</c>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <c>null</c>.</exception>
     public static bool TryFromJson<T>(string json, out BulkTransferPipeline<T>? value) where T : class
     {
         value = null;
 
-        if (json is null)
-        {
-            return false;
-        }
+        ArgumentNullException.ThrowIfNull(json);
 
         try
         {
