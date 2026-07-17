@@ -5,8 +5,6 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Globalization;
-
 namespace DotNet.SQLite.CrudGenerator.Events;
 
 /// <summary>
@@ -21,7 +19,7 @@ public static class EntityChangedEventValidation
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The entity change event to validate</param>
     /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static IReadOnlyList<string> Validate<T>(this EntityChangedEvent<T>? value) where T : class
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -53,7 +51,7 @@ public static class EntityChangedEventValidation
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The entity created event to validate</param>
     /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static IReadOnlyList<string> Validate<T>(this EntityCreatedEvent<T>? value) where T : class
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -102,7 +100,7 @@ public static class EntityChangedEventValidation
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The entity updated event to validate</param>
     /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static IReadOnlyList<string> Validate<T>(this EntityUpdatedEvent<T>? value) where T : class
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -178,7 +176,7 @@ public static class EntityChangedEventValidation
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The entity deleted event to validate</param>
     /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static IReadOnlyList<string> Validate<T>(this EntityDeletedEvent<T>? value) where T : class
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -227,7 +225,7 @@ public static class EntityChangedEventValidation
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The bulk entity changed event to validate</param>
     /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static IReadOnlyList<string> Validate<T>(this BulkEntityChangedEvent<T>? value) where T : class
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -315,7 +313,7 @@ public static class EntityChangedEventValidation
     /// </summary>
     /// <param name="value">The product restocked event to validate</param>
     /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static IReadOnlyList<string> Validate(this ProductRestockedEvent? value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -382,7 +380,7 @@ public static class EntityChangedEventValidation
     /// </summary>
     /// <param name="value">The product sold event to validate</param>
     /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static IReadOnlyList<string> Validate(this ProductSoldEvent? value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -526,7 +524,7 @@ public static class EntityChangedEventValidation
     /// </summary>
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The entity change event to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
     public static void EnsureValid<T>(this EntityChangedEvent<T>? value) where T : class
     {
@@ -546,7 +544,7 @@ public static class EntityChangedEventValidation
     /// </summary>
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The entity created event to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
     public static void EnsureValid<T>(this EntityCreatedEvent<T>? value) where T : class
     {
@@ -566,7 +564,7 @@ public static class EntityChangedEventValidation
     /// </summary>
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The entity updated event to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
     public static void EnsureValid<T>(this EntityUpdatedEvent<T>? value) where T : class
     {
@@ -586,7 +584,7 @@ public static class EntityChangedEventValidation
     /// </summary>
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The entity deleted event to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
     public static void EnsureValid<T>(this EntityDeletedEvent<T>? value) where T : class
     {
@@ -606,7 +604,7 @@ public static class EntityChangedEventValidation
     /// </summary>
     /// <typeparam name="T">The entity type</typeparam>
     /// <param name="value">The bulk entity changed event to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
     public static void EnsureValid<T>(this BulkEntityChangedEvent<T>? value) where T : class
     {
@@ -625,7 +623,7 @@ public static class EntityChangedEventValidation
     /// Ensures a ProductRestockedEvent is valid, throwing an exception if not.
     /// </summary>
     /// <param name="value">The product restocked event to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
     public static void EnsureValid(this ProductRestockedEvent? value)
     {
@@ -644,7 +642,7 @@ public static class EntityChangedEventValidation
     /// Ensures a ProductSoldEvent is valid, throwing an exception if not.
     /// </summary>
     /// <param name="value">The product sold event to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
     public static void EnsureValid(this ProductSoldEvent? value)
     {
