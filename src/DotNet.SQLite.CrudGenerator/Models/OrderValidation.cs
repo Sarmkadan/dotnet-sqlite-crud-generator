@@ -5,8 +5,6 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Globalization;
-using System.Linq;
 using DotNet.SQLite.CrudGenerator.Enums;
 
 namespace DotNet.SQLite.CrudGenerator.Models;
@@ -65,28 +63,34 @@ public static class OrderValidation
         if (value.CreatedAt > value.UpdatedAt)
             errors.Add("Updated date cannot be earlier than created date.");
 
-        // Validate status-specific timestamp rules
-        if (value.Status == EntityStatus.Shipped && value.ShippedAt == null)
-            errors.Add("Shipped status requires a shipped date.");
-        else if (value.Status == EntityStatus.Shipped && value.ShippedAt > DateTime.UtcNow.AddMinutes(5))
-            errors.Add("Shipped date cannot be in the future.");
-        else if (value.Status == EntityStatus.Shipped && value.ShippedAt < value.CreatedAt)
-            errors.Add("Shipped date cannot be earlier than created date.");
+        // Validate status-specific timestamp rules using pattern matching for clarity
+        if (value.Status is EntityStatus.Shipped)
+        {
+            if (value.ShippedAt == null)
+                errors.Add("Shipped status requires a shipped date.");
+            else if (value.ShippedAt > DateTime.UtcNow.AddMinutes(5))
+                errors.Add("Shipped date cannot be in the future.");
+            else if (value.ShippedAt < value.CreatedAt)
+                errors.Add("Shipped date cannot be earlier than created date.");
+        }
 
-        if (value.Status == EntityStatus.Delivered && value.DeliveredAt == null)
-            errors.Add("Delivered status requires a delivered date.");
-        else if (value.Status == EntityStatus.Delivered && value.DeliveredAt > DateTime.UtcNow.AddMinutes(5))
-            errors.Add("Delivered date cannot be in the future.");
-        else if (value.Status == EntityStatus.Delivered && value.DeliveredAt < value.CreatedAt)
-            errors.Add("Delivered date cannot be earlier than created date.");
+        if (value.Status is EntityStatus.Delivered)
+        {
+            if (value.DeliveredAt == null)
+                errors.Add("Delivered status requires a delivered date.");
+            else if (value.DeliveredAt > DateTime.UtcNow.AddMinutes(5))
+                errors.Add("Delivered date cannot be in the future.");
+            else if (value.DeliveredAt < value.CreatedAt)
+                errors.Add("Delivered date cannot be earlier than created date.");
+        }
 
         // Validate address fields when needed
-        if ((value.Status == EntityStatus.Shipped || value.Status == EntityStatus.Delivered) &&
-             string.IsNullOrWhiteSpace(value.ShippingAddress))
+        if ((value.Status is EntityStatus.Shipped or EntityStatus.Delivered) &&
+            string.IsNullOrWhiteSpace(value.ShippingAddress))
             errors.Add("Shipping address is required for shipped or delivered orders.");
 
-        if ((value.Status == EntityStatus.Shipped || value.Status == EntityStatus.Delivered) &&
-             string.IsNullOrWhiteSpace(value.BillingAddress))
+        if ((value.Status is EntityStatus.Shipped or EntityStatus.Delivered) &&
+            string.IsNullOrWhiteSpace(value.BillingAddress))
             errors.Add("Billing address is required for shipped or delivered orders.");
 
         // Validate notes length
@@ -111,6 +115,7 @@ public static class OrderValidation
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static bool IsValid(this Order value)
     {
+        ArgumentNullException.ThrowIfNull(value);
         return value.ValidateAll().Count == 0;
     }
 
