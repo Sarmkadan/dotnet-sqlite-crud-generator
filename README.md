@@ -1,4 +1,4 @@
-# DotNet SQLite CRUD Generator
+// # DotNet SQLite CRUD Generator
 
 ## ConfigurationExceptionValidation
 
@@ -970,6 +970,7 @@ public class StringExtensionsExample
         Console.WriteLine(emptyResult); // Output: (empty string)
     }
 }
+```
 
 ## AuditTrailServiceTests
 
@@ -1038,4 +1039,3 @@ public class AuditTrailExample : IDisposable
     }
 }
 ```
-
