@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using DotNet.SQLite.CrudGenerator.Models;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
@@ -11,6 +12,10 @@ namespace DotNet.SQLite.CrudGenerator.Tests;
 /// <summary>
 /// Extension methods for <see cref="AuditTrailServiceTests"/> providing common test utilities.
 /// </summary>
+/// <remarks>
+/// These extension methods simplify the creation of test entities for audit trail testing scenarios.
+/// All methods validate their input parameters and throw appropriate exceptions for invalid values.
+/// </remarks>
 public static class AuditTrailServiceTestsExtensions
 {
     /// <summary>
@@ -19,8 +24,13 @@ public static class AuditTrailServiceTestsExtensions
     /// <param name="id">The entity identifier.</param>
     /// <param name="name">The product name.</param>
     /// <returns>A product instance populated with test data.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="id"/> is less than 1.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="name"/> is null or whitespace.</exception>
     public static Product CreateTestProduct(this int id, string name = "Test Product")
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(id, 1);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
         return new Product
         {
             Id = id,
@@ -40,8 +50,11 @@ public static class AuditTrailServiceTestsExtensions
     /// </summary>
     /// <param name="id">The entity identifier.</param>
     /// <returns>An order instance populated with test data.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="id"/> is less than 1.</exception>
     public static Order CreateTestOrder(this int id)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(id, 1);
+
         return new Order
         {
             Id = id,
@@ -63,8 +76,13 @@ public static class AuditTrailServiceTestsExtensions
     /// <param name="id">The entity identifier.</param>
     /// <param name="name">The category name.</param>
     /// <returns>A category instance populated with test data.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="id"/> is less than 1.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="name"/> is null or whitespace.</exception>
     public static Category CreateTestCategory(this int id, string name = "Test Category")
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(id, 1);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
         return new Category
         {
             Id = id,
