@@ -18,9 +18,9 @@ public static class EventBusValidation
     /// <summary>
     /// Validates a domain event for common issues.
     /// </summary>
-    /// <param name="value">The domain event to validate</param>
-    /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <param name="value">The domain event to validate.</param>
+    /// <returns>List of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this DomainEvent? value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -70,19 +70,16 @@ public static class EventBusValidation
     /// <summary>
     /// Checks if a domain event is valid.
     /// </summary>
-    /// <param name="value">The domain event to check</param>
-    /// <returns>True if valid; false otherwise</returns>
-    public static bool IsValid(this DomainEvent? value)
-    {
-        return value?.Validate().Count == 0;
-    }
+    /// <param name="value">The domain event to check.</param>
+    /// <returns>True if valid; false otherwise.</returns>
+    public static bool IsValid(this DomainEvent? value) => value?.Validate().Count == 0;
 
     /// <summary>
     /// Ensures a domain event is valid, throwing an exception if not.
     /// </summary>
-    /// <param name="value">The domain event to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
-    /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
+    /// <param name="value">The domain event to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> has validation problems.</exception>
     public static void EnsureValid(this DomainEvent? value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -99,9 +96,9 @@ public static class EventBusValidation
     /// <summary>
     /// Validates an EventEnvelope for common issues.
     /// </summary>
-    /// <param name="value">The event envelope to validate</param>
-    /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <param name="value">The event envelope to validate.</param>
+    /// <returns>List of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this EventEnvelope? value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -144,19 +141,16 @@ public static class EventBusValidation
     /// <summary>
     /// Checks if an event envelope is valid.
     /// </summary>
-    /// <param name="value">The event envelope to check</param>
-    /// <returns>True if valid; false otherwise</returns>
-    public static bool IsValid(this EventEnvelope? value)
-    {
-        return value?.Validate().Count == 0;
-    }
+    /// <param name="value">The event envelope to check.</param>
+    /// <returns>True if valid; false otherwise.</returns>
+    public static bool IsValid(this EventEnvelope? value) => value?.Validate().Count == 0;
 
     /// <summary>
     /// Ensures an event envelope is valid, throwing an exception if not.
     /// </summary>
-    /// <param name="value">The event envelope to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
-    /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
+    /// <param name="value">The event envelope to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> has validation problems.</exception>
     public static void EnsureValid(this EventEnvelope? value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -173,9 +167,9 @@ public static class EventBusValidation
     /// <summary>
     /// Validates EventBusStatistics for common issues.
     /// </summary>
-    /// <param name="value">The statistics to validate</param>
-    /// <returns>List of validation problems; empty if valid</returns>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
+    /// <param name="value">The statistics to validate.</param>
+    /// <returns>List of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this EventBusStatistics? value)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -225,19 +219,16 @@ public static class EventBusValidation
     /// <summary>
     /// Checks if event bus statistics are valid.
     /// </summary>
-    /// <param name="value">The statistics to check</param>
-    /// <returns>True if valid; false otherwise</returns>
-    public static bool IsValid(this EventBusStatistics? value)
-    {
-        return value?.Validate().Count == 0;
-    }
+    /// <param name="value">The statistics to check.</param>
+    /// <returns>True if valid; false otherwise.</returns>
+    public static bool IsValid(this EventBusStatistics? value) => value?.Validate().Count == 0;
 
     /// <summary>
     /// Ensures event bus statistics are valid, throwing an exception if not.
     /// </summary>
-    /// <param name="value">The statistics to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown if value is null</exception>
-    /// <exception cref="ArgumentException">Thrown if value has validation problems</exception>
+    /// <param name="value">The statistics to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> has validation problems.</exception>
     public static void EnsureValid(this EventBusStatistics? value)
     {
         ArgumentNullException.ThrowIfNull(value);
