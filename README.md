@@ -294,6 +294,143 @@ public class EventBusExample
 }
 ```
 
+## EntityChangedEventValidation
+
+`EntityChangedEventValidation` is a static utility class that provides validation helpers for entity change events. It offers methods to validate `EntityChangedEvent<T>`, `EntityCreatedEvent<T>`, `EntityUpdatedEvent<T>`, `EntityDeletedEvent<T>`, `BulkEntityChangedEvent<T>`, `ProductRestockedEvent`, and `ProductSoldEvent` instances, ensuring consistent error handling when event validation fails.
+
+The class provides three main patterns for each validation scenario:
+- `Validate()` methods that return a list of validation problems
+- `IsValid()` methods that return a boolean indicating validity  
+- `EnsureValid()` methods that throw exceptions when validation fails
+
+Here's a realistic example demonstrating how to use `EntityChangedEventValidation` in an event handling scenario:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Events;
+using System;
+using System.Collections.Generic;
+
+public class EntityEventExample
+{
+    public static void Main()
+    {
+        // Create a valid entity created event
+        var product = new Product { Id = 1, Name = "Widget", Price = 19.99m };
+        var createdEvent = new EntityCreatedEvent<Product>
+        {
+            Entity = product,
+            EntityType = "Product",
+            AggregateId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventName = "ProductCreated"
+        };
+
+        // Validate using IsValid() pattern
+        if (createdEvent.IsValid())
+        {
+            Console.WriteLine("EntityCreatedEvent is valid");
+        }
+        else
+        {
+            var problems = createdEvent.Validate();
+            Console.WriteLine($"Validation failed: {string.Join(", ", problems)}");
+        }
+
+        // Validate using Validate() pattern with detailed feedback
+        var updatedEvent = new EntityUpdatedEvent<Product>
+        {
+            Entity = product,
+            OldEntity = new Product { Id = 1, Name = "Widget", Price = 15.99m },
+            EntityType = "Product",
+            AggregateId = Guid.Empty, // Invalid: empty GUID
+            OccurredAt = DateTime.UtcNow.AddDays(-366), // Invalid: too old
+            EventName = "ProductUpdated",
+            Changes = new Dictionary<string, object>
+            {
+                { "Price", 19.99m },
+                { "Name", "Widget" }
+            }
+        };
+
+        var problems = updatedEvent.Validate();
+        if (problems.Count > 0)
+        {
+            Console.WriteLine("EntityUpdatedEvent validation errors:");
+            foreach (var problem in problems)
+            {
+                Console.WriteLine($"- {problem}");
+            }
+        }
+
+        // Validate using EnsureValid() pattern for immediate failure
+        try
+        {
+            var invalidEvent = new EntityCreatedEvent<Product>
+            {
+                Entity = null, // Invalid: null entity
+                EntityType = "", // Invalid: empty type
+                AggregateId = Guid.Empty, // Invalid: empty GUID
+                OccurredAt = DateTime.MinValue, // Invalid: default DateTime
+                EventName = new string('x', 201) // Invalid: too long
+            };
+
+            invalidEvent.EnsureValid(); // This will throw
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Validation failed as expected:{Environment.NewLine}{ex.Message}");
+        }
+
+        // Create a bulk entity changed event
+        var bulkEvent = new BulkEntityChangedEvent<Product>
+        {
+            Count = 3,
+            Operation = "UpdateInventory",
+            Entities = new List<Product?>
+            {
+                new Product { Id = 1, Name = "Widget" },
+                new Product { Id = 2, Name = "Gadget" },
+                new Product { Id = 3, Name = "Gizmo" }
+            },
+            AggregateId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventName = "BulkProductUpdate"
+        };
+
+        // Validate bulk event
+        if (bulkEvent.IsValid())
+        {
+            Console.WriteLine("BulkEntityChangedEvent is valid");
+            Console.WriteLine($"Processing {bulkEvent.Count} entities");
+        }
+
+        // Validate domain-specific events
+        var restockedEvent = new ProductRestockedEvent
+        {
+            ProductId = 42,
+            QuantityAdded = 100,
+            NewQuantity = 150,
+            AggregateId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventName = "InventoryRestocked"
+        };
+
+        if (restockedEvent.IsValid())
+        {
+            Console.WriteLine($"Product {restockedEvent.ProductId} restocked: +{restockedEvent.QuantityAdded}");
+        }
+    }
+}
+
+// Example entity class
+public class Product
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public decimal Price { get; set; }
+}
+```
+
 ## CachingIntegrationTests
 
 `CachingIntegrationTests` is a test class that contains integration tests for the `MemoryCacheProvider` caching implementation. It verifies that the cache provider correctly stores, retrieves, expires, and manages items according to the configured eviction policy and TTL settings.
