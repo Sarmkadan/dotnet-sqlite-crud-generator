@@ -109,6 +109,79 @@ public class GenerationServiceTestsExample
 }
 ```
 
+## CachingIntegrationTests
+
+`CachingIntegrationTests` is a test class that contains integration tests for the `MemoryCacheProvider` caching implementation. It verifies that the cache provider correctly stores, retrieves, expires, and manages items according to the configured eviction policy and TTL settings.
+
+Here's an example of using `CachingIntegrationTests` to demonstrate the cache provider's functionality:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Caching;
+using DotNet.SQLite.CrudGenerator.Configuration;
+using System;
+using System.Threading.Tasks;
+
+public class CacheProviderExample : IDisposable
+{
+    private MemoryCacheProvider _cacheProvider;
+    private CacheConfiguration _cacheConfiguration;
+
+    public CacheProviderExample()
+    {
+        _cacheConfiguration = new CacheConfiguration
+        {
+            Enabled = true,
+            MaxSizeBytes = 1024 * 10, // 10 KB for testing
+            DefaultTTL = TimeSpan.FromMinutes(1)
+        };
+        _cacheProvider = new MemoryCacheProvider(_cacheConfiguration.MaxSizeBytes);
+    }
+
+    public void Dispose()
+    {
+        _cacheProvider.ClearAsync().GetAwaiter().GetResult();
+    }
+
+    public async Task ExampleUsage()
+    {
+        // Set a value in cache
+        await _cacheProvider.SetAsync("user:123", "John Doe");
+        
+        // Check if value exists
+        var exists = await _cacheProvider.ExistsAsync("user:123");
+        Console.WriteLine($"User exists: {exists}"); // Output: User exists: True
+        
+        // Get value from cache
+        var userName = await _cacheProvider.GetAsync<string>("user:123");
+        Console.WriteLine($"User name: {userName}"); // Output: User name: John Doe
+        
+        // Get or set with factory pattern
+        var productName = await _cacheProvider.GetOrSetAsync(
+            "product:456",
+            async () => await FetchProductFromDatabaseAsync(456)
+        );
+        
+        // Remove item from cache
+        await _cacheProvider.RemoveAsync("user:123");
+        
+        // Clear entire cache
+        await _cacheProvider.ClearAsync();
+        
+        // Get cache statistics
+        var stats = _cacheProvider.GetStatistics();
+        Console.WriteLine($"Total items: {stats.TotalItems}");
+        Console.WriteLine($"Total size: {stats.TotalSizeBytes} bytes");
+    }
+
+    private async Task<string> FetchProductFromDatabaseAsync(int id)
+    {
+        // Simulate database fetch
+        await Task.Delay(100);
+        return $"Product {id}";
+    }
+}
+```
+
 ## StringExtensionsTests
 
 `StringExtensionsTests` is a test class that contains unit tests for the `StringExtensions` utility class, verifying various string manipulation and formatting operations such as PascalCase conversion, camelCase conversion, pluralization, truncation, slug generation, and snake_case conversion.
