@@ -11,7 +11,7 @@ using System.Text.Json.Serialization.Metadata;
 namespace DotNet.SQLite.CrudGenerator.Services;
 
 /// <summary>
-/// Provides System.Text.Json serialization and deserialization extensions for OrderService.
+/// Provides System.Text.Json serialization and deserialization extensions for <see cref="OrderService"/>.
 /// </summary>
 public static class OrderServiceJsonExtensions
 {
@@ -23,50 +23,47 @@ public static class OrderServiceJsonExtensions
     };
 
     /// <summary>
-    /// Serializes the OrderService instance to a JSON string.
+    /// Serializes the <see cref="OrderService"/> instance to a JSON string.
     /// </summary>
-    /// <param name="value">The OrderService instance to serialize.</param>
+    /// <param name="value">The <see cref="OrderService"/> instance to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
-    /// <returns>A JSON string representation of the OrderService.</returns>
+    /// <returns>A JSON string representation of the <see cref="OrderService"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static string ToJson(this OrderService value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
-            : _jsonOptions;
-
-        return JsonSerializer.Serialize(value, options);
+        return JsonSerializer.Serialize(value, GetJsonOptions(indented));
     }
 
     /// <summary>
-    /// Deserializes a JSON string to an OrderService instance.
+    /// Deserializes a JSON string to an <see cref="OrderService"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized OrderService instance, or null if the JSON is null or empty.</returns>
+    /// <returns>The deserialized <see cref="OrderService"/> instance, or null if the JSON is null or empty.</returns>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static OrderService? FromJson(string json)
     {
-        if (string.IsNullOrEmpty(json))
-        {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(json);
 
-        return JsonSerializer.Deserialize<OrderService>(json, _jsonOptions);
+        return string.IsNullOrWhiteSpace(json)
+            ? null
+            : JsonSerializer.Deserialize<OrderService>(json, _jsonOptions);
     }
 
     /// <summary>
-    /// Attempts to deserialize a JSON string to an OrderService instance.
+    /// Attempts to deserialize a JSON string to an <see cref="OrderService"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized OrderService instance if successful.</param>
+    /// <param name="value">Receives the deserialized <see cref="OrderService"/> instance if successful.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(string json, out OrderService? value)
     {
         value = null;
 
-        if (string.IsNullOrEmpty(json))
+        if (string.IsNullOrWhiteSpace(json))
         {
             return false;
         }
@@ -81,4 +78,14 @@ public static class OrderServiceJsonExtensions
             return false;
         }
     }
+
+    /// <summary>
+    /// Gets the appropriate <see cref="JsonSerializerOptions"/> based on indentation preference.
+    /// </summary>
+    /// <param name="indented">Whether to format the JSON with indentation.</param>
+    /// <returns>The configured <see cref="JsonSerializerOptions"/>.</returns>
+    private static JsonSerializerOptions GetJsonOptions(bool indented)
+        => indented
+            ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true }
+            : _jsonOptions;
 }
