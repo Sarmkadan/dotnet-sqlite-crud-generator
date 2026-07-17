@@ -1,5 +1,93 @@
 # DotNet SQLite CRUD Generator
 
+## ConfigurationExceptionValidation
+
+`ConfigurationExceptionValidation` is a static utility class that provides validation helpers for configuration values used throughout the SQLite CRUD Generator. It offers methods to validate configuration names, values, connection strings, file paths, and timeout values, ensuring consistent error handling when configuration validation fails.
+
+The class provides three main patterns for each validation scenario:
+- `Validate()` methods that return a list of validation problems
+- `IsValid()` methods that return a boolean indicating validity  
+- `EnsureValid()` methods that throw exceptions when validation fails
+
+
+Here's a realistic example demonstrating how to use `ConfigurationExceptionValidation` in a configuration setup scenario:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Exceptions;
+using System;
+using System.IO;
+
+public class ConfigurationExample
+{
+    private const string ConnectionStringName = "DefaultConnection";
+    private const string DatabaseFilePath = @"/var/data/myapp.db";
+    private const int CommandTimeout = 30000;
+
+    public static void ConfigureDatabase()
+    {
+        // Validate connection string name
+        if (ConfigurationExceptionValidation.IsValidConnectionString(ConnectionStringName))
+        {
+            Console.WriteLine($"Connection string '{ConnectionStringName}' is valid");
+        }
+        else
+        {
+            var problems = ConfigurationExceptionValidation.ValidateConnectionString(ConnectionStringName);
+            Console.WriteLine($"Connection string validation failed: {string.Join(", ", problems)}");
+        }
+
+        // Validate file path
+        if (ConfigurationExceptionValidation.IsValidFilePath(DatabaseFilePath))
+        {
+            Console.WriteLine($"Database path '{DatabaseFilePath}' is valid");
+        }
+        else
+        {
+            var problems = ConfigurationExceptionValidation.ValidateFilePath(DatabaseFilePath);
+            foreach (var problem in problems)
+            {
+                Console.WriteLine($"File path validation error: {problem}");
+            }
+        }
+
+        // Validate timeout using EnsureValid pattern for immediate failure
+        try
+        {
+            ConfigurationExceptionValidation.EnsureValid("CommandTimeout", CommandTimeout);
+            Console.WriteLine($"Timeout {CommandTimeout}ms is valid");
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Invalid timeout configuration: {ex.Message}");
+        }
+
+        // Validate configuration name and value pair
+        var configName = "CacheSize";
+        var configValue = "1024";
+        
+        var validationResults = ConfigurationExceptionValidation.Validate(configName, configValue);
+        if (validationResults.Count == 0)
+        {
+            Console.WriteLine($"Configuration '{configName}' with value '{configValue}' is valid");
+        }
+        else
+        {
+            Console.WriteLine("Configuration validation errors:");
+            foreach (var error in validationResults)
+            {
+                Console.WriteLine($"- {error}");
+            }
+        }
+    }
+
+    public static void Main()
+    {
+        ConfigureDatabase();
+    }
+}
+```
+
+
 This project is a .NET tool that generates a complete CRUD (Create, Read, Update, Delete) API for SQLite databases, including:
 
 - Entity models
