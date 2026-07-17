@@ -47,6 +47,7 @@ public static class NamingConventionHelperJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A <see cref="NamingConventionInfo"/> instance populated from the JSON data.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static NamingConventionInfo? FromJsonToNamingConventionInfo(this string json)
     {
@@ -61,6 +62,7 @@ public static class NamingConventionHelperJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized instance if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(this string json, out NamingConventionInfo? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -103,6 +105,7 @@ public static class NamingConventionHelperJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A <see cref="PropertyConventionInfo"/> instance populated from the JSON data.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static PropertyConventionInfo? FromJsonToPropertyConventionInfo(this string json)
     {
@@ -117,6 +120,7 @@ public static class NamingConventionHelperJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized instance if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     public static bool TryFromJson(this string json, out PropertyConventionInfo? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
