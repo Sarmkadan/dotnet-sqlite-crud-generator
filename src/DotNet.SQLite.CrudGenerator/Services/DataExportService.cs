@@ -40,6 +40,48 @@ public sealed class DataExportService
         return await _xmlFormatter.FormatAsync(items);
     }
 
+    public async Task<string> ExportAsJsonLinesAsync<T>(IEnumerable<T> items) where T : class
+    {
+        return await _jsonFormatter.FormatJsonLinesAsync(items);
+    }
+
+    public async Task ExportAsJsonLinesToFileAsync<T>(IEnumerable<T> items, string filePath) where T : class
+    {
+        try
+        {
+            var jsonLines = await _jsonFormatter.FormatJsonLinesAsync(items);
+
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+
+            await File.WriteAllTextAsync(filePath, jsonLines);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"JSON Lines export failed: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task ExportAsJsonLinesToStreamAsync<T>(IEnumerable<T> items, Stream stream) where T : class
+    {
+        try
+        {
+            using (var writer = new StreamWriter(stream, leaveOpen: true))
+            {
+                var jsonLines = await _jsonFormatter.FormatJsonLinesAsync(items);
+                await writer.WriteAsync(jsonLines);
+                await writer.FlushAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"JSON Lines stream export failed: {ex.Message}");
+            throw;
+        }
+    }
+
     public async Task<bool> ExportToFileAsync<T>(IEnumerable<T> items, string filePath, ExportFormat format) where T : class
     {
         try

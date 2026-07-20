@@ -257,4 +257,62 @@ public static class DataExportServiceExtensions
 
         return await service.ExportToFileAsync(items, filePath, format);
     }
+
+    /// <summary>
+    /// Exports data as JSON Lines format (one JSON object per line).
+    /// </summary>
+    /// <typeparam name="T">Entity type to export</typeparam>
+    /// <param name="service">The export service instance</param>
+    /// <param name="items">Items to export</param>
+    /// <returns>JSON Lines formatted string with one JSON object per line</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> or <paramref name="items"/> is <see langword="null"/></exception>
+    public static async Task<string> ExportAsJsonLinesAsync<T>(this DataExportService service, IEnumerable<T> items) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
+
+        return await service.ExportAsJsonLinesAsync(items);
+    }
+
+    /// <summary>
+    /// Exports data as JSON Lines format to a file (one JSON object per line).
+    /// </summary>
+    /// <typeparam name="T">Entity type to export</typeparam>
+    /// <param name="service">The export service instance</param>
+    /// <param name="items">Items to export</param>
+    /// <param name="filePath">Target file path</param>
+    /// <returns>Task representing the asynchronous operation</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/>, <paramref name="items"/>, or <paramref name="filePath"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentException"><paramref name="filePath"/> is empty or contains only whitespace</exception>
+    public static async Task ExportAsJsonLinesToFileAsync<T>(this DataExportService service, IEnumerable<T> items, string filePath) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(filePath);
+
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+        }
+
+        await service.ExportAsJsonLinesToFileAsync(items, filePath);
+    }
+
+    /// <summary>
+    /// Exports data as JSON Lines format to a stream (one JSON object per line).
+    /// </summary>
+    /// <typeparam name="T">Entity type to export</typeparam>
+    /// <param name="service">The export service instance</param>
+    /// <param name="items">Items to export</param>
+    /// <param name="stream">Target stream</param>
+    /// <returns>Task representing the asynchronous operation</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/>, <paramref name="items"/>, or <paramref name="stream"/> is <see langword="null"/></exception>
+    public static async Task ExportAsJsonLinesToStreamAsync<T>(this DataExportService service, IEnumerable<T> items, Stream stream) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(service);
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(stream);
+
+        await service.ExportAsJsonLinesToStreamAsync(items, stream);
+    }
 }

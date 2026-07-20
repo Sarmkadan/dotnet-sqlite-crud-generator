@@ -14,15 +14,24 @@ namespace DotNet.SQLite.CrudGenerator.Formatters;
 /// Supports both pretty-printing and compact output.
 /// Handles circular references and custom type conversions.
 /// </summary>
+public enum JsonFormatStyle
+{
+    Pretty,
+    Compact,
+    JsonLines
+}
+
 public sealed class JsonFormatter : IFormatter
 {
     private readonly JsonSerializerOptions _options;
+    private readonly JsonFormatStyle _style;
 
-    public JsonFormatter(bool pretty = true, bool ignoreNull = false)
+    public JsonFormatter(bool pretty = true, bool ignoreNull = false, JsonFormatStyle style = JsonFormatStyle.Pretty)
     {
+        _style = style;
         _options = new JsonSerializerOptions
         {
-            WriteIndented = pretty,
+            WriteIndented = pretty && style == JsonFormatStyle.Pretty,
             DefaultIgnoreCondition = ignoreNull ? JsonIgnoreCondition.WhenWritingNull : JsonIgnoreCondition.Never,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
@@ -73,6 +82,44 @@ public sealed class JsonFormatter : IFormatter
     public async Task<string> FormatAsync<T>(IEnumerable<T> items) where T : class
     {
         return await Task.FromResult(Format(items));
+    }
+
+    /// <summary>
+    /// Formats a collection as JSON Lines (one JSON object per line).
+    /// </summary>
+    /// <typeparam name="T">Entity type</typeparam>
+    /// <param name="items">Items to format</param>
+    /// <returns>JSON Lines formatted string</returns>
+    public string FormatJsonLines<T>(IEnumerable<T> items) where T : class
+    {
+        try
+        {
+            if (items is null)
+                return string.Empty;
+
+            var sb = new System.Text.StringBuilder();
+            foreach (var item in items)
+            {
+                var json = JsonSerializer.Serialize(item, _options);
+                sb.AppendLine(json);
+            }
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            throw new FormattingException($"Failed to format collection as JSON Lines: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Formats a collection as JSON Lines asynchronously (one JSON object per line).
+    /// </summary>
+    /// <typeparam name="T">Entity type</typeparam>
+    /// <param name="items">Items to format</param>
+    /// <returns>JSON Lines formatted string</returns>
+    public async Task<string> FormatJsonLinesAsync<T>(IEnumerable<T> items) where T : class
+    {
+        return await Task.FromResult(FormatJsonLines(items));
     }
 
     public T? Parse<T>(string json) where T : class
