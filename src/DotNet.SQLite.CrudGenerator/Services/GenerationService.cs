@@ -18,10 +18,12 @@ namespace DotNet.SQLite.CrudGenerator.Services;
 public sealed class GenerationService
 {
     private readonly string _outputPath;
+    private readonly SoftDeleteOptions _softDeleteOptions;
 
-    public GenerationService(string outputPath = "./Generated")
+    public GenerationService(string outputPath = "./Generated", SoftDeleteOptions? softDeleteOptions = null)
     {
         _outputPath = outputPath;
+        _softDeleteOptions = softDeleteOptions ?? new SoftDeleteOptions { Enabled = false };
         Directory.CreateDirectory(_outputPath);
     }
 
@@ -70,11 +72,22 @@ public sealed class GenerationService
         sb.AppendLine($"/// </summary>");
         sb.AppendLine($"public interface I{entityType.Name}Repository");
         sb.AppendLine("{");
-        sb.AppendLine($"    Task<{entityType.Name}?> GetByIdAsync({keyParams}, CancellationToken cancellationToken = default);");
-        sb.AppendLine($"    Task<IEnumerable<{entityType.Name}>> GetAllAsync(CancellationToken cancellationToken = default);");
-        sb.AppendLine($"    Task<{entityType.Name}> AddAsync({entityType.Name} entity, CancellationToken cancellationToken = default);");
-        sb.AppendLine($"    Task<{entityType.Name}> UpdateAsync({entityType.Name} entity, CancellationToken cancellationToken = default);");
-        sb.AppendLine($"    Task<bool> DeleteAsync({keyParams}, CancellationToken cancellationToken = default);");
+        sb.AppendLine($" Task<{entityType.Name}?> GetByIdAsync({keyParams}, CancellationToken cancellationToken = default);");
+
+        sb.AppendLine($" Task<IEnumerable<{entityType.Name}>> GetAllAsync(CancellationToken cancellationToken = default);");
+
+        sb.AppendLine($" Task<{entityType.Name}> AddAsync({entityType.Name} entity, CancellationToken cancellationToken = default);");
+        sb.AppendLine($" Task<{entityType.Name}> UpdateAsync({entityType.Name} entity, CancellationToken cancellationToken = default);");
+
+        // Update DeleteAsync to use soft-delete when enabled
+        if (_softDeleteOptions.Enabled)
+        {
+            sb.AppendLine($" Task<bool> DeleteAsync({keyParams}, CancellationToken cancellationToken = default);");
+        }
+        else
+        {
+            sb.AppendLine($" Task<bool> DeleteAsync({keyParams}, CancellationToken cancellationToken = default);");
+        }
         sb.AppendLine("}");
 
         var filePath = Path.Combine(_outputPath, $"I{entityType.Name}Repository.cs");
@@ -110,6 +123,12 @@ public sealed class GenerationService
         var columns = compositeKeyProps.Count >= 2
             ? GenerateCompositeKeyColumnDefinitions(properties, compositeKeyProps)
             : GenerateColumnDefinitions(properties);
+
+        // Add IsDeleted column when soft-delete is enabled
+        if (_softDeleteOptions.Enabled && !columns.Any(c => c.Contains(_softDeleteOptions.ColumnName)))
+        {
+            columns.Insert(1, $"{_softDeleteOptions.ColumnName} INTEGER NOT NULL DEFAULT {_softDeleteOptions.ActiveValue}");
+        }
 
         sb.AppendLine($"CREATE TABLE IF NOT EXISTS {entityType.Name}s (");
         sb.AppendLine(string.Join(",\n    ", columns));
@@ -200,6 +219,12 @@ public sealed class GenerationService
         var idProp = Array.Find(properties, p => p.Name == "Id");
         if (idProp is not null)
             columns.Add("Id INTEGER PRIMARY KEY AUTOINCREMENT");
+
+        // Add IsDeleted column when soft-delete is enabled
+        if (_softDeleteOptions.Enabled && !columns.Any(c => c.Contains(_softDeleteOptions.ColumnName)))
+        {
+            columns.Add($"{_softDeleteOptions.ColumnName} INTEGER NOT NULL DEFAULT {_softDeleteOptions.ActiveValue}");
+        }
 
         foreach (var prop in properties)
         {
@@ -316,4 +341,174 @@ public sealed class GenerationService
         _ when type == typeof(DateTime) => "string",
         _ => "string"
     };
+
+    /// <summary>
+    /// Generates a repository implementation for a given entity type.
+    /// Supports both single-column primary keys and composite primary keys declared via
+    /// <see cref="CompositeKeyAttribute"/>.
+    /// </summary>
+    public async Task<string> GenerateRepositoryImplementationAsync(Type entityType, CancellationToken cancellationToken = default)
+    {
+        if (entityType is null)
+            throw new ArgumentNullException(nameof(entityType));
+
+        ValidateEntityType(entityType);
+
+        var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var compositeKeyProps = properties
+            .Where(p => p.GetCustomAttribute<CompositeKeyAttribute>() is not null)
+            .OrderBy(p => p.GetCustomAttribute<CompositeKeyAttribute>()!.Order)
+            .ToList();
+
+        // Build key parameter list: "int id" for single-key, or "Guid userId, Guid roleId" for composite.
+        string keyParams;
+        string keyArgs;
+        if (compositeKeyProps.Count >= 2)
+        {
+            keyParams = string.Join(", ", compositeKeyProps.Select(p => $"{GetFriendlyTypeName(p.PropertyType)} {char.ToLowerInvariant(p.Name[0]) + p.Name[1..]}"));
+            keyArgs = string.Join(", ", compositeKeyProps.Select(p => $"{char.ToLowerInvariant(p.Name[0]) + p.Name[1..]}"));
+        }
+        else
+        {
+            keyParams = "int id";
+            keyArgs = "id";
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine("// =============================================================================");
+        sb.AppendLine("// Author: Vladyslav Zaiets | https://sarmkadan.com");
+        sb.AppendLine("// CTO & Software Architect");
+        sb.AppendLine("// =============================================================================");
+        sb.AppendLine();
+        sb.AppendLine("using System.Data.Common;");
+        sb.AppendLine("using DotNet.SQLite.CrudGenerator.Data;");
+        sb.AppendLine("using DotNet.SQLite.CrudGenerator.Interfaces;");
+        sb.AppendLine("using Microsoft.Data.Sqlite;");
+        sb.AppendLine("using Microsoft.Extensions.Logging;");
+        sb.AppendLine();
+        sb.AppendLine("namespace DotNet.SQLite.CrudGenerator.Repositories;");
+        sb.AppendLine();
+        sb.AppendLine($"/// <summary>");
+        sb.AppendLine($"/// Repository implementation for {entityType.Name} entities.");
+        sb.AppendLine($"/// </summary>");
+        sb.AppendLine($"public sealed class {entityType.Name}Repository : Repository<{entityType.Name}, {(compositeKeyProps.Count >= 2 ? "(int, int)" : "int")}>, I{entityType.Name}Repository");
+        sb.AppendLine("{");
+        sb.AppendLine($"    /// <summary>");
+        sb.AppendLine($"    /// Initializes a new instance of the <see cref=\\\"{entityType.Name}Repository\\\"/> class.");
+        sb.AppendLine($"    /// </summary>");
+        sb.AppendLine($"    /// <param name=\\\"database\\\">The database connection.</param>");
+        sb.AppendLine($"    /// <param name=\\\"logger\\\">The logger.</param>");
+        sb.AppendLine($"    public {entityType.Name}Repository(DatabaseConnection database, ILogger<{entityType.Name}Repository>? logger = null)");
+        sb.AppendLine("        : base(database, logger)");
+        sb.AppendLine("    {");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
+        // Generate GetByIdAsync
+        sb.AppendLine($"    public override async Task<{entityType.Name}?> GetByIdAsync({keyParams}, CancellationToken cancellationToken = default)");
+        sb.AppendLine("    {");
+        if (_softDeleteOptions.Enabled)
+        {
+            sb.AppendLine($"        return await base.GetByIdAsync({keyArgs}, cancellationToken);");
+        }
+        else
+        {
+            sb.AppendLine($"        return await base.GetByIdAsync({keyArgs}, cancellationToken);");
+        }
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
+        // Generate GetAllAsync
+        if (_softDeleteOptions.Enabled)
+        {
+            sb.AppendLine($"    public override async Task<IEnumerable<{entityType.Name}>> GetAllAsync(CancellationToken cancellationToken = default)");
+            sb.AppendLine("    {");
+            sb.AppendLine("        if (_cacheLoaded)");
+            sb.AppendLine("        {");
+            sb.AppendLine($"            return _cache.AsReadOnly().Where(e => EF.Property<int>(e, _softDeleteOptions.ColumnName) == _softDeleteOptions.ActiveValue);");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        await _database.OpenAsync(cancellationToken);");
+            sb.AppendLine();
+            sb.AppendLine("        using var command = _database.Connection.CreateCommand();");
+            sb.AppendLine($"        command.CommandText = $\"SELECT * FROM {entityType.Name}s WHERE {_softDeleteOptions.ColumnName} = {_softDeleteOptions.ActiveValue}\";");
+            sb.AppendLine();
+            sb.AppendLine("        using var reader = await command.ExecuteReaderAsync(cancellationToken);");
+            sb.AppendLine($"        var results = new List<{entityType.Name}>();");
+            sb.AppendLine("        while (await reader.ReadAsync(cancellationToken))");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var entity = MapFromReader(reader);");
+            sb.AppendLine("            if (!_cache.Contains(entity))");
+            sb.AppendLine("                _cache.Add(entity);");
+            sb.AppendLine("            results.Add(entity);");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        _cache = results;");
+            sb.AppendLine("        _cacheLoaded = true;");
+            sb.AppendLine("        return _cache.AsReadOnly();");
+            sb.AppendLine("    }");
+        }
+        else
+        {
+            sb.AppendLine($"    public override async Task<IEnumerable<{entityType.Name}>> GetAllAsync(CancellationToken cancellationToken = default)");
+            sb.AppendLine("    {");
+            sb.AppendLine("        return await base.GetAllAsync(cancellationToken);");
+            sb.AppendLine("    }");
+        }
+        sb.AppendLine();
+
+        // Generate AddAsync
+        sb.AppendLine($"    public override async Task<{entityType.Name}> AddAsync({entityType.Name} entity, CancellationToken cancellationToken = default)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        return await base.AddAsync(entity, cancellationToken);");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
+        // Generate UpdateAsync
+        sb.AppendLine($"    public override async Task<{entityType.Name}> UpdateAsync({entityType.Name} entity, CancellationToken cancellationToken = default)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        return await base.UpdateAsync(entity, cancellationToken);");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
+        // Generate DeleteAsync
+        if (_softDeleteOptions.Enabled)
+        {
+            sb.AppendLine($"    public override async Task<bool> DeleteAsync({keyParams}, CancellationToken cancellationToken = default)");
+            sb.AppendLine("    {");
+            sb.AppendLine("        await _database.OpenAsync(cancellationToken);");
+            sb.AppendLine();
+            sb.AppendLine("        using var command = _database.Connection.CreateCommand();");
+            sb.AppendLine($"        command.CommandText = $\"UPDATE {entityType.Name}s SET {_softDeleteOptions.ColumnName} = {_softDeleteOptions.DeletedValue} WHERE Id = @id\";");
+            sb.AppendLine("        command.Parameters.AddWithValue(\"@id\", id!);");
+            sb.AppendLine();
+            sb.AppendLine("        var affected = await command.ExecuteNonQueryAsync(cancellationToken);");
+            sb.AppendLine("        if (affected > 0)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var cachedEntity = _cache.FirstOrDefault(e => GetId(e)?.Equals(id) == true);");
+            sb.AppendLine("            if (cachedEntity is not null)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                var cachedIndex = _cache.FindIndex(e => GetId(e)?.Equals(id) == true);");
+            sb.AppendLine("                if (cachedIndex >= 0)");
+            sb.AppendLine("                    _cache[cachedIndex] = entity;");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        return affected > 0;");
+            sb.AppendLine("    }");
+        }
+        else
+        {
+            sb.AppendLine($"    public override async Task<bool> DeleteAsync({keyParams}, CancellationToken cancellationToken = default)");
+            sb.AppendLine("    {");
+            sb.AppendLine("        return await base.DeleteAsync(id, cancellationToken);");
+            sb.AppendLine("    }");
+        }
+        sb.AppendLine("}");
+
+        var filePath = Path.Combine(_outputPath, $"{entityType.Name}Repository.cs");
+        await File.WriteAllTextAsync(filePath, sb.ToString(), cancellationToken);
+
+        return filePath;
+    }
 }

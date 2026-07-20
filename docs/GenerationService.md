@@ -4,9 +4,15 @@ The `GenerationService` class provides asynchronous methods for generating C# so
 
 ## API
 
-### `public GenerationService()`
+### `public GenerationService(string outputPath = "./Generated", SoftDeleteOptions? softDeleteOptions = null)`
 
-Initializes a new instance of the `GenerationService` class. No parameters are required. The constructor does not perform any I/O or heavy initialization.
+Initializes a new instance of the `GenerationService` class.
+
+- **Parameters**:
+  - `outputPath` (optional): The directory where generated files will be written. Defaults to `./Generated`.
+  - `softDeleteOptions` (optional): Configuration for soft-delete functionality. When provided, generated migrations will include a soft-delete column and repository interfaces will filter deleted records. Defaults to disabled soft-delete.
+
+The constructor does not perform any I/O or heavy initialization.
 
 ### `public async Task<string> GenerateRepositoryInterfaceAsync()`
 
