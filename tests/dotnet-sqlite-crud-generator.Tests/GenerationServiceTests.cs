@@ -5,20 +5,16 @@
 // =============================================================================
 
 using Xunit;
-using NSubstitute;
 using FluentAssertions;
 using DotNet.SQLite.CrudGenerator.Services;
-using DotNet.SQLite.CrudGenerator.Data;
-using DotNet.SQLite.CrudGenerator.Models;
-using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Exceptions;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using DotNet.SQLite.CrudGenerator.Models;
 
 namespace DotNet.SQLite.CrudGenerator.Tests;
 
 /// <summary>
-/// Tests for the GenerationService class.
+/// Contains unit tests for <see cref="GenerationService"/>.
+/// Tests generation of repository interfaces, SQL migrations, and gRPC services.
 /// </summary>
 public sealed class GenerationServiceTests : IDisposable
 {
@@ -59,6 +55,16 @@ public sealed class GenerationServiceTests : IDisposable
     public sealed class InvalidModelTooFewProperties
     {
         public int Id { get; set; }
+    }
+
+    /// <summary>
+    /// A model with nullable properties for testing type mapping.
+    /// </summary>
+    public sealed class TestProductWithNullable
+    {
+        public int Id { get; set; }
+        public string? Description { get; set; }
+        public int? Quantity { get; set; }
     }
 
     /// <summary>
@@ -212,5 +218,186 @@ public sealed class GenerationServiceTests : IDisposable
         // Assert
         await act.Should().ThrowAsync<GenerationException>()
             .WithMessage("Entity must have at least 2 properties. (Parameter 'InvalidModelTooFewProperties')");
+    }
+
+    /// <summary>
+    /// Tests the GenerateMigrationAsync method, verifying the generated SQL contains the entity table name.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GenerateMigrationAsync_ContainsEntityTableName()
+    {
+        // Arrange
+        var migrationName = "TestMigration";
+
+        // Act
+        var filePath = await _sut.GenerateMigrationAsync(typeof(TestProduct), migrationName);
+        var content = await File.ReadAllTextAsync(filePath);
+
+        // Assert - The table name should be "TestProducts" (entity name + 's')
+        content.Should().Contain("CREATE TABLE IF NOT EXISTS TestProducts (");
+    }
+
+    /// <summary>
+    /// Tests the GenerateMigrationAsync method, verifying it throws ArgumentNullException for null entity type.
+    /// </summary>
+    [Fact]
+    public async Task GenerateMigrationAsync_ThrowsArgumentNullExceptionForNullEntityType()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.GenerateMigrationAsync(null!, "Migration"));
+    }
+
+    /// <summary>
+    /// Tests the GenerateRepositoryInterfaceAsync method, verifying it throws ArgumentNullException for null entity type.
+    /// </summary>
+    [Fact]
+    public async Task GenerateRepositoryInterfaceAsync_ThrowsArgumentNullExceptionForNullEntityType()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.GenerateRepositoryInterfaceAsync(null!));
+    }
+
+    /// <summary>
+    /// Tests the GenerateGrpcServiceAsync method, verifying it throws ArgumentNullException for null entity type.
+    /// </summary>
+    [Fact]
+    public async Task GenerateGrpcServiceAsync_ThrowsArgumentNullExceptionForNullEntityType()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _sut.GenerateGrpcServiceAsync(null!));
+    }
+
+    /// <summary>
+    /// Tests the GenerateMigrationAsync method with soft delete enabled.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GenerateMigrationAsync_WithSoftDeleteEnabled()
+    {
+        // Arrange
+        var softDeleteOptions = new SoftDeleteOptions
+        {
+            Enabled = true,
+            ColumnName = "IsDeleted",
+            ActiveValue = 0,
+            DeletedValue = 1
+        };
+        var serviceWithSoftDelete = new GenerationService(_testOutputPath, softDeleteOptions);
+
+        // Act
+        var filePath = await serviceWithSoftDelete.GenerateMigrationAsync(typeof(TestProduct), "CreateTableWithSoftDelete");
+        var content = await File.ReadAllTextAsync(filePath);
+
+        // Assert
+        content.Should().Contain("IsDeleted INTEGER NOT NULL DEFAULT 0");
+        content.Should().Contain("CREATE TABLE IF NOT EXISTS TestProducts (");
+    }
+
+    /// <summary>
+    /// Tests the GenerateMigrationAsync method with soft delete disabled.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GenerateMigrationAsync_WithSoftDeleteDisabled()
+    {
+        // Arrange
+        var softDeleteOptions = new SoftDeleteOptions { Enabled = false };
+        var serviceWithoutSoftDelete = new GenerationService(_testOutputPath, softDeleteOptions);
+
+        // Act
+        var filePath = await serviceWithoutSoftDelete.GenerateMigrationAsync(typeof(TestProduct), "CreateTableNoSoftDelete");
+        var content = await File.ReadAllTextAsync(filePath);
+
+        // Assert
+        content.Should().NotContain("IsDeleted");
+        content.Should().Contain("CREATE TABLE IF NOT EXISTS TestProducts (");
+    }
+
+    /// <summary>
+    /// Tests all three generation methods work together for a single entity.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task AllGenerationMethods_WorkTogether()
+    {
+        // Act
+        var repoPath = await _sut.GenerateRepositoryInterfaceAsync(typeof(TestProduct));
+        var migrationPath = await _sut.GenerateMigrationAsync(typeof(TestProduct), "CreateTestProductTable");
+        var grpcPath = await _sut.GenerateGrpcServiceAsync(typeof(TestProduct));
+
+        // Assert - All files should exist
+        File.Exists(repoPath).Should().BeTrue();
+        File.Exists(migrationPath).Should().BeTrue();
+        File.Exists(grpcPath).Should().BeTrue();
+
+        // Verify file names
+        Path.GetFileName(repoPath).Should().Be("ITestProductRepository.cs");
+        Path.GetFileName(grpcPath).Should().Be("TestProduct.proto");
+    }
+
+    /// <summary>
+    /// Tests the GenerationService creates output directory if it doesn't exist.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GenerationService_CreatesOutputDirectory()
+    {
+        // Arrange - Use a new output path that doesn't exist
+        var nonExistentPath = Path.Combine(Path.GetTempPath(), "NonExistentDir", Guid.NewGuid().ToString());
+        var service = new GenerationService(nonExistentPath);
+
+        try
+        {
+            // Act
+            var filePath = await service.GenerateMigrationAsync(typeof(TestProduct), "TestMigration");
+
+            // Assert
+            Directory.Exists(nonExistentPath).Should().BeTrue();
+            File.Exists(filePath).Should().BeTrue();
+        }
+        finally
+        {
+            // Cleanup
+            if (Directory.Exists(nonExistentPath))
+                Directory.Delete(nonExistentPath, true);
+        }
+    }
+
+    /// <summary>
+    /// Tests the GenerateMigrationAsync method generates correct column types for different property types.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GenerateMigrationAsync_GeneratesCorrectColumnTypes()
+    {
+        // Arrange
+        var migrationName = "TestColumnTypes";
+
+        // Act
+        var filePath = await _sut.GenerateMigrationAsync(typeof(TestProduct), migrationName);
+        var content = await File.ReadAllTextAsync(filePath);
+
+        // Assert
+        content.Should().Contain("Id INTEGER PRIMARY KEY AUTOINCREMENT");
+        content.Should().Contain("Name TEXT");
+        content.Should().Contain("Price REAL");
+    }
+
+    /// <summary>
+    /// Tests the GenerateGrpcServiceAsync method generates correct message types for nullable properties.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    [Fact]
+    public async Task GenerateGrpcServiceAsync_HandlesNullableProperties()
+    {
+        // Act
+        var filePath = await _sut.GenerateGrpcServiceAsync(typeof(TestProductWithNullable));
+        var content = await File.ReadAllTextAsync(filePath);
+
+        // Assert - nullable string should be optional in proto
+        content.Should().Contain("string description = 2;");
+        content.Should().Contain("int32 quantity = 3;");
+        content.Should().Contain("service TestProductWithNullableService {");
     }
 }
