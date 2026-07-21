@@ -2,6 +2,8 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
+// Service for exporting entity data to various formats.
+// Supports JSON, CSV, and XML exports with streaming capability.
 // =============================================================================
 
 using DotNet.SQLite.CrudGenerator.Formatters;
@@ -86,6 +88,19 @@ public sealed class DataExportService
     {
         try
         {
+            // Validate file path before attempting export
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                Console.Error.WriteLine("Export failed: File path cannot be null or empty");
+                return false;
+            }
+
+            if (!Path.IsPathRooted(filePath))
+            {
+                Console.Error.WriteLine("Export failed: File path must be rooted");
+                return false;
+            }
+
             var content = format switch
             {
                 ExportFormat.Json => await ExportAsJsonAsync(items),
@@ -120,7 +135,7 @@ public sealed class DataExportService
                 _ => throw new ArgumentException($"Unsupported format: {format}")
             };
 
-            using (var writer = new StreamWriter(stream))
+            using (var writer = new StreamWriter(stream, leaveOpen: true))
             {
                 await writer.WriteAsync(content);
                 await writer.FlushAsync();
