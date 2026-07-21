@@ -4,7 +4,11 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.Collections.Generic;
+using System.IO;
 using DotNet.SQLite.CrudGenerator.Utilities;
+using DotNet.SQLite.CrudGenerator.Formatters;
+using Microsoft.Data.Sqlite;
 
 namespace DotNet.SQLite.CrudGenerator.CLI;
 
@@ -16,6 +20,7 @@ public sealed class StatsCommand : ICommand
 {
     private readonly PerformanceMonitor _performanceMonitor = new();
     private bool _verbose = false;
+    private bool _json = false;
 
     public async Task<int> ExecuteAsync(string[] args)
     {
@@ -24,7 +29,15 @@ public sealed class StatsCommand : ICommand
 
         try
         {
-            DisplayApplicationStats();
+            if (_json)
+            {
+                DisplayJsonStats();
+            }
+            else
+            {
+                DisplayApplicationStats();
+            }
+
             return 0;
         }
         catch (Exception ex)
@@ -43,6 +56,10 @@ public sealed class StatsCommand : ICommand
                 case "-v":
                 case "--verbose":
                     _verbose = true;
+                    break;
+
+                case "--json":
+                    _json = true;
                     break;
 
                 case "-h":
@@ -83,6 +100,140 @@ public sealed class StatsCommand : ICommand
         Console.WriteLine("  MB    = Megabytes");
         Console.WriteLine("  ms    = milliseconds");
         Console.WriteLine("  %     = percentage");
+    }
+
+    private void DisplayJsonStats()
+    {
+        // Gather basic system and performance information
+        var memInfo = _performanceMonitor.GetMemoryInfo();
+        var perfReport = _performanceMonitor.GetPerformanceReport();
+
+        // Get row counts per table from the SQLite database (if accessible)
+        var tableRowCounts = GetTableRowCounts();
+
+        // Get database file size (if the file exists)
+        long databaseFileSizeBytes = GetDatabaseFileSize();
+
+        var statsObject = new
+        {
+            SystemInfo = new
+            {
+                memInfo.WorkingSetMB,
+                memInfo.PrivateMemoryMB,
+                memInfo.ThreadCount,
+                memInfo.GCTotalMemoryMB,
+                Framework = ".NET 10.0",
+                OS = Environment.OSVersion.VersionString,
+                Processors = Environment.ProcessorCount
+            },
+            Performance = new
+            {
+                Uptime = TimeSpan.FromSeconds(perfReport.UptimeSeconds).ToString(@"hh\:mm\:ss"),
+                perfReport.TotalOperations,
+                perfReport.TotalSuccessful,
+                perfReport.TotalFailed,
+                AverageResponseTimeMs = perfReport.AverageResponseTime,
+                SlowestOperation = perfReport.SlowestOperation,
+                FastestOperation = perfReport.FastestOperation
+            },
+            Database = new
+            {
+                FileSizeBytes = databaseFileSizeBytes,
+                TableRowCounts = tableRowCounts
+            }
+        };
+
+        var formatter = new JsonFormatter(pretty: true);
+        string json = formatter.Format(statsObject);
+        Console.WriteLine(json);
+    }
+
+    /// <summary>
+    /// Attempts to locate the SQLite database file in the current directory.
+    /// Returns its size in bytes, or 0 if not found.
+    /// </summary>
+    private long GetDatabaseFileSize()
+    {
+        // Common default database file name – adjust if your project uses a different name.
+        const string defaultDbFileName = "app.db";
+
+        string baseDir = AppContext.BaseDirectory;
+        string dbPath = Path.Combine(baseDir, defaultDbFileName);
+
+        if (File.Exists(dbPath))
+        {
+            return new FileInfo(dbPath).Length;
+        }
+
+        // If the default file is not present, try to locate any *.db file in the directory.
+        var dbFiles = Directory.GetFiles(baseDir, "*.db");
+        if (dbFiles.Length > 0)
+        {
+            return new FileInfo(dbFiles[0]).Length;
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// Retrieves row counts for each user-defined table in the SQLite database.
+    /// Returns an empty dictionary if the database cannot be accessed.
+    /// </summary>
+    private Dictionary<string, long> GetTableRowCounts()
+    {
+        var result = new Dictionary<string, long>();
+
+        // Locate the database file using the same logic as GetDatabaseFileSize.
+        const string defaultDbFileName = "app.db";
+        string baseDir = AppContext.BaseDirectory;
+        string dbPath = Path.Combine(baseDir, defaultDbFileName);
+
+        if (!File.Exists(dbPath))
+        {
+            var dbFiles = Directory.GetFiles(baseDir, "*.db");
+            if (dbFiles.Length > 0)
+                dbPath = dbFiles[0];
+            else
+                return result; // No database file found.
+        }
+
+        try
+        {
+            var connectionString = new SqliteConnectionStringBuilder
+            {
+                DataSource = dbPath,
+                Mode = SqliteOpenMode.ReadOnly
+            }.ToString();
+
+            using var connection = new SqliteConnection(connectionString);
+            connection.Open();
+
+            // Get list of user tables (exclude SQLite internal tables)
+            using var tablesCmd = connection.CreateCommand();
+            tablesCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';";
+
+            using var reader = tablesCmd.ExecuteReader();
+            var tableNames = new List<string>();
+            while (reader.Read())
+            {
+                var name = reader.GetString(0);
+                tableNames.Add(name);
+            }
+
+            foreach (var table in tableNames)
+            {
+                using var countCmd = connection.CreateCommand();
+                countCmd.CommandText = $"SELECT COUNT(*) FROM \"{table}\";";
+                var count = (long)countCmd.ExecuteScalar()!;
+                result[table] = count;
+            }
+        }
+        catch
+        {
+            // Swallow any exceptions – returning an empty or partial result is acceptable for stats output.
+        }
+
+        return result;
     }
 
     private void DisplaySystemInfo()
@@ -153,11 +304,13 @@ Usage: dotnet run stats [options]
 
 Options:
   -v, --verbose   Show detailed operation metrics
+  --json          Output statistics in JSON format
   -h, --help      Show this help message
 
 Examples:
   dotnet run stats
   dotnet run stats -v
+  dotnet run stats --json
 ");
     }
 }
