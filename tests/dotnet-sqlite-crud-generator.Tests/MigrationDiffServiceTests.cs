@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System.ComponentModel.DataAnnotations;
 using FluentAssertions;
 using Xunit;
 using DotNet.SQLite.CrudGenerator.Data;
@@ -52,6 +53,30 @@ public sealed class MigrationDiffServiceTests : IDisposable
         public string? Description { get; set; }
     }
 
+    private sealed class EntityWithNullableTypes
+    {
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public decimal? Price { get; set; }
+    }
+
+    private sealed class EntityWithRequiredAttribute
+    {
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    private sealed class ComplexEntity
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public string? Description { get; set; }
+        public bool IsActive { get; set; }
+    }
+
     // ---------- GetExpectedSchema ----------
 
     /// <summary>
@@ -84,6 +109,29 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
         schema["Id"].NotNull.Should().BeTrue();
         schema["Price"].NotNull.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Verifies that nullable reference types are correctly handled in expected schema.
+    /// </summary>
+    [Fact]
+    public void GetExpectedSchema_NullableReferenceTypesAreNotMarkedNotNull()
+    {
+        var schema = _sut.GetExpectedSchema(typeof(EntityWithNullableTypes));
+
+        schema["Name"].NotNull.Should().BeFalse();
+        schema["Price"].NotNull.Should().BeFalse();
+    }
+
+    /// <summary>
+    /// Verifies that [Required] attribute makes reference types NOT NULL.
+    /// </summary>
+    [Fact]
+    public void GetExpectedSchema_RequiredAttributeMakesReferenceTypeNotNull()
+    {
+        var schema = _sut.GetExpectedSchema(typeof(EntityWithRequiredAttribute));
+
+        schema["Name"].NotNull.Should().BeTrue();
     }
 
     // ---------- ComputeDiffAsync — table does not exist ----------
@@ -134,6 +182,24 @@ public sealed class MigrationDiffServiceTests : IDisposable
         diff.AlterScript.Should().Contain("up to date");
     }
 
+    /// <summary>
+    /// When schemas are identical, the diff produces an empty column differences list.
+    /// </summary>
+    [Fact]
+    public async Task ComputeDiffAsync_ProducesEmptyDiff_WhenSchemasAreIdentical()
+    {
+        await _db.OpenAsync();
+        using var cmd = _db.Connection.CreateCommand();
+        cmd.CommandText = "CREATE TABLE ComplexEntitys (Id INTEGER, Name TEXT, Price REAL, Description TEXT, IsActive INTEGER)";
+        await cmd.ExecuteNonQueryAsync();
+
+        var diff = await _sut.ComputeDiffAsync(typeof(ComplexEntity));
+
+        diff.IsUpToDate.Should().BeTrue();
+        diff.TableDiff.ColumnDiffs.Should().BeEmpty();
+        diff.AlterScript.Should().Contain("No differences detected");
+    }
+
     // ---------- ComputeDiffAsync — column added ----------
 
     /// <summary>
@@ -153,6 +219,29 @@ public sealed class MigrationDiffServiceTests : IDisposable
         diff.IsUpToDate.Should().BeFalse();
         diff.TableDiff.ColumnDiffs
             .Should().ContainSingle(d => d.Kind == ColumnDiffKind.Added && d.ColumnName == "Description");
+    }
+
+    /// <summary>
+    /// Detects multiple added columns.
+    /// </summary>
+    [Fact]
+    public async Task ComputeDiffAsync_DetectsMultipleAddedColumns()
+    {
+        // Create table with only Id column
+        await _db.OpenAsync();
+        using var cmd = _db.Connection.CreateCommand();
+        cmd.CommandText = "CREATE TABLE ComplexEntitys (Id INTEGER)";
+        await cmd.ExecuteNonQueryAsync();
+
+        var diff = await _sut.ComputeDiffAsync(typeof(ComplexEntity));
+
+        diff.IsUpToDate.Should().BeFalse();
+        var addedColumns = diff.TableDiff.ColumnDiffs
+            .Where(d => d.Kind == ColumnDiffKind.Added)
+            .Select(d => d.ColumnName)
+            .ToList();
+
+        addedColumns.Should().ContainInOrder(["Name", "Price", "Description", "IsActive"]);
     }
 
     // ---------- ComputeDiffAsync — column removed ----------
@@ -175,6 +264,29 @@ public sealed class MigrationDiffServiceTests : IDisposable
             .Should().ContainSingle(d => d.Kind == ColumnDiffKind.Removed && d.ColumnName == "Obsolete");
     }
 
+    /// <summary>
+    /// Detects multiple removed columns.
+    /// </summary>
+    [Fact]
+    public async Task ComputeDiffAsync_DetectsMultipleRemovedColumns()
+    {
+        // Create table with extra columns
+        await _db.OpenAsync();
+        using var cmd = _db.Connection.CreateCommand();
+        cmd.CommandText = "CREATE TABLE SimpleEntitys (Id INTEGER, Name TEXT, Price REAL, Col1 TEXT, Col2 INTEGER, Col3 REAL)";
+        await cmd.ExecuteNonQueryAsync();
+
+        var diff = await _sut.ComputeDiffAsync(typeof(SimpleEntity));
+
+        diff.IsUpToDate.Should().BeFalse();
+        var removedColumns = diff.TableDiff.ColumnDiffs
+            .Where(d => d.Kind == ColumnDiffKind.Removed)
+            .Select(d => d.ColumnName)
+            .ToList();
+
+        removedColumns.Should().ContainInOrder(["Col1", "Col2", "Col3"]);
+    }
+
     // ---------- ComputeDiffAsync — type changed ----------
 
     /// <summary>
@@ -193,6 +305,70 @@ public sealed class MigrationDiffServiceTests : IDisposable
 
         diff.TableDiff.ColumnDiffs
             .Should().ContainSingle(d => d.Kind == ColumnDiffKind.TypeChanged && d.ColumnName == "Price");
+    }
+
+    /// <summary>
+    /// Detects multiple type changes.
+    /// </summary>
+    [Fact]
+    public async Task ComputeDiffAsync_DetectsMultipleTypeChanges()
+    {
+        // Store Name as INTEGER and Price as INTEGER but model expects TEXT and REAL
+        await _db.OpenAsync();
+        using var cmd = _db.Connection.CreateCommand();
+        cmd.CommandText = "CREATE TABLE SimpleEntitys (Id INTEGER, Name INTEGER, Price INTEGER)";
+        await cmd.ExecuteNonQueryAsync();
+
+        var diff = await _sut.ComputeDiffAsync(typeof(SimpleEntity));
+
+        diff.IsUpToDate.Should().BeFalse();
+        var typeChanges = diff.TableDiff.ColumnDiffs
+            .Where(d => d.Kind == ColumnDiffKind.TypeChanged)
+            .Select(d => d.ColumnName)
+            .ToList();
+
+        typeChanges.Should().ContainInOrder(["Name", "Price"]);
+    }
+
+    // ---------- ComputeDiffAsync — mixed changes ----------
+
+    /// <summary>
+    /// Detects a combination of added, removed, and type-changed columns in a single diff.
+    /// </summary>
+    [Fact]
+    public async Task ComputeDiffAsync_DetectsMixedChanges()
+    {
+        // Model: Id, Name, Price, Description, IsActive
+        // DB: Id, Name (as INTEGER), Price (as TEXT), OldColumn, AnotherOldColumn
+        await _db.OpenAsync();
+        using var cmd = _db.Connection.CreateCommand();
+        cmd.CommandText = "CREATE TABLE ComplexEntitys (Id INTEGER, Name INTEGER, Price TEXT, OldColumn TEXT, AnotherOldColumn INTEGER)";
+        await cmd.ExecuteNonQueryAsync();
+
+        var diff = await _sut.ComputeDiffAsync(typeof(ComplexEntity));
+
+        diff.IsUpToDate.Should().BeFalse();
+
+        // Should have 2 added columns (Description, IsActive)
+        var added = diff.TableDiff.ColumnDiffs
+            .Where(d => d.Kind == ColumnDiffKind.Added)
+            .Select(d => d.ColumnName)
+            .ToList();
+        added.Should().ContainInOrder(["Description", "IsActive"]);
+
+        // Should have 2 removed columns (OldColumn, AnotherOldColumn)
+        var removed = diff.TableDiff.ColumnDiffs
+            .Where(d => d.Kind == ColumnDiffKind.Removed)
+            .Select(d => d.ColumnName)
+            .ToList();
+        removed.Should().ContainInOrder(["OldColumn", "AnotherOldColumn"]);
+
+        // Should have 2 type-changed columns (Name, Price)
+        var typeChanged = diff.TableDiff.ColumnDiffs
+            .Where(d => d.Kind == ColumnDiffKind.TypeChanged)
+            .Select(d => d.ColumnName)
+            .ToList();
+        typeChanged.Should().ContainInOrder(["Name", "Price"]);
     }
 
     // ---------- GetActualSchemaAsync — empty when table missing ----------
