@@ -103,30 +103,38 @@ public sealed class ConnectionPool : IConnectionPool
                 $"(MaxPoolSize={_config.MaxPoolSize}).");
         }
 
-        SqliteConnection connection;
+        SqliteConnection? connection = null;
 
-        if (_available.TryDequeue(out var entry))
+        try
         {
-            connection = entry.Connection;
+            if (_available.TryDequeue(out var entry))
+            {
+                connection = entry.Connection;
 
-            if (connection.State != System.Data.ConnectionState.Open)
+                if (connection.State != System.Data.ConnectionState.Open)
+                    await connection.OpenAsync(linkedCts.Token);
+
+                if (_config.EnableDiagnostics)
+                    _logger.LogDebug("Reusing idle connection from pool. Available={Count}", _available.Count);
+            }
+            else
+            {
+                connection = new SqliteConnection(_connectionString);
                 await connection.OpenAsync(linkedCts.Token);
+                Interlocked.Increment(ref _totalConnections);
 
-            if (_config.EnableDiagnostics)
-                _logger.LogDebug("Reusing idle connection from pool. Available={Count}", _available.Count);
+                if (_config.EnableDiagnostics)
+                    _logger.LogDebug("Opened new connection. Total={Total}", _totalConnections);
+            }
+
+            Interlocked.Increment(ref _acquireCount);
+            return new PooledConnection(connection, this);
         }
-        else
+        catch
         {
-            connection = new SqliteConnection(_connectionString);
-            await connection.OpenAsync(linkedCts.Token);
-            Interlocked.Increment(ref _totalConnections);
-
-            if (_config.EnableDiagnostics)
-                _logger.LogDebug("Opened new connection. Total={Total}", _totalConnections);
+            connection?.Dispose();
+            throw;
         }
-
-        Interlocked.Increment(ref _acquireCount);
-        return new PooledConnection(connection, this);
     }
 
     /// <inheritdoc />
