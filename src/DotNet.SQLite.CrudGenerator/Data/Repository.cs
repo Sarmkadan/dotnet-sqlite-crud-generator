@@ -198,12 +198,74 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
     public virtual async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
     {
+        if (entities is null) throw new ArgumentNullException(nameof(entities));
+
         var results = new List<T>();
-        foreach (var entity in entities)
+        var entityList = entities.ToList();
+
+        if (entityList.Count == 0)
+            return results;
+
+        await _database.OpenAsync(cancellationToken);
+
+        try
         {
-            results.Add(await AddAsync(entity, cancellationToken));
+            // Begin transaction for the entire batch
+            using var transaction = _database.Connection.BeginTransaction();
+
+            // Build parameterized insert command once
+            var columns = GetProperties();
+            var columnNames = string.Join(", ", columns.Select(p => p.Name));
+            var placeholders = string.Join(", ", columns.Select((_, i) => $"@p{i}"));
+
+            var command = _database.Connection.CreateCommand();
+            command.CommandText = $"INSERT INTO {_tableName} ({columnNames}) VALUES ({placeholders}) RETURNING *";
+
+            // Add parameters once
+            for (int i = 0; i < columns.Count; i++)
+            {
+                var param = new SqliteParameter();
+                param.ParameterName = $"@p{i}";
+                command.Parameters.Add(param);
+            }
+
+            // Insert all entities in the transaction
+            foreach (var entity in entityList)
+            {
+                // Set parameter values
+                for (int i = 0; i < columns.Count; i++)
+                {
+                    var value = GetPropertyValue(entity, columns[i]);
+                    command.Parameters[i].Value = value ?? DBNull.Value;
+                }
+
+                using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    var insertedEntity = MapFromReader(reader);
+                    results.Add(insertedEntity);
+                    _cache.Add(insertedEntity);
+                }
+            }
+
+            transaction.Commit();
+            return results;
         }
-        return results;
+        catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
+        {
+            _logger?.LogWarning(ex, "Duplicate key error while adding batch of entities {EntityType} to table {TableName}", typeof(T).Name, _tableName);
+            throw RepositoryException.DuplicateKey(typeof(T).Name, "Unknown", entityList.FirstOrDefault() ?? entityList.First());
+        }
+        catch (SqliteException ex)
+        {
+            _logger?.LogError(ex, "Failed to insert batch of entities {EntityType} into table {TableName}", typeof(T).Name, _tableName);
+            throw new RepositoryException($"Failed to insert batch of entities into table {_tableName}: {ex.Message}", ex);
+        }
+        catch (Exception ex) when (ex is not RepositoryException)
+        {
+            _logger?.LogError(ex, "Unexpected error while adding batch of entities {EntityType} to table {TableName}", typeof(T).Name, _tableName);
+            throw new RepositoryException($"Unexpected error while adding batch of entities to table {_tableName}: {ex.Message}", ex);
+        }
     }
 
     public virtual async Task<bool> UpdateAsync(T entity, CancellationToken cancellationToken = default)
