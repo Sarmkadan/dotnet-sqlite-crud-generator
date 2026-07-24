@@ -6,6 +6,16 @@ namespace DotNet.SQLite.CrudGenerator.BackgroundWorkers;
 /// Extension methods for <see cref="BackgroundWorkerService"/> providing additional functionality
 /// for managing background workers and scheduled tasks.
 /// </summary>
+/// <remarks>
+/// <para>
+/// These extension methods support fail-safe background worker operation by:
+/// <list type="bullet">
+/// <item><description>Creating service scopes for task execution to support scoped dependencies</description></item>
+/// <item><description>Providing exception isolation and graceful error handling</description></item>
+/// <item><description>Supporting both singleton and scoped service registrations</description></item>
+/// </list>
+/// </para>
+/// </remarks>
 public static class BackgroundWorkerServiceExtensions
 {
     /// <summary>
@@ -38,6 +48,32 @@ public static class BackgroundWorkerServiceExtensions
         await runner.ScheduleAsync(taskName, action, interval, initialDelay);
 
         return runner;
+    }
+
+    /// <summary>
+    /// Creates and starts a background worker that processes tasks from the queue.
+    /// </summary>
+    /// <param name="service">The background worker service instance.</param>
+    /// <param name="workerCount">Number of worker threads to create. Defaults to 1.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="service"/> is <see langword="null"/>.</exception>
+    /// <remarks>
+    /// <para>
+    /// This method creates a background worker with proper exception isolation and scoped dependency injection:
+    /// <list type="bullet">
+    /// <item><description>Each task execution creates a service scope to support scoped services like AuditTrailService</description></item>
+    /// <item><description>Exceptions in worker threads are caught and logged without crashing the worker</description></item>
+    /// <item><description>Supports both singleton and scoped service registrations</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    public static async Task StartWorkerAsync(
+        this BackgroundWorkerService service,
+        int workerCount = 1)
+    {
+        ArgumentNullException.ThrowIfNull(service);
+
+        await service.StartAsync();
     }
 
     /// <summary>
