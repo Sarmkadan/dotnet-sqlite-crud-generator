@@ -37,26 +37,26 @@ public sealed class AuditTrailFilter
     /// <summary>Maximum number of rows to return. Defaults to 100.</summary>
     public int Limit { get; set; } = 100;
 
-/// <summary>
-/// The page number to return (1-based). When using PageNumber/PageSize,
-/// the query uses keyset pagination for better performance on large tables.
-/// </summary>
-/// <remarks>
-/// When PageNumber and PageSize are both specified, keyset pagination is used.
-/// Otherwise, traditional LIMIT/OFFSET pagination is used.
-/// </remarks>
-public int PageNumber { get; set; } = 1;
+    /// <summary>
+    /// The page number to return (1-based). When using PageNumber/PageSize,
+    /// the query uses keyset pagination for better performance on large tables.
+    /// </summary>
+    /// <remarks>
+    /// When PageNumber and PageSize are both specified, keyset pagination is used.
+    /// Otherwise, traditional LIMIT/OFFSET pagination is used.
+    /// </remarks>
+    public int PageNumber { get; set; } = 1;
 
-/// <summary>
-/// The number of items per page. Defaults to 100.
-/// </summary>
-public int PageSize { get; set; } = 100;
+    /// <summary>
+    /// The number of items per page. Defaults to 100.
+    /// </summary>
+    public int PageSize { get; set; } = 100;
 
-/// <summary>
-/// Gets a value indicating whether keyset pagination should be used.
-/// Keyset pagination is used when both PageNumber and PageSize are set.
-/// </summary>
-internal bool UseKeysetPagination => PageNumber > 0 && PageSize > 0;
+    /// <summary>
+    /// Gets a value indicating whether keyset pagination should be used.
+    /// Keyset pagination is used when both PageNumber and PageSize are set.
+    /// </summary>
+    internal bool UseKeysetPagination => PageNumber > 0 && PageSize > 0;
 }
 
 /// <summary>
@@ -177,11 +177,11 @@ public sealed class AuditTrailService
 
         using var cmd = _database.Connection.CreateCommand();
         cmd.CommandText = @"
-            INSERT INTO AuditLogs
-                (EntityType, EntityId, OperationType, ChangedByUserId,
-                 OldValues, NewValues, ChangeReason, IpAddress, Timestamp)
-            VALUES
-                (@et, @eid, @op, @uid, @old, @new, @reason, @ip, @ts)";
+INSERT INTO AuditLogs
+(EntityType, EntityId, OperationType, ChangedByUserId,
+ OldValues, NewValues, ChangeReason, IpAddress, Timestamp)
+VALUES
+(@et, @eid, @op, @uid, @old, @new, @reason, @ip, @ts)";
 
         cmd.Parameters.AddWithValue("@et", entityType);
         cmd.Parameters.AddWithValue("@eid", entityId);
@@ -220,8 +220,7 @@ public sealed class AuditTrailService
     /// </summary>
     public async Task<IReadOnlyList<AuditLog>> QueryAsync(AuditTrailFilter filter, CancellationToken cancellationToken = default)
     {
-        if (filter is null)
-            throw new ArgumentNullException(nameof(filter));
+        if (filter is null) throw new ArgumentNullException(nameof(filter));
 
         await _database.OpenAsync(cancellationToken);
 
@@ -316,6 +315,90 @@ public sealed class AuditTrailService
         cmd.Parameters.AddWithValue("@cutoff", olderThan.ToString("O"));
 
         return await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Summary data for a bulk operation audit record.
+    /// </summary>
+    private sealed class BulkOperationSummary
+    {
+        public Guid OperationId { get; set; }
+        public long RowCount { get; set; }
+        public string? Source { get; set; }
+        public string? CheckpointId { get; set; }
+        public string? Reason { get; set; }
+    }
+
+    /// <summary>
+    /// Records a bulk operation audit event to the database.
+    /// </summary>
+    /// <param name="entityType">Name of the entity type being bulk processed (e.g. "Product").</param>
+    /// <param name="operationId">Unique identifier for this bulk operation session.</param>
+    /// <param name="operationType">The type of bulk operation performed.</param>
+    /// <param name="userId">ID of the user who performed the operation.</param>
+    /// <param name="rowCount">Number of rows affected by the bulk operation.</param>
+    /// <param name="source">Optional description of the data source (file path, stream name, etc.).</param>
+    /// <param name="checkpointId">Optional checkpoint identifier for resumable operations.</param>
+    /// <param name="reason">Optional free-text reason for the bulk operation.</param>
+    /// <param name="ipAddress">Optional IP address of the originating request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <remarks>
+    /// This method creates a single summary audit record for bulk operations, avoiding the performance
+    /// overhead of recording individual audit entries for each entity in the bulk operation.
+    /// </remarks>
+    public async Task RecordBulkOperationAsync(
+        string entityType,
+        Guid operationId,
+        OperationType operationType,
+        int userId,
+        long rowCount,
+        string? source = null,
+        string? checkpointId = null,
+        string? reason = null,
+        string? ipAddress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(entityType))
+            throw new ArgumentException("Entity type cannot be empty.", nameof(entityType));
+
+        if (userId <= 0)
+            throw new ArgumentException("User ID must be positive.", nameof(userId));
+
+        if (rowCount < 0)
+            throw new ArgumentException("Row count cannot be negative.", nameof(rowCount));
+
+        await _database.OpenAsync(cancellationToken);
+
+        using var cmd = _database.Connection.CreateCommand();
+        cmd.CommandText = @"
+            INSERT INTO AuditLogs
+            (EntityType, EntityId, OperationType, ChangedByUserId,
+             OldValues, NewValues, ChangeReason, IpAddress, Timestamp)
+            VALUES
+            (@et, @eid, @op, @uid, @old, @new, @reason, @ip, @ts)";
+
+        cmd.Parameters.AddWithValue("@et", entityType);
+        cmd.Parameters.AddWithValue("@eid", operationId);
+        cmd.Parameters.AddWithValue("@op", (int)operationType);
+        cmd.Parameters.AddWithValue("@uid", userId);
+        cmd.Parameters.AddWithValue("@old", (object?)null ?? DBNull.Value);
+
+        var summary = new BulkOperationSummary
+        {
+            OperationId = operationId,
+            RowCount = rowCount,
+            Source = source,
+            CheckpointId = checkpointId,
+            Reason = reason
+        };
+        var newValues = JsonSerializer.Serialize(summary);
+        cmd.Parameters.AddWithValue("@new", newValues);
+
+        cmd.Parameters.AddWithValue("@reason", (object?)reason ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ip", (object?)ipAddress ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@ts", DateTime.UtcNow.ToString("O"));
+
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
     /// <summary>
