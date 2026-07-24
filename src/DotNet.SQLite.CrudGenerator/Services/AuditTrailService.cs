@@ -36,6 +36,27 @@ public sealed class AuditTrailFilter
 
     /// <summary>Maximum number of rows to return. Defaults to 100.</summary>
     public int Limit { get; set; } = 100;
+
+/// <summary>
+/// The page number to return (1-based). When using PageNumber/PageSize,
+/// the query uses keyset pagination for better performance on large tables.
+/// </summary>
+/// <remarks>
+/// When PageNumber and PageSize are both specified, keyset pagination is used.
+/// Otherwise, traditional LIMIT/OFFSET pagination is used.
+/// </remarks>
+public int PageNumber { get; set; } = 1;
+
+/// <summary>
+/// The number of items per page. Defaults to 100.
+/// </summary>
+public int PageSize { get; set; } = 100;
+
+/// <summary>
+/// Gets a value indicating whether keyset pagination should be used.
+/// Keyset pagination is used when both PageNumber and PageSize are set.
+/// </summary>
+internal bool UseKeysetPagination => PageNumber > 0 && PageSize > 0;
 }
 
 /// <summary>
@@ -69,6 +90,34 @@ public sealed class AuditTrailPruneResult
 
     /// <summary>Timestamp of the oldest entry that was pruned, or null if no entries were pruned.</summary>
     public DateTime? OldestPrunedEntry { get; set; }
+}
+
+/// <summary>
+/// Paginated result containing audit trail entries and metadata.
+/// </summary>
+/// <typeparam name="T">The type of items in the result.</typeparam>
+public sealed class PaginatedResult<T> where T : class
+{
+    /// <summary>Gets the items in the current page.</summary>
+    public IReadOnlyList<T> Items { get; init; } = Array.Empty<T>();
+
+    /// <summary>Gets the current page number (1-based).</summary>
+    public int PageNumber { get; init; }
+
+    /// <summary>Gets the number of items per page.</summary>
+    public int PageSize { get; init; }
+
+    /// <summary>Gets the total number of items across all pages.</summary>
+    public int TotalCount { get; init; }
+
+    /// <summary>Gets the total number of pages.</summary>
+    public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
+
+    /// <summary>Gets a value indicating whether there is a previous page.</summary>
+    public bool HasPreviousPage => PageNumber > 1;
+
+    /// <summary>Gets a value indicating whether there is a next page.</summary>
+    public bool HasNextPage => PageNumber < TotalPages;
 }
 
 /// <summary>

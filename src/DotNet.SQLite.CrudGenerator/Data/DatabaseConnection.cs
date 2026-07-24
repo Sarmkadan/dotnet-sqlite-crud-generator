@@ -178,6 +178,8 @@ public sealed class DatabaseConnection : IAsyncDisposable, IDisposable
             CREATE INDEX IF NOT EXISTS idx_Orders_Status ON Orders(Status);
             CREATE INDEX IF NOT EXISTS idx_AuditLogs_EntityType ON AuditLogs(EntityType);
             CREATE INDEX IF NOT EXISTS idx_AuditLogs_Timestamp ON AuditLogs(Timestamp);
+CREATE INDEX IF NOT EXISTS idx_AuditLogs_EntityType_Timestamp ON AuditLogs(EntityType, Timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_AuditLogs_Timestamp_Id ON AuditLogs(Timestamp DESC, Id DESC);
         ";
 
         await command.ExecuteNonQueryAsync(cancellationToken);
