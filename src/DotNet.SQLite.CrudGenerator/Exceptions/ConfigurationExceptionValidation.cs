@@ -12,6 +12,35 @@ using System.Text;
 namespace DotNet.SQLite.CrudGenerator.Exceptions;
 
 /// <summary>
+/// Helper methods for file path validation.
+/// </summary>
+internal static class PathValidationHelper
+{
+    /// <summary>
+    /// Checks if a filename is a Windows reserved device name.
+    /// </summary>
+    /// <param name="fileName">The filename to check.</param>
+    /// <returns><see langword="true"/> if the filename is a reserved device name; otherwise, <see langword="false"/>.</returns>
+    internal static bool IsReservedDeviceName(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return false;
+        }
+
+        // List of Windows reserved device names (case-insensitive)
+        var reservedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        };
+
+        return reservedNames.Contains(fileName);
+    }
+}
+
+/// <summary>
 /// Provides validation helpers for configuration values that would be used to create <see cref="ConfigurationException"/> instances.
 /// </summary>
 public static class ConfigurationExceptionValidation
