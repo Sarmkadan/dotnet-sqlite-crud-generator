@@ -21,6 +21,12 @@ public sealed class LoggingMiddleware : IPipelineStep
         _enableDetailedLogging = enableDetailedLogging;
     }
 
+    /// <summary>
+    /// Creates a new instance of <see cref="LoggingMiddleware"/> with default configuration.
+    /// </summary>
+    /// <returns>A new <see cref="LoggingMiddleware"/> instance.</returns>
+    public static LoggingMiddleware Create() => new();
+
     public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(
         TRequest request,
         PipelineStepDelegate<TRequest, TResponse> next)
@@ -92,7 +98,20 @@ public delegate Task<PipelineStepResult> PipelineStepDelegate<TRequest, TRespons
 
 public sealed class PipelineStepResult
 {
+    /// <summary>
+    /// Gets or sets whether the middleware execution was successful.
+    /// When false, the middleware pipeline will short-circuit and not execute
+    /// subsequent middleware.
+    /// </summary>
     public bool Success { get; set; }
+
+    /// <summary>
+    /// Gets or sets a message describing the result.
+    /// </summary>
     public string? Message { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional data associated with the result.
+    /// </summary>
     public object? Data { get; set; }
 }

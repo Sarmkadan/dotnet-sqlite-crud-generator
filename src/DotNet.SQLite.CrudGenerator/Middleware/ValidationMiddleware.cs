@@ -155,4 +155,10 @@ public static class ValidationExtensions
 
         return errors;
     }
+
+    /// <summary>
+    /// Creates a validation middleware instance configured for dependency injection.
+    /// </summary>
+    /// <returns>A new <see cref="ValidationMiddleware"/> instance.</returns>
+    public static ValidationMiddleware Create() => new();
 }

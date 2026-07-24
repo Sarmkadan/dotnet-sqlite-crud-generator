@@ -3,7 +3,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =====================================================================
+// ====================================================================
 
 using System.Collections.Concurrent;
 
@@ -26,9 +26,13 @@ public sealed class RateLimitingMiddleware : IPipelineStep
         _timeWindow = TimeSpan.FromSeconds(windowSeconds);
     }
 
-    public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(
-        TRequest request,
-        PipelineStepDelegate<TRequest, TResponse> next)
+    /// <summary>
+    /// Creates a new instance of <see cref="RateLimitingMiddleware"/> with default configuration.
+    /// </summary>
+    /// <returns>A new <see cref="RateLimitingMiddleware"/> instance.</returns>
+    public static RateLimitingMiddleware Create() => new();
+
+    public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(TRequest request, PipelineStepDelegate<TRequest, TResponse> next)
         where TRequest : class
         where TResponse : class
     {

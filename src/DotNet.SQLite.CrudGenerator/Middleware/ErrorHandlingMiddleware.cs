@@ -1,8 +1,9 @@
 #nullable enable
+
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Collections.Concurrent;
 using DotNet.SQLite.CrudGenerator.Exceptions;
@@ -18,9 +19,17 @@ public sealed class ErrorHandlingMiddleware : IPipelineStep
 {
     private readonly ConcurrentDictionary<string, int> _errorCounts = new();
 
-    public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(
-        TRequest request,
-        PipelineStepDelegate<TRequest, TResponse> next)
+    public ErrorHandlingMiddleware()
+    {
+    }
+
+    /// <summary>
+    /// Creates a new instance of <see cref="ErrorHandlingMiddleware"/> for dependency injection.
+    /// </summary>
+    /// <returns>A new <see cref="ErrorHandlingMiddleware"/> instance.</returns>
+    public static ErrorHandlingMiddleware Create() => new();
+
+    public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(TRequest request, PipelineStepDelegate<TRequest, TResponse> next)
         where TRequest : class
         where TResponse : class
     {
