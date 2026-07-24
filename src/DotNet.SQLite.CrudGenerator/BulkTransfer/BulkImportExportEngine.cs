@@ -111,6 +111,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
     if (entities is null) throw new ArgumentNullException(nameof(entities));
 
     var result = new BulkImportResult { StartedAt = DateTime.UtcNow };
+            result._options = _options;
     var sessionId = Guid.NewGuid();
     var allEntities = entities is List<T> list ? list : entities.ToList();
     result.TotalRead = allEntities.Count;

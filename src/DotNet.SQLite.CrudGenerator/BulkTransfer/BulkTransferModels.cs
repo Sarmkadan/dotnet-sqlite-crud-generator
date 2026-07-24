@@ -2,7 +2,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Text.Json.Serialization;
 using DotNet.SQLite.CrudGenerator.Services;
@@ -77,6 +77,21 @@ public sealed record BulkTransferProgress(
 }
 
 /// <summary>
+/// Reason for operation completion status.
+/// </summary>
+public enum CancellationReason
+{
+    /// <summary>Operation completed normally without cancellation.</summary>
+    None,
+
+    /// <summary>Operation was cancelled by the caller via CancellationToken.</summary>
+    Cancelled,
+
+    /// <summary>Operation failed due to an error.</summary>
+    Failed
+}
+
+/// <summary>
 /// Describes a single record-level failure that occurred during a bulk import or export.
 /// </summary>
 public sealed record BulkTransferError
@@ -125,10 +140,40 @@ public sealed class BulkImportResult
     public DateTime StartedAt { get; set; }
 
     /// <summary>
+    /// Reason for the operation completion status.
+    /// </summary>
+    public CancellationReason CancellationReason { get; set; } = CancellationReason.None;
+
+    /// <summary>
+    /// Bulk transfer options used for this operation, if available.
+    /// </summary>
+    [JsonIgnore]
+    internal BulkTransferOptions? _options;
+
+    /// <summary>
     /// <c>true</c> when at least one record succeeded, even if some records failed.
     /// <c>false</c> only when every record in the source failed.
     /// </summary>
-    public bool IsSuccess => Failed == 0 || Succeeded > 0;
+    public bool IsSuccess => CancellationReason == CancellationReason.Cancelled ? false : (Failed == 0 || Succeeded > 0);
+
+    /// <summary>
+    /// <c>true</c> when the operation was cancelled by the caller.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsCancelled => CancellationReason == CancellationReason.Cancelled;
+
+    /// <summary>
+    /// <c>true</c> when the operation was cancelled by the caller and checkpointing is enabled,
+    /// indicating that a checkpoint file exists for resumption.
+    /// </summary>
+    [JsonIgnore]
+    public bool HasCheckpointForCancellation => IsCancelled && _options?.EnableCheckpointing == true;
+
+    /// <summary>
+    /// <c>true</c> when the operation completed successfully without cancellation or errors.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsCompletedSuccessfully => IsSuccess && !IsCancelled;
 
     /// <summary>
     /// Ordered list of per-record failures. Capped by <see cref="BulkTransferOptions.MaxErrorThreshold"/>.
@@ -144,6 +189,7 @@ public sealed class BulkImportResult
     /// <inheritdoc/>
     public override string ToString() =>
         $"Import complete: {Succeeded:N0} succeeded, {Failed:N0} failed " +
+        (IsCancelled ? "(CANCELLED) " : "") +
         $"in {Duration.TotalSeconds:F2}s ({Throughput:N0} rec/s)";
 }
 
