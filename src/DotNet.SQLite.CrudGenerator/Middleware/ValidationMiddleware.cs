@@ -14,11 +14,12 @@ namespace DotNet.SQLite.CrudGenerator.Middleware;
 /// Uses reflection and data annotations to validate entity properties.
 /// Accumulates all validation errors for comprehensive feedback.
 /// </summary>
-public sealed class ValidationMiddleware : IMiddleware
+public sealed class ValidationMiddleware : IPipelineStep
 {
-    public async Task<MiddlewareResult> ExecuteAsync<TRequest, TResponse>(
+    public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(
+
         TRequest request,
-        MiddlewareDelegate<TRequest, TResponse> next)
+        PipelineStepDelegate<TRequest, TResponse> next)
         where TRequest : class
         where TResponse : class
     {
@@ -26,7 +27,7 @@ public sealed class ValidationMiddleware : IMiddleware
 
         if (validationErrors.Any())
         {
-            return new MiddlewareResult
+            return new PipelineStepResult
             {
                 Success = false,
                 Message = "Request validation failed",

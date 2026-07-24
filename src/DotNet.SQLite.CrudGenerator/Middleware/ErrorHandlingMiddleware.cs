@@ -14,13 +14,13 @@ namespace DotNet.SQLite.CrudGenerator.Middleware;
 /// Catches exceptions and converts them to structured error responses.
 /// Tracks error statistics for monitoring and alerting.
 /// </summary>
-public sealed class ErrorHandlingMiddleware : IMiddleware
+public sealed class ErrorHandlingMiddleware : IPipelineStep
 {
     private readonly ConcurrentDictionary<string, int> _errorCounts = new();
 
-    public async Task<MiddlewareResult> ExecuteAsync<TRequest, TResponse>(
+    public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(
         TRequest request,
-        MiddlewareDelegate<TRequest, TResponse> next)
+        PipelineStepDelegate<TRequest, TResponse> next)
         where TRequest : class
         where TResponse : class
     {
@@ -50,10 +50,10 @@ public sealed class ErrorHandlingMiddleware : IMiddleware
         }
     }
 
-    private MiddlewareResult HandleValidationError(ValidationException ex)
+    private PipelineStepResult HandleValidationError(ValidationException ex)
     {
         TrackError(nameof(ValidationException));
-        return new MiddlewareResult
+        return new PipelineStepResult
         {
             Success = false,
             Message = "Validation failed",
@@ -61,10 +61,10 @@ public sealed class ErrorHandlingMiddleware : IMiddleware
         };
     }
 
-    private MiddlewareResult HandleRepositoryError(RepositoryException ex)
+    private PipelineStepResult HandleRepositoryError(RepositoryException ex)
     {
         TrackError(nameof(RepositoryException));
-        return new MiddlewareResult
+        return new PipelineStepResult
         {
             Success = false,
             Message = "Database operation failed",
@@ -72,10 +72,10 @@ public sealed class ErrorHandlingMiddleware : IMiddleware
         };
     }
 
-    private MiddlewareResult HandleArgumentError(ArgumentException ex)
+    private PipelineStepResult HandleArgumentError(ArgumentException ex)
     {
         TrackError(nameof(ArgumentException));
-        return new MiddlewareResult
+        return new PipelineStepResult
         {
             Success = false,
             Message = "Invalid argument",
@@ -83,10 +83,10 @@ public sealed class ErrorHandlingMiddleware : IMiddleware
         };
     }
 
-    private MiddlewareResult HandleOperationCanceledError(OperationCanceledException ex)
+    private PipelineStepResult HandleOperationCanceledError(OperationCanceledException ex)
     {
         TrackError(nameof(OperationCanceledException));
-        return new MiddlewareResult
+        return new PipelineStepResult
         {
             Success = false,
             Message = "Operation was canceled",
@@ -94,13 +94,13 @@ public sealed class ErrorHandlingMiddleware : IMiddleware
         };
     }
 
-    private MiddlewareResult HandleUnexpectedError(Exception ex)
+    private PipelineStepResult HandleUnexpectedError(Exception ex)
     {
         TrackError(ex.GetType().Name);
         Console.Error.WriteLine($"Unexpected error: {ex.GetType().Name} - {ex.Message}");
         Console.Error.WriteLine(ex.StackTrace);
 
-        return new MiddlewareResult
+        return new PipelineStepResult
         {
             Success = false,
             Message = "An unexpected error occurred",

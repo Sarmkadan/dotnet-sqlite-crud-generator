@@ -1,8 +1,9 @@
 #nullable enable
+
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Collections.Concurrent;
 
@@ -13,7 +14,7 @@ namespace DotNet.SQLite.CrudGenerator.Middleware;
 /// Uses a sliding window algorithm to track request counts per client.
 /// Prevents abuse by limiting requests to a configured threshold per time window.
 /// </summary>
-public sealed class RateLimitingMiddleware : IMiddleware
+public sealed class RateLimitingMiddleware : IPipelineStep
 {
     private readonly int _requestsPerWindow;
     private readonly TimeSpan _timeWindow;
@@ -25,9 +26,9 @@ public sealed class RateLimitingMiddleware : IMiddleware
         _timeWindow = TimeSpan.FromSeconds(windowSeconds);
     }
 
-    public async Task<MiddlewareResult> ExecuteAsync<TRequest, TResponse>(
+    public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(
         TRequest request,
-        MiddlewareDelegate<TRequest, TResponse> next)
+        PipelineStepDelegate<TRequest, TResponse> next)
         where TRequest : class
         where TResponse : class
     {
@@ -36,7 +37,7 @@ public sealed class RateLimitingMiddleware : IMiddleware
 
         if (!bucket.IsAllowed())
         {
-            return new MiddlewareResult
+            return new PipelineStepResult
             {
                 Success = false,
                 Message = "Rate limit exceeded",

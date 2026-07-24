@@ -12,7 +12,7 @@ namespace DotNet.SQLite.CrudGenerator.Middleware;
 /// Middleware for logging operation execution time, results, and any exceptions.
 /// Provides detailed insights into application performance and operation flow.
 /// </summary>
-public sealed class LoggingMiddleware : IMiddleware
+public sealed class LoggingMiddleware : IPipelineStep
 {
     private readonly bool _enableDetailedLogging;
 
@@ -21,9 +21,9 @@ public sealed class LoggingMiddleware : IMiddleware
         _enableDetailedLogging = enableDetailedLogging;
     }
 
-    public async Task<MiddlewareResult> ExecuteAsync<TRequest, TResponse>(
+    public async Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(
         TRequest request,
-        MiddlewareDelegate<TRequest, TResponse> next)
+        PipelineStepDelegate<TRequest, TResponse> next)
         where TRequest : class
         where TResponse : class
     {
@@ -77,20 +77,20 @@ public sealed class LoggingMiddleware : IMiddleware
     }
 }
 
-public interface IMiddleware
+public interface IPipelineStep
 {
-    Task<MiddlewareResult> ExecuteAsync<TRequest, TResponse>(
+    Task<PipelineStepResult> ExecuteAsync<TRequest, TResponse>(
         TRequest request,
-        MiddlewareDelegate<TRequest, TResponse> next)
+        PipelineStepDelegate<TRequest, TResponse> next)
         where TRequest : class
         where TResponse : class;
 }
 
-public delegate Task<MiddlewareResult> MiddlewareDelegate<TRequest, TResponse>(TRequest request)
+public delegate Task<PipelineStepResult> PipelineStepDelegate<TRequest, TResponse>(TRequest request)
     where TRequest : class
     where TResponse : class;
 
-public sealed class MiddlewareResult
+public sealed class PipelineStepResult
 {
     public bool Success { get; set; }
     public string? Message { get; set; }

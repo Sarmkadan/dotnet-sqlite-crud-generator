@@ -21,7 +21,7 @@ public static class LoggingMiddlewareValidation
     /// <param name="value">The middleware instance to validate.</param>
     /// <returns>A list of validation problems (empty if valid).</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static IReadOnlyList<string> Validate(this LoggingMiddleware value)
+    public static IReadOnlyList<string> Validate(this IPipelineStep value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
@@ -40,7 +40,7 @@ public static class LoggingMiddlewareValidation
     /// <param name="value">The middleware instance to check.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static bool IsValid(this LoggingMiddleware value)
+    public static bool IsValid(this IPipelineStep value)
     {
         return value?.Validate().Count == 0;
     }
