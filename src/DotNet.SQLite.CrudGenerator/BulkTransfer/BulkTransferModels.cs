@@ -230,6 +230,24 @@ public sealed class BulkTransferStatistics
 
     /// <summary>Most recent progress snapshot received from any active operation.</summary>
     public BulkTransferProgress? LastProgress { get; set; }
+
+    /// <summary>
+    /// Number of batches that required at least one retry attempt due to a transient
+    /// SQLite lock contention error (<c>SQLITE_BUSY</c> or <c>SQLITE_LOCKED</c>).
+    /// </summary>
+    public long RetriedBatches { get; set; }
+
+    /// <summary>
+    /// Cumulative number of individual retry attempts performed across all batches,
+    /// regardless of whether the batch ultimately succeeded.
+    /// </summary>
+    public long TotalRetryAttempts { get; set; }
+
+    /// <summary>
+    /// Number of batches whose retry budget was exhausted without a successful commit,
+    /// resulting in the batch's records being recorded as <see cref="BulkTransferError"/> entries.
+    /// </summary>
+    public long RetriesExhausted { get; set; }
 }
 
 /// <summary>

@@ -104,6 +104,26 @@ public sealed class BulkTransferOptions
     public TimeSpan BatchTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
+    /// Maximum number of retry attempts for a batch commit that fails with a transient
+    /// SQLite lock contention error (<c>SQLITE_BUSY</c> or <c>SQLITE_LOCKED</c>). A value of
+    /// <c>0</c> disables retries entirely. Default: 5.
+    /// </summary>
+    public int MaxRetryAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Base delay used to compute exponential backoff between retry attempts. The actual
+    /// delay for attempt <c>n</c> is <c>RetryBaseDelay * 2^(n-1)</c> plus random jitter,
+    /// capped at <see cref="RetryMaxDelay"/>. Default: 50 milliseconds.
+    /// </summary>
+    public TimeSpan RetryBaseDelay { get; set; } = TimeSpan.FromMilliseconds(50);
+
+    /// <summary>
+    /// Upper bound on the backoff delay applied between retry attempts, regardless of how
+    /// many attempts have already elapsed. Default: 5 seconds.
+    /// </summary>
+    public TimeSpan RetryMaxDelay { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
     /// Returns a default options instance appropriate for most production workloads.
     /// </summary>
     public static BulkTransferOptions Default => new();
@@ -120,7 +140,10 @@ public sealed class BulkTransferOptions
         ValidationMode = ValidationMode.None,
         ProgressReportingInterval = 500,
         EnableCheckpointing = false,
-        BatchTimeout = TimeSpan.FromMinutes(2)
+        BatchTimeout = TimeSpan.FromMinutes(2),
+        MaxRetryAttempts = 8,
+        RetryBaseDelay = TimeSpan.FromMilliseconds(25),
+        RetryMaxDelay = TimeSpan.FromSeconds(10)
     };
 
     /// <summary>
@@ -135,6 +158,9 @@ public sealed class BulkTransferOptions
         ValidationMode = ValidationMode.Strict,
         EnableCheckpointing = true,
         MaxErrorThreshold = 10,
-        BatchTimeout = TimeSpan.FromSeconds(15)
+        BatchTimeout = TimeSpan.FromSeconds(15),
+        MaxRetryAttempts = 3,
+        RetryBaseDelay = TimeSpan.FromMilliseconds(100),
+        RetryMaxDelay = TimeSpan.FromSeconds(3)
     };
 }

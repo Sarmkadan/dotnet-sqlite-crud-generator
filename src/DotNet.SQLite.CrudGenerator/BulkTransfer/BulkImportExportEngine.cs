@@ -7,9 +7,11 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Formatters;
 using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Services;
+using Microsoft.Data.Sqlite;
 
 namespace DotNet.SQLite.CrudGenerator.BulkTransfer;
 
@@ -36,6 +38,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
   private readonly DataExportService _exportService;
   private readonly BulkTransferOptions _options;
   private readonly BulkTransferStatistics _statistics;
+  private readonly Random _retryJitter = new();
 
   /// <summary>
   /// Initialises a new engine backed by the supplied repository and export service.
@@ -392,43 +395,81 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
     IProgress<BulkTransferProgress>? progress,
     CancellationToken cancellationToken)
   {
-    using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-    cts.CancelAfter(_options.BatchTimeout);
-
     var batchStartRow = (long)batchIndex * _options.BatchSize;
+    var attempt = 0;
+    var retriedThisBatch = false;
 
-    try
+    while (true)
     {
-      await _repository.AddRangeAsync(batch, cts.Token);
-      result.Succeeded += batch.Count;
-      result.BatchesCommitted++;
-    }
-    catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-    {
-      result.Failed += batch.Count;
-      for (var i = 0; i < batch.Count; i++)
+      using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+      cts.CancelAfter(_options.BatchTimeout);
+
+      try
       {
-        result.Errors.Add(new BulkTransferError
-        {
-          RowNumber = batchStartRow + i,
-          Message = $"Batch {batchIndex + 1} timed out after {_options.BatchTimeout.TotalSeconds}s."
-        });
+        await _repository.AddRangeAsync(batch, cts.Token);
+        result.Succeeded += batch.Count;
+        result.BatchesCommitted++;
+        if (retriedThisBatch)
+          _statistics.RetriedBatches++;
+        break;
       }
-      Console.Error.WriteLine($"[BulkTransfer] Batch {batchIndex + 1} timed out.");
-    }
-    catch (Exception ex)
-    {
-      result.Failed += batch.Count;
-      for (var i = 0; i < batch.Count; i++)
+      catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
       {
-        result.Errors.Add(new BulkTransferError
+        result.Failed += batch.Count;
+        for (var i = 0; i < batch.Count; i++)
         {
-          RowNumber = batchStartRow + i,
-          Message = ex.Message,
-          InnerException = ex
-        });
+          result.Errors.Add(new BulkTransferError
+          {
+            RowNumber = batchStartRow + i,
+            Message = $"Batch {batchIndex + 1} timed out after {_options.BatchTimeout.TotalSeconds}s."
+          });
+        }
+        Console.Error.WriteLine($"[BulkTransfer] Batch {batchIndex + 1} timed out.");
+        break;
       }
-      Console.Error.WriteLine($"[BulkTransfer] Batch {batchIndex + 1} failed: {ex.Message}");
+      catch (Exception ex) when (IsTransientLockError(ex) && attempt < _options.MaxRetryAttempts)
+      {
+        attempt++;
+        retriedThisBatch = true;
+        _statistics.TotalRetryAttempts++;
+
+        var delay = ComputeRetryDelay(attempt);
+        Console.Error.WriteLine(
+          $"[BulkTransfer] Batch {batchIndex + 1} hit a transient lock error " +
+          $"({ex.Message}); retrying attempt {attempt}/{_options.MaxRetryAttempts} after {delay.TotalMilliseconds:F0}ms.");
+
+        try
+        {
+          await Task.Delay(delay, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+          throw;
+        }
+      }
+      catch (Exception ex)
+      {
+        var isExhaustedRetry = IsTransientLockError(ex) && attempt >= _options.MaxRetryAttempts;
+        if (isExhaustedRetry)
+          _statistics.RetriesExhausted++;
+
+        result.Failed += batch.Count;
+        var message = isExhaustedRetry
+          ? $"Batch {batchIndex + 1} still locked after {attempt} retr{(attempt == 1 ? "y" : "ies")}: {ex.Message}"
+          : ex.Message;
+
+        for (var i = 0; i < batch.Count; i++)
+        {
+          result.Errors.Add(new BulkTransferError
+          {
+            RowNumber = batchStartRow + i,
+            Message = message,
+            InnerException = ex
+          });
+        }
+        Console.Error.WriteLine($"[BulkTransfer] Batch {batchIndex + 1} failed: {message}");
+        break;
+      }
     }
 
     if (!_options.EnableProgressReporting || progress is null)
@@ -493,6 +534,45 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
     {
       Console.Error.WriteLine($"[BulkTransfer] Checkpoint save failed: {ex.Message}");
     }
+  }
+
+  /// <summary>
+  /// Determines whether the supplied exception represents a transient SQLite lock
+  /// contention condition (<c>SQLITE_BUSY</c> = 5 or <c>SQLITE_LOCKED</c> = 6) that is
+  /// safe to retry, as opposed to a permanent failure such as a constraint violation
+  /// (<c>SQLITE_CONSTRAINT</c> = 19) or database corruption (<c>SQLITE_CORRUPT</c> = 11).
+  /// Unwraps <see cref="RepositoryException"/> wrappers to inspect the underlying
+  /// <see cref="SqliteException"/> when present.
+  /// </summary>
+  /// <param name="exception">The exception raised by the failed batch write.</param>
+  /// <returns><c>true</c> when the failure is a transient lock error eligible for retry.</returns>
+  private static bool IsTransientLockError(Exception exception)
+  {
+    var sqliteException = exception as SqliteException
+      ?? exception.InnerException as SqliteException;
+
+    if (sqliteException is null)
+      return false;
+
+    // Mask off SQLite's extended result code bits (upper byte) to compare against the
+    // primary result code, since drivers may surface either form.
+    var primaryErrorCode = sqliteException.SqliteErrorCode & 0xFF;
+    return primaryErrorCode is 5 or 6; // SQLITE_BUSY, SQLITE_LOCKED
+  }
+
+  /// <summary>
+  /// Computes the exponential backoff delay for the given retry attempt, combining
+  /// <see cref="BulkTransferOptions.RetryBaseDelay"/> doubled per attempt with random
+  /// full jitter, capped at <see cref="BulkTransferOptions.RetryMaxDelay"/>.
+  /// </summary>
+  /// <param name="attempt">One-based retry attempt number.</param>
+  /// <returns>The delay to wait before the next retry.</returns>
+  private TimeSpan ComputeRetryDelay(int attempt)
+  {
+    var exponential = _options.RetryBaseDelay.TotalMilliseconds * Math.Pow(2, attempt - 1);
+    var capped = Math.Min(exponential, _options.RetryMaxDelay.TotalMilliseconds);
+    var jittered = capped * _retryJitter.NextDouble();
+    return TimeSpan.FromMilliseconds(Math.Max(1, jittered));
   }
 
   private static IEnumerable<List<T>> Partition(List<T> source, int size)
