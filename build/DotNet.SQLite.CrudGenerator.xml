@@ -327,6 +327,27 @@
         <member name="M:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportExportEngine`1.GetStatistics">
             <inheritdoc/>
         </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportExportEngine`1.IsTransientLockError(System.Exception)">
+            <summary>
+            Determines whether the supplied exception represents a transient SQLite lock
+            contention condition (<c>SQLITE_BUSY</c> = 5 or <c>SQLITE_LOCKED</c> = 6) that is
+            safe to retry, as opposed to a permanent failure such as a constraint violation
+            (<c>SQLITE_CONSTRAINT</c> = 19) or database corruption (<c>SQLITE_CORRUPT</c> = 11).
+            Unwraps <see cref="T:DotNet.SQLite.CrudGenerator.Exceptions.RepositoryException"/> wrappers to inspect the underlying
+            <see cref="T:Microsoft.Data.Sqlite.SqliteException"/> when present.
+            </summary>
+            <param name="exception">The exception raised by the failed batch write.</param>
+            <returns><c>true</c> when the failure is a transient lock error eligible for retry.</returns>
+        </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportExportEngine`1.ComputeRetryDelay(System.Int32)">
+            <summary>
+            Computes the exponential backoff delay for the given retry attempt, combining
+            <see cref="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferOptions.RetryBaseDelay"/> doubled per attempt with random
+            full jitter, capped at <see cref="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferOptions.RetryMaxDelay"/>.
+            </summary>
+            <param name="attempt">One-based retry attempt number.</param>
+            <returns>The delay to wait before the next retry.</returns>
+        </member>
         <member name="T:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportExportEngineExtensions">
             <summary>
             Extension methods for <see cref="T:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportExportEngine`1"/> providing convenient
@@ -514,6 +535,20 @@
         <member name="M:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferProgress.ToString">
             <inheritdoc/>
         </member>
+        <member name="T:DotNet.SQLite.CrudGenerator.BulkTransfer.CancellationReason">
+            <summary>
+            Reason for operation completion status.
+            </summary>
+        </member>
+        <member name="F:DotNet.SQLite.CrudGenerator.BulkTransfer.CancellationReason.None">
+            <summary>Operation completed normally without cancellation.</summary>
+        </member>
+        <member name="F:DotNet.SQLite.CrudGenerator.BulkTransfer.CancellationReason.Cancelled">
+            <summary>Operation was cancelled by the caller via CancellationToken.</summary>
+        </member>
+        <member name="F:DotNet.SQLite.CrudGenerator.BulkTransfer.CancellationReason.Failed">
+            <summary>Operation failed due to an error.</summary>
+        </member>
         <member name="T:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferError">
             <summary>
             Describes a single record-level failure that occurred during a bulk import or export.
@@ -560,10 +595,36 @@
         <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportResult.StartedAt">
             <summary>UTC instant the import operation started.</summary>
         </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportResult.CancellationReason">
+            <summary>
+            Reason for the operation completion status.
+            </summary>
+        </member>
+        <member name="F:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportResult._options">
+            <summary>
+            Bulk transfer options used for this operation, if available.
+            </summary>
+        </member>
         <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportResult.IsSuccess">
             <summary>
             <c>true</c> when at least one record succeeded, even if some records failed.
             <c>false</c> only when every record in the source failed.
+            </summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportResult.IsCancelled">
+            <summary>
+            <c>true</c> when the operation was cancelled by the caller.
+            </summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportResult.HasCheckpointForCancellation">
+            <summary>
+            <c>true</c> when the operation was cancelled by the caller and checkpointing is enabled,
+            indicating that a checkpoint file exists for resumption.
+            </summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportResult.IsCompletedSuccessfully">
+            <summary>
+            <c>true</c> when the operation completed successfully without cancellation or errors.
             </summary>
         </member>
         <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkImportResult.Errors">
@@ -666,6 +727,24 @@
         </member>
         <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferStatistics.LastProgress">
             <summary>Most recent progress snapshot received from any active operation.</summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferStatistics.RetriedBatches">
+            <summary>
+            Number of batches that required at least one retry attempt due to a transient
+            SQLite lock contention error (<c>SQLITE_BUSY</c> or <c>SQLITE_LOCKED</c>).
+            </summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferStatistics.TotalRetryAttempts">
+            <summary>
+            Cumulative number of individual retry attempts performed across all batches,
+            regardless of whether the batch ultimately succeeded.
+            </summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferStatistics.RetriesExhausted">
+            <summary>
+            Number of batches whose retry budget was exhausted without a successful commit,
+            resulting in the batch's records being recorded as <see cref="T:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferError"/> entries.
+            </summary>
         </member>
         <member name="T:DotNet.SQLite.CrudGenerator.BulkTransfer.TransferCheckpoint">
             <summary>
@@ -787,6 +866,26 @@
             <summary>
             Per-batch operation timeout. Batches that exceed this duration are cancelled and
             recorded as failures, but the overall import continues. Default: 30 seconds.
+            </summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferOptions.MaxRetryAttempts">
+            <summary>
+            Maximum number of retry attempts for a batch commit that fails with a transient
+            SQLite lock contention error (<c>SQLITE_BUSY</c> or <c>SQLITE_LOCKED</c>). A value of
+            <c>0</c> disables retries entirely. Default: 5.
+            </summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferOptions.RetryBaseDelay">
+            <summary>
+            Base delay used to compute exponential backoff between retry attempts. The actual
+            delay for attempt <c>n</c> is <c>RetryBaseDelay * 2^(n-1)</c> plus random jitter,
+            capped at <see cref="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferOptions.RetryMaxDelay"/>. Default: 50 milliseconds.
+            </summary>
+        </member>
+        <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferOptions.RetryMaxDelay">
+            <summary>
+            Upper bound on the backoff delay applied between retry attempts, regardless of how
+            many attempts have already elapsed. Default: 5 seconds.
             </summary>
         </member>
         <member name="P:DotNet.SQLite.CrudGenerator.BulkTransfer.BulkTransferOptions.Default">
@@ -2892,6 +2991,68 @@
             <param name="timeoutValue">The timeout value in milliseconds to validate.</param>
             <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="configName"/> is <see langword="null"/>.</exception>
             <exception cref="T:System.ArgumentException">Thrown when the timeout configuration is invalid.</exception>
+        </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.Exceptions.ConfigurationExceptionValidation.ValidateConnectionString(System.String,System.String)">
+            <summary>
+            Validates a connection string value.
+            </summary>
+            <param name="connectionStringName">The name of the connection string configuration.</param>
+            <param name="connectionStringValue">The connection string value to validate.</param>
+            <returns>A list of validation problems; empty if valid.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="connectionStringName"/> is <see langword="null"/>.</exception>
+        </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.Exceptions.ConfigurationExceptionValidation.IsValidConnectionString(System.String,System.String)">
+            <summary>
+            Determines whether the specified connection string value is valid.
+            </summary>
+            <param name="connectionStringName">The name of the connection string configuration.</param>
+            <param name="connectionStringValue">The connection string value to validate.</param>
+            <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="connectionStringName"/> is <see langword="null"/>.</exception>
+        </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.Exceptions.ConfigurationExceptionValidation.EnsureValidConnectionString(System.String,System.String)">
+            <summary>
+            Ensures that the specified connection string value is valid.
+            </summary>
+            <param name="connectionStringName">The name of the connection string configuration.</param>
+            <param name="connectionStringValue">The connection string value to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="connectionStringName"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">Thrown when the connection string value is invalid.</exception>
+        </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.Exceptions.ConfigurationExceptionValidation.ValidateConnectionString(System.String,System.String,System.String@)">
+            <summary>
+            Validates a connection string value and returns a sanitized version for error reporting.
+            </summary>
+            <param name="connectionStringName">The name of the connection string configuration.</param>
+            <param name="connectionStringValue">The connection string value to validate.</param>
+            <param name="sanitizedValue">Outputs a sanitized version of the connection string with secrets redacted.</param>
+            <returns>A list of validation problems; empty if valid.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="connectionStringName"/> is <see langword="null"/>.</exception>
+        </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.Exceptions.ConfigurationExceptionValidation.SanitizeConnectionString(System.String)">
+            <summary>
+            Sanitizes a connection string by redacting credential-bearing segments.
+            </summary>
+            <param name="connectionString">The connection string to sanitize.</param>
+            <returns>A sanitized connection string with secrets redacted.</returns>
+        </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.Exceptions.ConfigurationExceptionValidation.IsConnectionStringSafe(System.String)">
+            <summary>
+            Determines whether a connection string contains only safe characters and format.
+            </summary>
+            <param name="connectionString">The connection string to check.</param>
+            <returns><see langword="true"/> if the connection string appears safe; otherwise, <see langword="false"/>.</returns>
+        </member>
+        <member name="M:DotNet.SQLite.CrudGenerator.Exceptions.ConfigurationExceptionValidation.EnsureValidConnectionString(System.String,System.String,System.Collections.Generic.IReadOnlyList{System.String}@)">
+            <summary>
+            Ensures that the specified connection string value is valid and throws a sanitized exception.
+            </summary>
+            <param name="connectionStringName">The name of the connection string configuration.</param>
+            <param name="connectionStringValue">The connection string value to validate.</param>
+            <param name="problemList">When this method returns, contains the list of validation problems if any; otherwise, <see langword="null"/>.</param>
+            <returns>The sanitized connection string for error reporting.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when <paramref name="connectionStringName"/> is <see langword="null"/>.</exception>
+            <exception cref="T:System.ArgumentException">Thrown when the connection string value is invalid.</exception>
         </member>
         <member name="T:DotNet.SQLite.CrudGenerator.Exceptions.DotnetSqliteCrudGeneratorException">
             <summary>
