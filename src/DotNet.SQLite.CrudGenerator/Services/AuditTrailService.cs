@@ -60,6 +60,18 @@ public sealed class AuditTrailSummary
 }
 
 /// <summary>
+/// Result of an audit trail pruning operation.
+/// </summary>
+public sealed class AuditTrailPruneResult
+{
+    /// <summary>Total number of audit log entries pruned.</summary>
+    public int TotalPruned { get; set; }
+
+    /// <summary>Timestamp of the oldest entry that was pruned, or null if no entries were pruned.</summary>
+    public DateTime? OldestPrunedEntry { get; set; }
+}
+
+/// <summary>
 /// Persists structured audit trail entries to the <c>AuditLogs</c> SQLite table
 /// and provides rich querying capabilities for compliance and debugging.
 /// </summary>
