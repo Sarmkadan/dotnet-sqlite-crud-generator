@@ -7,6 +7,7 @@
 using System.Reflection;
 using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Validation;
+using Microsoft.Extensions.Logging;
 
 namespace DotNet.SQLite.CrudGenerator.CLI;
 
@@ -17,10 +18,17 @@ namespace DotNet.SQLite.CrudGenerator.CLI;
 public sealed class CommandParser
 {
     private readonly Dictionary<string, Type> _commands = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ILogger<CommandParser>? _logger;
+
+    public CommandParser(ILogger<CommandParser>? logger = null)
+    {
+        _logger = logger;
+    }
 
     public CommandParser RegisterCommand<T>(string name) where T : ICommand
     {
         _commands[name] = typeof(T);
+        _logger?.LogDebug("Registered command {CommandName} with type {CommandType}", name, typeof(T));
         return this;
     }
 
@@ -28,6 +36,8 @@ public sealed class CommandParser
     {
         try
         {
+            _logger?.LogDebug("Starting command parse for {CommandName}", args.FirstOrDefault());
+
             if (args.Length == 0)
             {
                 PrintHelp();
@@ -50,6 +60,7 @@ public sealed class CommandParser
             var commandName = args[0];
             if (!_commands.TryGetValue(commandName, out var commandType))
             {
+                _logger?.LogWarning("Unknown command {CommandName}", commandName);
                 Console.Error.WriteLine($"Unknown command: '{commandName}'");
 
                 // Suggest the closest matching command if any
@@ -63,15 +74,18 @@ public sealed class CommandParser
 
             var command = (ICommand)Activator.CreateInstance(commandType)!;
             var result = await command.ExecuteAsync(args.Skip(1).ToArray());
+            _logger?.LogInformation("Command {CommandName} completed with exit code {ExitCode}", commandName, result);
             return result;
         }
         catch (ValidationException ex)
         {
+            _logger?.LogError(ex, "Validation error while parsing or executing command {CommandName}", args.FirstOrDefault());
             Console.Error.WriteLine($"Validation Error: {ex.Message}");
             return 1;
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex, "Fatal error while parsing or executing command {CommandName}", args.FirstOrDefault());
             Console.Error.WriteLine($"Fatal Error: {ex.Message}");
             return 1;
         }
