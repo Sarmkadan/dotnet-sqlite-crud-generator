@@ -39,19 +39,15 @@ public sealed class GenerationService
 
         ValidateEntityType(entityType);
 
-        var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var compositeKeyProps = properties
-            .Where(p => p.GetCustomAttribute<CompositeKeyAttribute>() is not null)
-            .OrderBy(p => p.GetCustomAttribute<CompositeKeyAttribute>()!.Order)
-            .ToList();
+        var compositeKeyProps = GetCompositeKeyProperties(entityType);
 
         // Build key parameter list: "int id" for single-key, or "Guid userId, Guid roleId" for composite.
         string keyParams;
         string keyArgs;
         if (compositeKeyProps.Count >= 2)
         {
-            keyParams = string.Join(", ", compositeKeyProps.Select(p => $"{GetFriendlyTypeName(p.PropertyType)} {char.ToLowerInvariant(p.Name[0]) + p.Name[1..]}"));
-            keyArgs = string.Join(", ", compositeKeyProps.Select(p => $"{char.ToLowerInvariant(p.Name[0]) + p.Name[1..]}"));
+            keyParams = string.Join(", ", compositeKeyProps.Select(p => $"{GetFriendlyTypeName(p.PropertyType)} {ToCamelCase(p.Name)}"));
+            keyArgs = string.Join(", ", compositeKeyProps.Select(p => ToCamelCase(p.Name)));
         }
         else
         {
@@ -60,11 +56,7 @@ public sealed class GenerationService
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine("// =============================================================================");
-        sb.AppendLine("// Author: Vladyslav Zaiets | https://sarmkadan.com");
-        sb.AppendLine("// CTO & Software Architect");
-        sb.AppendLine("// =============================================================================");
-        sb.AppendLine();
+        AppendFileHeader(sb);
         sb.AppendLine("namespace DotNet.SQLite.CrudGenerator.Repositories;");
         sb.AppendLine();
         sb.AppendLine($"/// <summary>");
@@ -115,10 +107,7 @@ public sealed class GenerationService
         sb.AppendLine();
 
         var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var compositeKeyProps = properties
-            .Where(p => p.GetCustomAttribute<CompositeKeyAttribute>() is not null)
-            .OrderBy(p => p.GetCustomAttribute<CompositeKeyAttribute>()!.Order)
-            .ToList();
+        var compositeKeyProps = GetCompositeKeyProperties(entityType);
 
         var columns = compositeKeyProps.Count >= 2
             ? GenerateCompositeKeyColumnDefinitions(properties, compositeKeyProps)
@@ -201,8 +190,7 @@ public sealed class GenerationService
     {
         var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        var hasCompositeKey = properties.Any(p =>
-            p.GetCustomAttribute<CompositeKeyAttribute>() is not null);
+        var hasCompositeKey = GetCompositeKeyProperties(entityType).Count > 0;
 
         if (!hasCompositeKey && !properties.Any(p => p.Name == "Id"))
             throw new GenerationException($"Entity must have an 'Id' property. (Parameter '{entityType.Name}')");
@@ -210,6 +198,24 @@ public sealed class GenerationService
         if (properties.Length < 2)
             throw new GenerationException($"Entity must have at least 2 properties. (Parameter '{entityType.Name}')");
     }
+
+    private static void AppendFileHeader(StringBuilder sb)
+    {
+        sb.AppendLine("// =============================================================================");
+        sb.AppendLine("// Author: Vladyslav Zaiets | https://sarmkadan.com");
+        sb.AppendLine("// CTO & Software Architect");
+        sb.AppendLine("// =============================================================================");
+        sb.AppendLine();
+    }
+
+    private static string ToCamelCase(string value) =>
+        char.ToLowerInvariant(value[0]) + value[1..];
+
+    private static List<PropertyInfo> GetCompositeKeyProperties(Type entityType) =>
+        entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.GetCustomAttribute<CompositeKeyAttribute>() is not null)
+            .OrderBy(p => p.GetCustomAttribute<CompositeKeyAttribute>()!.Order)
+            .ToList();
 
     private List<string> GenerateColumnDefinitions(PropertyInfo[] properties)
     {
@@ -354,19 +360,15 @@ public sealed class GenerationService
 
         ValidateEntityType(entityType);
 
-        var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var compositeKeyProps = properties
-            .Where(p => p.GetCustomAttribute<CompositeKeyAttribute>() is not null)
-            .OrderBy(p => p.GetCustomAttribute<CompositeKeyAttribute>()!.Order)
-            .ToList();
+        var compositeKeyProps = GetCompositeKeyProperties(entityType);
 
         // Build key parameter list: "int id" for single-key, or "Guid userId, Guid roleId" for composite.
         string keyParams;
         string keyArgs;
         if (compositeKeyProps.Count >= 2)
         {
-            keyParams = string.Join(", ", compositeKeyProps.Select(p => $"{GetFriendlyTypeName(p.PropertyType)} {char.ToLowerInvariant(p.Name[0]) + p.Name[1..]}"));
-            keyArgs = string.Join(", ", compositeKeyProps.Select(p => $"{char.ToLowerInvariant(p.Name[0]) + p.Name[1..]}"));
+            keyParams = string.Join(", ", compositeKeyProps.Select(p => $"{GetFriendlyTypeName(p.PropertyType)} {ToCamelCase(p.Name)}"));
+            keyArgs = string.Join(", ", compositeKeyProps.Select(p => ToCamelCase(p.Name)));
         }
         else
         {
@@ -375,11 +377,7 @@ public sealed class GenerationService
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine("// =============================================================================");
-        sb.AppendLine("// Author: Vladyslav Zaiets | https://sarmkadan.com");
-        sb.AppendLine("// CTO & Software Architect");
-        sb.AppendLine("// =============================================================================");
-        sb.AppendLine();
+        AppendFileHeader(sb);
         sb.AppendLine("using System.Data.Common;");
         sb.AppendLine("using DotNet.SQLite.CrudGenerator.Data;");
         sb.AppendLine("using DotNet.SQLite.CrudGenerator.Interfaces;");
