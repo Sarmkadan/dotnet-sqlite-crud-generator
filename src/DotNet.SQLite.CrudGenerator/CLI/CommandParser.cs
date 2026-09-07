@@ -6,6 +6,7 @@
 
 using System.Reflection;
 using DotNet.SQLite.CrudGenerator.Exceptions;
+using DotNet.SQLite.CrudGenerator.Validation;
 
 namespace DotNet.SQLite.CrudGenerator.CLI;
 

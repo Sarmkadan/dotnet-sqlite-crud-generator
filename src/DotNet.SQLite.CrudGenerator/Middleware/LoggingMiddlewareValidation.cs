@@ -6,11 +6,12 @@
 // =====================================================================
 
 using System;
+using DotNet.SQLite.CrudGenerator.Validation;
 
 namespace DotNet.SQLite.CrudGenerator.Middleware;
 
 /// <summary>
-/// Provides validation helpers for <see cref="LoggingMiddleware"/> instances.
+/// Provides validation helpers for <see cref="LoggingMiddleware"/> instances using the shared <see cref="ValidationResult"/> abstraction.
 /// Validates the middleware configuration and ensures it's in a valid state before execution.
 /// </summary>
 public static class LoggingMiddlewareValidation
@@ -19,50 +20,41 @@ public static class LoggingMiddlewareValidation
     /// Validates the specified <see cref="LoggingMiddleware"/> instance.
     /// </summary>
     /// <param name="value">The middleware instance to validate.</param>
-    /// <returns>A list of validation problems (empty if valid).</returns>
+    /// <returns>A <see cref="ValidationResult"/> containing any validation problems.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static IReadOnlyList<string> Validate(this IPipelineStep value)
+    public static ValidationResult Validate(this IPipelineStep value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var problems = new List<string>();
+        var result = new ValidationResult();
 
         // Validate the internal _enableDetailedLogging flag is within expected range
         // This is a defensive check even though the constructor parameter is a bool
         // The validation ensures the middleware is in a valid state
 
-        return problems.AsReadOnly();
+        return result;
     }
 
     /// <summary>
     /// Determines whether the specified <see cref="LoggingMiddleware"/> instance is valid.
     /// </summary>
     /// <param name="value">The middleware instance to check.</param>
-    /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
+    /// <returns>True if valid; otherwise, false.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static bool IsValid(this IPipelineStep value)
-    {
-        return value?.Validate().Count == 0;
-    }
+        => value is not null && Validate(value).IsValid;
 
     /// <summary>
     /// Ensures that the specified <see cref="LoggingMiddleware"/> instance is valid.
     /// </summary>
     /// <param name="value">The middleware instance to validate.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="value"/> is invalid, containing a list of validation problems.</exception>
+    /// <exception cref="ValidationException">Thrown when <paramref name="value"/> is invalid.</exception>
     public static void EnsureValid(this LoggingMiddleware value)
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        var problems = value.Validate();
-        if (problems.Count == 0)
-        {
-            return;
-        }
-
-        throw new ArgumentException(
-            $"LoggingMiddleware is invalid. Problems: {string.Join("; ", problems)}",
-            nameof(value));
+        Validate(value).ThrowIfInvalid(problems => new ValidationException(
+            $"LoggingMiddleware is invalid. Problems: {string.Join("; ", problems.Select(p => p.Message))}",
+            nameof(value)));
     }
 }

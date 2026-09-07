@@ -18,7 +18,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = validException.Validate();
+        var errors = validException.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().BeEmpty();
@@ -36,7 +36,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().HaveCount(1);
@@ -55,7 +55,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().HaveCount(1);
@@ -74,7 +74,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert - IsNullOrEmpty doesn't catch whitespace-only strings
         errors.Should().BeEmpty();
@@ -92,7 +92,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().HaveCount(1);
@@ -111,7 +111,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().HaveCount(1);
@@ -130,7 +130,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert - IsNullOrEmpty doesn't catch whitespace-only strings
         errors.Should().BeEmpty();
@@ -148,7 +148,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().HaveCount(1);
@@ -167,7 +167,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().HaveCount(1);
@@ -186,7 +186,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().HaveCount(3);
@@ -399,7 +399,7 @@ public class GenerationExceptionValidationTests
         };
 
         // Act
-        var errors = exception.Validate();
+        var errors = exception.Validate().Select(p => p.Message).ToList();
 
         // Assert
         errors.Should().BeAssignableTo<IReadOnlyList<string>>();

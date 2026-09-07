@@ -5,6 +5,7 @@
 // =============================================================================
 
 using DotNet.SQLite.CrudGenerator.Exceptions;
+using DotNet.SQLite.CrudGenerator.Validation;
 using DotNet.SQLite.CrudGenerator.Interfaces;
 using DotNet.SQLite.CrudGenerator.Models;
 using DotNet.SQLite.CrudGenerator.Data;

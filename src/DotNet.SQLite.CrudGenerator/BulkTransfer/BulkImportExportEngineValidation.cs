@@ -5,12 +5,13 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Globalization;
+using System;
+using DotNet.SQLite.CrudGenerator.Validation;
 
 namespace DotNet.SQLite.CrudGenerator.BulkTransfer;
 
 /// <summary>
-/// Provides validation helpers for <see cref="BulkImportExportEngine{T}"/> instances.
+/// Provides validation helpers for <see cref="BulkImportExportEngine{T}"/> instances using the shared <see cref="ValidationResult"/> abstraction.
 /// </summary>
 /// <remarks>
 /// Validates the configuration and state of bulk import/export engines to ensure
@@ -19,62 +20,60 @@ namespace DotNet.SQLite.CrudGenerator.BulkTransfer;
 public static class BulkImportExportEngineValidation
 {
     /// <summary>
-    /// Adds an error message if the specified value is negative.
+    /// Adds a validation problem if the specified value is negative.
     /// </summary>
-    /// <param name="errors">The list of error messages to add to.</param>
+    /// <param name="result">The validation result to add problems to.</param>
     /// <param name="value">The value to check.</param>
     /// <param name="propertyName">The name of the property being validated.</param>
-    private static void AddIfNegative(ICollection<string> errors, long value, string propertyName)
+    private static void AddIfNegative(ref ValidationResult result, long value, string propertyName)
     {
         if (value < 0)
         {
-            errors.Add($"{propertyName} cannot be negative.");
+            result = result.WithProblem(propertyName, $"{propertyName} cannot be negative.");
         }
     }
 
     /// <summary>
-    /// Validates the specified bulk import/export engine and returns a list of human-readable
-    /// validation problems. Returns an empty list if the engine is valid.
+    /// Validates the specified bulk import/export engine and returns a <see cref="ValidationResult"/>.
     /// </summary>
     /// <typeparam name="T">The entity type managed by the engine.</typeparam>
     /// <param name="value">The engine to validate.</param>
-    /// <returns>A read-only list of validation error messages; empty if valid.</returns>
+    /// <returns>A <see cref="ValidationResult"/> containing any validation problems.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-    public static IReadOnlyList<string> Validate<T>(this BulkImportExportEngine<T> value) where T : class
+    public static ValidationResult Validate<T>(this BulkImportExportEngine<T> value) where T : class
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        var errors = new List<string>();
-
+        var result = new ValidationResult();
 
         var stats = value.GetStatistics();
 
         // Validate statistics (should have reasonable values)
-        AddIfNegative(errors, stats.TotalImports, nameof(stats.TotalImports));
-        AddIfNegative(errors, stats.TotalExports, nameof(stats.TotalExports));
-        AddIfNegative(errors, stats.TotalRecordsImported, nameof(stats.TotalRecordsImported));
-        AddIfNegative(errors, stats.TotalRecordsExported, nameof(stats.TotalRecordsExported));
-        AddIfNegative(errors, stats.TotalErrors, nameof(stats.TotalErrors));
-        AddIfNegative(errors, stats.TotalBytesTransferred, nameof(stats.TotalBytesTransferred));
+        AddIfNegative(ref result, stats.TotalImports, nameof(stats.TotalImports));
+        AddIfNegative(ref result, stats.TotalExports, nameof(stats.TotalExports));
+        AddIfNegative(ref result, stats.TotalRecordsImported, nameof(stats.TotalRecordsImported));
+        AddIfNegative(ref result, stats.TotalRecordsExported, nameof(stats.TotalRecordsExported));
+        AddIfNegative(ref result, stats.TotalErrors, nameof(stats.TotalErrors));
+        AddIfNegative(ref result, stats.TotalBytesTransferred, nameof(stats.TotalBytesTransferred));
 
         // Validate last progress (if available)
         if (stats.LastProgress is not null)
         {
-            AddIfNegative(errors, stats.LastProgress.ProcessedCount, nameof(stats.LastProgress.ProcessedCount));
-            AddIfNegative(errors, stats.LastProgress.TotalCount, nameof(stats.LastProgress.TotalCount));
-            AddIfNegative(errors, stats.LastProgress.SucceededCount, nameof(stats.LastProgress.SucceededCount));
-            AddIfNegative(errors, stats.LastProgress.FailedCount, nameof(stats.LastProgress.FailedCount));
-            AddIfNegative(errors, stats.LastProgress.BytesTransferred, nameof(stats.LastProgress.BytesTransferred));
+            AddIfNegative(ref result, stats.LastProgress.ProcessedCount, nameof(stats.LastProgress.ProcessedCount));
+            AddIfNegative(ref result, stats.LastProgress.TotalCount, nameof(stats.LastProgress.TotalCount));
+            AddIfNegative(ref result, stats.LastProgress.SucceededCount, nameof(stats.LastProgress.SucceededCount));
+            AddIfNegative(ref result, stats.LastProgress.FailedCount, nameof(stats.LastProgress.FailedCount));
+            AddIfNegative(ref result, stats.LastProgress.BytesTransferred, nameof(stats.LastProgress.BytesTransferred));
 
             if (stats.LastProgress.StartedAt == default)
             {
-                errors.Add("Statistics.LastProgress.StartedAt cannot be default(DateTime).");
+                result = result.WithProblem(nameof(stats.LastProgress.StartedAt), "Statistics.LastProgress.StartedAt cannot be default(DateTime).");
             }
 
-            AddIfNegative(errors, stats.LastProgress.CurrentBatch, nameof(stats.LastProgress.CurrentBatch));
+            AddIfNegative(ref result, stats.LastProgress.CurrentBatch, nameof(stats.LastProgress.CurrentBatch));
         }
 
-        return errors.AsReadOnly();
+        return result;
     }
 
     /// <summary>
@@ -82,13 +81,10 @@ public static class BulkImportExportEngineValidation
     /// </summary>
     /// <typeparam name="T">The entity type managed by the engine.</typeparam>
     /// <param name="value">The engine to check.</param>
-    /// <returns><see langword="true"/> if the engine is valid; otherwise, <see langword="false"/>.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <returns>True if the engine is valid; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static bool IsValid<T>(this BulkImportExportEngine<T> value) where T : class
-    {
-        ArgumentNullException.ThrowIfNull(value);
-        return Validate(value).Count == 0;
-    }
+        => value is not null && Validate(value).IsValid;
 
     /// <summary>
     /// Ensures that the specified bulk import/export engine is valid, throwing an
@@ -97,21 +93,12 @@ public static class BulkImportExportEngineValidation
     /// <typeparam name="T">The entity type managed by the engine.</typeparam>
     /// <param name="value">The engine to validate.</param>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown if the engine is invalid, containing a list of problems.</exception>
+    /// <exception cref="ValidationException">Thrown if the engine is invalid.</exception>
     public static void EnsureValid<T>(this BulkImportExportEngine<T> value) where T : class
     {
         ArgumentNullException.ThrowIfNull(value);
-
-        var errors = Validate(value);
-
-            ArgumentNullException.ThrowIfNull(errors);
-        if (errors.Count == 0)
-        {
-            return;
-        }
-
-        throw new ArgumentException(
-            $"The bulk import/export engine is invalid. Problems: {string.Join(" ", errors)}",
-            nameof(value));
+        Validate(value).ThrowIfInvalid(problems => new ValidationException(
+            $"The bulk import/export engine is invalid. Problems: {string.Join(" ", problems.Select(p => p.Message))}",
+            nameof(value)));
     }
 }

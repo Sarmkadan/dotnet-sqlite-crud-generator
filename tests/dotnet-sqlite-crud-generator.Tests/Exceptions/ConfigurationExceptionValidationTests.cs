@@ -211,7 +211,7 @@ public sealed class ConfigurationExceptionValidationTests
         var problems = ConfigurationExceptionValidation.ValidateConnectionString(connectionStringName, connectionStringValue, out var sanitizedValue);
 
         // Add an artificial problem to test sanitization
-        problems = problems.Append("Connection string contains invalid characters or format.").ToList();
+        problems = problems.WithProblem("Connection string contains invalid characters or format.");
 
         // Assert
         sanitizedValue.Should().NotBeNull();
