@@ -39,6 +39,8 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     protected List<T> _cache = new();
     protected bool _cacheLoaded = false;
     protected readonly ILogger<Repository<T, TKey>>? _logger;
+    private readonly object _cacheLock = new();
+    private long _cacheVersion;
 
     protected Repository(DatabaseConnection database, ILogger<Repository<T, TKey>>? logger = null)
     {
@@ -53,16 +55,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         if (id is null)
             throw new ArgumentNullException(nameof(id));
 
-        _logger?.LogDebug("Attempting to retrieve entity {EntityType} with ID {EntityId} from cache", typeof(T).Name, id);
-
-        var cached = _cache.FirstOrDefault(e => GetId(e)?.Equals(id) == true);
-        if (cached is not null)
-        {
-            _logger?.LogDebug("Entity {EntityType} with ID {EntityId} found in cache", typeof(T).Name, id);
-            return cached;
-        }
-
-        _logger?.LogDebug("Entity {EntityType} with ID {EntityId} not found in cache, querying database", typeof(T).Name, id);
+        _logger?.LogDebug("Retrieving entity {EntityType} with ID {EntityId} from database", typeof(T).Name, id);
 
         try
         {
@@ -76,12 +69,24 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             if (await reader.ReadAsync(cancellationToken))
             {
                 var entity = MapFromReader(reader);
-                if (!_cache.Contains(entity))
-                    _cache.Add(entity);
+                lock (_cacheLock)
+                {
+                    var cachedIndex = _cache.FindIndex(e => GetId(e)?.Equals(id) == true);
+                    if (cachedIndex >= 0)
+                        _cache[cachedIndex] = entity;
+                    else
+                        _cache.Add(entity);
+                    _cacheVersion++;
+                }
                 _logger?.LogInformation("Successfully retrieved entity {EntityType} with ID {EntityId} from database", typeof(T).Name, id);
                 return entity;
             }
 
+            lock (_cacheLock)
+            {
+                if (_cache.RemoveAll(e => GetId(e)?.Equals(id) == true) > 0)
+                    _cacheVersion++;
+            }
             _logger?.LogDebug("Entity {EntityType} with ID {EntityId} not found in database", typeof(T).Name, id);
             return null;
         }
@@ -101,26 +106,47 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     {
         _logger?.LogDebug("Retrieving all entities {EntityType} from table {TableName}", typeof(T).Name, _tableName);
 
-        if (_cacheLoaded)
+        lock (_cacheLock)
         {
-            _logger?.LogDebug("Returning {EntityCount} cached entities {EntityType} from table {TableName}", _cache.Count, typeof(T).Name, _tableName);
-            return _cache.AsReadOnly();
+            if (_cacheLoaded)
+            {
+                var cached = _cache.ToList().AsReadOnly();
+                _logger?.LogDebug("Returning {EntityCount} cached entities {EntityType} from table {TableName}", cached.Count, typeof(T).Name, _tableName);
+                return cached;
+            }
         }
 
-        await _database.OpenAsync(cancellationToken);
+        while (true)
+        {
+            long cacheVersion;
+            lock (_cacheLock)
+                cacheVersion = _cacheVersion;
 
-        using var command = _database.Connection.CreateCommand();
-        command.CommandText = $"SELECT * FROM {_tableName}";
+            await _database.OpenAsync(cancellationToken);
 
-        using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var results = new List<T>();
-        while (await reader.ReadAsync(cancellationToken))
-            results.Add(MapFromReader(reader));
+            using var command = _database.Connection.CreateCommand();
+            command.CommandText = $"SELECT * FROM {_tableName}";
 
-        _cache = results;
-        _cacheLoaded = true;
-        _logger?.LogInformation("Successfully retrieved {EntityCount} entities {EntityType} from table {TableName}", _cache.Count, typeof(T).Name, _tableName);
-        return _cache.AsReadOnly();
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            var results = new List<T>();
+            while (await reader.ReadAsync(cancellationToken))
+                results.Add(MapFromReader(reader));
+
+            lock (_cacheLock)
+            {
+                if (_cacheLoaded)
+                    return _cache.ToList().AsReadOnly();
+
+                if (_cacheVersion != cacheVersion)
+                    continue;
+
+                _cache = results;
+                _cacheLoaded = true;
+                _cacheVersion++;
+                _logger?.LogInformation("Successfully retrieved {EntityCount} entities {EntityType} from table {TableName}", _cache.Count, typeof(T).Name, _tableName);
+                return _cache.ToList().AsReadOnly();
+            }
+        }
     }
 
     public virtual async Task<IEnumerable<T>> FindAsync(Func<T, bool> predicate, CancellationToken cancellationToken = default)
@@ -183,7 +209,12 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
                 idProperty.SetValue(entity, convertedId);
             }
 
-            _cache.Add(entity);
+            lock (_cacheLock)
+            {
+                _cache.RemoveAll(e => GetId(e)?.Equals(GetId(entity)) == true);
+                _cache.Add(entity);
+                _cacheVersion++;
+            }
             _logger?.LogInformation("Successfully added entity {EntityType} with ID {EntityId} to table {TableName}", typeof(T).Name, lastId, _tableName);
             return entity;
         }
@@ -252,11 +283,20 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
                 {
                     var insertedEntity = MapFromReader(reader);
                     results.Add(insertedEntity);
-                    _cache.Add(insertedEntity);
                 }
             }
 
             transaction.Commit();
+            lock (_cacheLock)
+            {
+                foreach (var insertedEntity in results)
+                {
+                    var insertedId = GetId(insertedEntity);
+                    _cache.RemoveAll(e => GetId(e)?.Equals(insertedId) == true);
+                    _cache.Add(insertedEntity);
+                }
+                _cacheVersion++;
+            }
             return results;
         }
         catch (SqliteException ex) when (ex.SqliteErrorCode == SqliteConstraintErrorCode)
@@ -307,9 +347,15 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             throw RepositoryException.EntityNotFound(typeof(T).Name, id is null ? 0 : Convert.ToInt32(id));
         }
 
-        var cachedIndex = _cache.FindIndex(e => GetId(e)?.Equals(id) == true);
-        if (cachedIndex >= 0)
-            _cache[cachedIndex] = entity;
+        lock (_cacheLock)
+        {
+            var cachedIndex = _cache.FindIndex(e => GetId(e)?.Equals(id) == true);
+            if (cachedIndex >= 0)
+                _cache[cachedIndex] = entity;
+            else
+                _cache.Add(entity);
+            _cacheVersion++;
+        }
 
         _logger?.LogInformation("Successfully updated entity {EntityType} with ID {EntityId} in table {TableName}", typeof(T).Name, id, _tableName);
         return affected > 0; // Return true if at least one row was affected
@@ -328,7 +374,11 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected > 0)
         {
-            _cache.RemoveAll(e => GetId(e)?.Equals(id) == true);
+            lock (_cacheLock)
+            {
+                _cache.RemoveAll(e => GetId(e)?.Equals(id) == true);
+                _cacheVersion++;
+            }
             _logger?.LogInformation("Successfully deleted entity {EntityType} with ID {EntityId} from table {TableName}", typeof(T).Name, id, _tableName);
         }
         else
@@ -365,7 +415,8 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     public virtual async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _database.OpenAsync(cancellationToken);
-        return _cache.Count;
+        lock (_cacheLock)
+            return _cache.Count;
     }
 
     protected virtual List<PropertyInfo> GetProperties() =>
