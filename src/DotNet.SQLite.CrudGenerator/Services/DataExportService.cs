@@ -29,26 +29,37 @@ public sealed class DataExportService
 
     public async Task<string> ExportAsJsonAsync<T>(IEnumerable<T> items) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         return await _jsonFormatter.FormatAsync(items);
     }
 
     public async Task<string> ExportAsCsvAsync<T>(IEnumerable<T> items) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         return await _csvFormatter.FormatAsync(items);
     }
 
     public async Task<string> ExportAsXmlAsync<T>(IEnumerable<T> items) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         return await _xmlFormatter.FormatAsync(items);
     }
 
     public async Task<string> ExportAsJsonLinesAsync<T>(IEnumerable<T> items) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         return await _jsonFormatter.FormatJsonLinesAsync(items);
     }
 
     public async Task ExportAsJsonLinesToFileAsync<T>(IEnumerable<T> items, string filePath) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
         try
         {
             var jsonLines = await _jsonFormatter.FormatJsonLinesAsync(items);
@@ -68,6 +79,8 @@ public sealed class DataExportService
 
     public async Task ExportAsJsonLinesToStreamAsync<T>(IEnumerable<T> items, Stream stream) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         try
         {
             using (var writer = new StreamWriter(stream, leaveOpen: true))
@@ -86,15 +99,11 @@ public sealed class DataExportService
 
     public async Task<bool> ExportToFileAsync<T>(IEnumerable<T> items, string filePath, ExportFormat format) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
         try
         {
-            // Validate file path before attempting export
-            if (string.IsNullOrWhiteSpace(filePath))
-            {
-                Console.Error.WriteLine("Export failed: File path cannot be null or empty");
-                return false;
-            }
-
             if (!Path.IsPathRooted(filePath))
             {
                 Console.Error.WriteLine("Export failed: File path must be rooted");
@@ -125,6 +134,8 @@ public sealed class DataExportService
 
     public async Task ExportToStreamAsync<T>(IEnumerable<T> items, Stream stream, ExportFormat format) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         try
         {
             var content = format switch
@@ -150,6 +161,8 @@ public sealed class DataExportService
 
     public ExportReport GenerateExportReport<T>(IEnumerable<T> items, string entityName) where T : class
     {
+        ArgumentNullException.ThrowIfNull(items);
+
         var itemList = items.ToList();
 
         return new ExportReport
