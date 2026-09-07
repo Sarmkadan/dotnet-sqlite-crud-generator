@@ -19,6 +19,14 @@ namespace DotNet.SQLite.CrudGenerator.Data;
 /// </summary>
 public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 {
+    private const string DefaultPrimaryKeyColumn = "Id";
+    private const string TableNameSuffix = "s";
+    private const string IdParameterName = "@id";
+    private const string PositionalParameterPrefix = "@p";
+    private const string ColumnSeparator = ", ";
+    private const string UnknownKeyValue = "Unknown";
+    private const int SqliteConstraintErrorCode = 19;
+
     // Static caches shared across all instances of the same generic instantiation.
     // GetProperties() and GetId() are called on every CRUD operation; caching
     // eliminates repeated Type.GetProperties / Type.GetProperty invocations.
@@ -36,8 +44,8 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     {
         _logger = logger;
         _database = database ?? throw new ArgumentNullException(nameof(database));
-        _tableName = typeof(T).Name + "s";
-        _primaryKeyColumn = "Id";
+        _tableName = typeof(T).Name + TableNameSuffix;
+        _primaryKeyColumn = DefaultPrimaryKeyColumn;
     }
 
     public virtual async Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
@@ -61,8 +69,8 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             await _database.OpenAsync(cancellationToken);
 
             using var command = _database.Connection.CreateCommand();
-            command.CommandText = $"SELECT * FROM {_tableName} WHERE {_primaryKeyColumn} = @id LIMIT 1";
-            command.Parameters.AddWithValue("@id", id!);
+            command.CommandText = $"SELECT * FROM {_tableName} WHERE {_primaryKeyColumn} = {IdParameterName} LIMIT 1";
+            command.Parameters.AddWithValue(IdParameterName, id!);
 
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
             if (await reader.ReadAsync(cancellationToken))
@@ -147,15 +155,15 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
         var columns = GetProperties();
         var values = columns.Select(p => GetPropertyValue(entity, p)).ToList();
-        var columnNames = string.Join(", ", columns.Select(p => p.Name));
-        var placeholders = string.Join(", ", columns.Select((_, i) => $"@p{i}"));
+        var columnNames = string.Join(ColumnSeparator, columns.Select(p => p.Name));
+        var placeholders = string.Join(ColumnSeparator, columns.Select((_, i) => $"{PositionalParameterPrefix}{i}"));
 
         using var command = _database.Connection.CreateCommand();
         command.CommandText = $"INSERT INTO {_tableName} ({columnNames}) VALUES ({placeholders})";
 
         for (int i = 0; i < values.Count; i++)
         {
-            command.Parameters.AddWithValue($"@p{i}", values[i] ?? DBNull.Value);
+            command.Parameters.AddWithValue($"{PositionalParameterPrefix}{i}", values[i] ?? DBNull.Value);
         }
 
         try
@@ -179,10 +187,10 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             _logger?.LogInformation("Successfully added entity {EntityType} with ID {EntityId} to table {TableName}", typeof(T).Name, lastId, _tableName);
             return entity;
         }
-        catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
+        catch (SqliteException ex) when (ex.SqliteErrorCode == SqliteConstraintErrorCode)
         {
             _logger?.LogWarning(ex, "Duplicate key error while adding entity {EntityType} to table {TableName}", typeof(T).Name, _tableName);
-            throw RepositoryException.DuplicateKey(typeof(T).Name, "Unknown", entity);
+            throw RepositoryException.DuplicateKey(typeof(T).Name, UnknownKeyValue, entity);
         }
         catch (SqliteException ex)
         {
@@ -215,8 +223,8 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
             // Build parameterized insert command once
             var columns = GetProperties();
-            var columnNames = string.Join(", ", columns.Select(p => p.Name));
-            var placeholders = string.Join(", ", columns.Select((_, i) => $"@p{i}"));
+            var columnNames = string.Join(ColumnSeparator, columns.Select(p => p.Name));
+            var placeholders = string.Join(ColumnSeparator, columns.Select((_, i) => $"{PositionalParameterPrefix}{i}"));
 
             var command = _database.Connection.CreateCommand();
             command.CommandText = $"INSERT INTO {_tableName} ({columnNames}) VALUES ({placeholders}) RETURNING *";
@@ -225,7 +233,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             for (int i = 0; i < columns.Count; i++)
             {
                 var param = new SqliteParameter();
-                param.ParameterName = $"@p{i}";
+                param.ParameterName = $"{PositionalParameterPrefix}{i}";
                 command.Parameters.Add(param);
             }
 
@@ -251,10 +259,10 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             transaction.Commit();
             return results;
         }
-        catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
+        catch (SqliteException ex) when (ex.SqliteErrorCode == SqliteConstraintErrorCode)
         {
             _logger?.LogWarning(ex, "Duplicate key error while adding batch of entities {EntityType} to table {TableName}", typeof(T).Name, _tableName);
-            throw RepositoryException.DuplicateKey(typeof(T).Name, "Unknown", entityList.FirstOrDefault() ?? entityList.First());
+            throw RepositoryException.DuplicateKey(typeof(T).Name, UnknownKeyValue, entityList.FirstOrDefault() ?? entityList.First());
         }
         catch (SqliteException ex)
         {
@@ -279,17 +287,17 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         await _database.OpenAsync(cancellationToken);
 
         var properties = GetProperties();
-        var updates = string.Join(", ", properties.Select((p, i) => $"{p.Name} = @p{i}"));
+        var updates = string.Join(ColumnSeparator, properties.Select((p, i) => $"{p.Name} = {PositionalParameterPrefix}{i}"));
 
         using var command = _database.Connection.CreateCommand();
-        command.CommandText = $"UPDATE {_tableName} SET {updates} WHERE {_primaryKeyColumn} = @id";
+        command.CommandText = $"UPDATE {_tableName} SET {updates} WHERE {_primaryKeyColumn} = {IdParameterName}";
 
         for (int i = 0; i < properties.Count; i++)
         {
-            command.Parameters.AddWithValue($"@p{i}", GetPropertyValue(entity, properties[i]) ?? DBNull.Value);
+            command.Parameters.AddWithValue($"{PositionalParameterPrefix}{i}", GetPropertyValue(entity, properties[i]) ?? DBNull.Value);
         }
 
-        command.Parameters.AddWithValue("@id", id!);
+        command.Parameters.AddWithValue(IdParameterName, id!);
 
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected == 0)
@@ -314,8 +322,8 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         await _database.OpenAsync(cancellationToken);
 
         using var command = _database.Connection.CreateCommand();
-        command.CommandText = $"DELETE FROM {_tableName} WHERE {_primaryKeyColumn} = @id";
-        command.Parameters.AddWithValue("@id", id!);
+        command.CommandText = $"DELETE FROM {_tableName} WHERE {_primaryKeyColumn} = {IdParameterName}";
+        command.Parameters.AddWithValue(IdParameterName, id!);
 
         var affected = await command.ExecuteNonQueryAsync(cancellationToken);
         if (affected > 0)
@@ -363,7 +371,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
     protected virtual List<PropertyInfo> GetProperties() =>
         _propertiesCache.GetOrAdd(typeof(T), static t =>
             t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-             .Where(p => p.CanRead && p.CanWrite && p.Name != "Id")
+             .Where(p => p.CanRead && p.CanWrite && p.Name != DefaultPrimaryKeyColumn)
              .ToList());
 
     protected virtual object? GetPropertyValue(T entity, PropertyInfo property) =>
@@ -373,7 +381,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
     protected virtual TKey? GetId(T entity)
     {
-        var prop = _idPropertyCache.GetOrAdd(typeof(T), static t => t.GetProperty("Id"));
+        var prop = _idPropertyCache.GetOrAdd(typeof(T), static t => t.GetProperty(DefaultPrimaryKeyColumn));
         return prop is not null ? (TKey?)prop.GetValue(entity) : default;
     }
 
