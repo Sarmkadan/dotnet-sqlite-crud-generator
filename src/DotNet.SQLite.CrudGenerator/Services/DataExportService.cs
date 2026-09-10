@@ -7,6 +7,7 @@
 // =============================================================================
 
 using DotNet.SQLite.CrudGenerator.Formatters;
+using System.Reflection;
 
 namespace DotNet.SQLite.CrudGenerator.Services;
 
@@ -95,6 +96,61 @@ public sealed class DataExportService
             Console.Error.WriteLine($"JSON Lines stream export failed: {ex.Message}");
             throw;
         }
+    }
+
+    public async Task<string> ExportAsMarkdownAsync<T>(IEnumerable<T> items) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(items);
+
+        return GenerateMarkdownTable(items);
+    }
+
+    public async Task ExportAsMarkdownToFileAsync<T>(IEnumerable<T> items, string filePath) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        try
+        {
+            var markdown = GenerateMarkdownTable(items);
+
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+
+            await File.WriteAllTextAsync(filePath, markdown);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Markdown export failed: {ex.Message}");
+            throw;
+        }
+    }
+
+    private static string GenerateMarkdownTable<T>(IEnumerable<T> items) where T : class
+    {
+        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        if (!properties.Any())
+            return string.Empty;
+
+        var header = "| " + string.Join(" | ", properties.Select(p => p.Name)) + " |";
+        var separator = "| " + string.Join(" | ", properties.Select(p => "---")) + " |";
+
+        var rows = new List<string>();
+        foreach (var item in items)
+        {
+            var values = properties.Select(p =>
+            {
+                var value = p.GetValue(item);
+                if (value == null)
+                    return string.Empty;
+                var stringValue = value.ToString()!;
+                return stringValue.Replace("|", "\\|");
+            });
+            rows.Add("| " + string.Join(" | ", values) + " |");
+        }
+
+        return string.Join(Environment.NewLine, header, separator, string.Join(Environment.NewLine, rows));
     }
 
     public async Task<bool> ExportToFileAsync<T>(IEnumerable<T> items, string filePath, ExportFormat format) where T : class
