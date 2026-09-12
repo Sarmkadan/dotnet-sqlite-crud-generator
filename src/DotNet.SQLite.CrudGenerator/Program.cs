@@ -15,6 +15,9 @@ namespace DotNet.SQLite.CrudGenerator;
 
 class Program
 {
+    /// <summary>
+    /// Initializes the application and demonstrates its CRUD operations.
+    /// </summary>
     static async Task Main(string[] args)
     {
         Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
