@@ -20,6 +20,8 @@ class Program
     /// </summary>
     static async Task Main(string[] args)
     {
+        ArgumentNullException.ThrowIfNull(args);
+
         Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
         Console.WriteLine("║       SQLite CRUD Generator - Core Architecture Phase 1        ║");
         Console.WriteLine("║                  Author: Vladyslav Zaiets                      ║");
@@ -72,6 +74,8 @@ class Program
 
     static async Task DemonstrateCrudOperations(IServiceProvider serviceProvider)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
         using var scope = serviceProvider.CreateScope();
 
         var userService = scope.ServiceProvider.GetRequiredService<UserService>();
