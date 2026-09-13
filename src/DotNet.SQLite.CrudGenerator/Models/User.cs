@@ -107,4 +107,12 @@ public sealed class User
         IsActive = false;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Returns a concise readable summary of the user.
+    /// </summary>
+    public override string ToString()
+    {
+        return $"User {Id}: {Username} ({Email}) - {GetFullName()} (Active: {IsActive}, Verified: {EmailVerified})";
+    }
 }
