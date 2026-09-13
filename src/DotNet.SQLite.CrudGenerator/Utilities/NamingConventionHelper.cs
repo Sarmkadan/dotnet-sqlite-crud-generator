@@ -47,6 +47,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static string GetSqlType(Type propertyType)
     {
+        ArgumentNullException.ThrowIfNull(propertyType);
+
         var underlying = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
         return _sqlTypeMappings.TryGetValue(underlying, out var sqlType) ? sqlType : "TEXT";
     }
@@ -57,6 +59,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static string ToCSharpToSqlConvention(string propertyName)
     {
+        ArgumentNullException.ThrowIfNull(propertyName);
+
         if (string.IsNullOrEmpty(propertyName))
             return propertyName;
 
@@ -69,6 +73,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static string ToSqlToCSharpConvention(string columnName)
     {
+        ArgumentNullException.ThrowIfNull(columnName);
+
         if (string.IsNullOrEmpty(columnName))
             return columnName;
 
@@ -82,6 +88,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static string GetTableName(Type entityType, bool pluralize = true)
     {
+        ArgumentNullException.ThrowIfNull(entityType);
+
         if (pluralize)
             return _tableNameCache.GetOrAdd(entityType, static t => t.Name.Pluralize().ToSnakeCase());
 
@@ -94,6 +102,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static string GetColumnName(PropertyInfo property)
     {
+        ArgumentNullException.ThrowIfNull(property);
+
         return _columnNameCache.GetOrAdd(property, static p =>
         {
             var columnAttr = p.GetCustomAttribute<ColumnAttribute>();
@@ -109,6 +119,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static string GetGrpcServiceName(string className)
     {
+        ArgumentNullException.ThrowIfNull(className);
+
         if (className.EndsWith("Service"))
             return className; // Keep as-is for service names
 
@@ -120,6 +132,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static string GetGrpcMessageName(string className)
     {
+        ArgumentNullException.ThrowIfNull(className);
+
         if (className.EndsWith("Message"))
             return className;
 
@@ -132,6 +146,9 @@ public static class NamingConventionHelper
     /// </summary>
     public static string GetApiEndpoint(Type entityType, string apiVersion = "v1")
     {
+        ArgumentNullException.ThrowIfNull(entityType);
+        ArgumentNullException.ThrowIfNull(apiVersion);
+
         var entityName = entityType.Name.Pluralize().ToLower();
         return $"/api/{apiVersion}/{entityName}";
     }
@@ -141,6 +158,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static bool IsValidPropertyName(string propertyName)
     {
+        ArgumentNullException.ThrowIfNull(propertyName);
+
         if (string.IsNullOrEmpty(propertyName))
             return false;
 
@@ -161,6 +180,8 @@ public static class NamingConventionHelper
     /// </summary>
     public static NamingConventionInfo GetConventionInfo(Type entityType)
     {
+        ArgumentNullException.ThrowIfNull(entityType);
+
         var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         return new NamingConventionInfo
