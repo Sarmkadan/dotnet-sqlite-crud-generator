@@ -50,6 +50,14 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         _primaryKeyColumn = DefaultPrimaryKeyColumn;
     }
 
+    /// <summary>
+    /// Retrieves an entity by its ID from the database.
+    /// </summary>
+    /// <param name="id">The ID of the entity to retrieve.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The entity if found; otherwise, null.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="id"/> is null.</exception>
+    /// <exception cref="RepositoryException">Thrown when a database error occurs.</exception>
     public virtual async Task<T?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
         if (id is null)
@@ -102,6 +110,11 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         }
     }
 
+    /// <summary>
+    /// Retrieves all entities from the database.
+    /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A collection of all entities.</returns>
     public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         _logger?.LogDebug("Retrieving all entities {EntityType} from table {TableName}", typeof(T).Name, _tableName);
@@ -149,12 +162,24 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         }
     }
 
+    /// <summary>
+    /// Finds entities matching the specified predicate.
+    /// </summary>
+    /// <param name="predicate">The function to test each element for a condition.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A collection of entities that match the predicate.</returns>
     public virtual async Task<IEnumerable<T>> FindAsync(Func<T, bool> predicate, CancellationToken cancellationToken = default)
     {
         var all = await GetAllAsync(cancellationToken);
         return all.Where(predicate);
     }
 
+    /// <summary>
+    /// Counts entities in the database, optionally filtered by a predicate.
+    /// </summary>
+    /// <param name="predicate">The function to test each element for a condition. If null, counts all entities.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The number of entities matching the predicate.</returns>
     public virtual async Task<int> CountAsync(Func<T, bool>? predicate = null, CancellationToken cancellationToken = default)
     {
         await _database.OpenAsync(cancellationToken);
@@ -170,6 +195,14 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return all.Count(predicate);
     }
 
+    /// <summary>
+    /// Adds a new entity to the database.
+    /// </summary>
+    /// <param name="entity">The entity to add.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The added entity with its ID populated.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="entity"/> is null.</exception>
+    /// <exception cref="RepositoryException">Thrown when a database error occurs.</exception>
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
         if (entity is null)
@@ -235,6 +268,14 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         }
     }
 
+    /// <summary>
+    /// Adds a collection of entities to the database in a single transaction.
+    /// </summary>
+    /// <param name="entities">The collection of entities to add.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The added entities with their IDs populated.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="entities"/> is null.</exception>
+    /// <exception cref="RepositoryException">Thrown when a database error occurs.</exception>
     public virtual async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
     {
         if (entities is null) throw new ArgumentNullException(nameof(entities));
@@ -316,6 +357,14 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         }
     }
 
+    /// <summary>
+    /// Updates an existing entity in the database.
+    /// </summary>
+    /// <param name="entity">The entity to update.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>True if the entity was updated; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="entity"/> is null.</exception>
+    /// <exception cref="RepositoryException">Thrown when a database error occurs.</exception>
     public virtual async Task<bool> UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         if (entity is null)
@@ -361,6 +410,12 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return affected > 0; // Return true if at least one row was affected
     }
 
+    /// <summary>
+    /// Deletes an entity with the specified ID from the database.
+    /// </summary>
+    /// <param name="id">The ID of the entity to delete.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>True if the entity was deleted; otherwise, false.</returns>
     public virtual async Task<bool> DeleteAsync(TKey id, CancellationToken cancellationToken = default)
     {
         _logger?.LogDebug("Attempting to delete entity {EntityType} with ID {EntityId} from table {TableName}", typeof(T).Name, id, _tableName);
@@ -389,6 +444,12 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return affected > 0;
     }
 
+    /// <summary>
+    /// Deletes an entity from the database by entity reference.
+    /// </summary>
+    /// <param name="entity">The entity to delete.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>True if the entity was deleted; otherwise, false.</returns>
     public virtual async Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default)
     {
         var id = GetId(entity);
@@ -396,6 +457,12 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return await DeleteAsync(id!, cancellationToken);
     }
 
+    /// <summary>
+    /// Deletes a collection of entities with the specified IDs from the database.
+    /// </summary>
+    /// <param name="ids">The collection of entity IDs to delete.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The number of entities that were deleted.</returns>
     public virtual async Task<int> DeleteRangeAsync(IEnumerable<TKey> ids, CancellationToken cancellationToken = default)
     {
         int deleted = 0;
@@ -407,11 +474,22 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         return deleted;
     }
 
+    /// <summary>
+    /// Determines whether an entity with the specified ID exists in the database.
+    /// </summary>
+    /// <param name="id">The ID of the entity to check.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>True if the entity exists; otherwise, false.</returns>
     public virtual async Task<bool> ExistsAsync(TKey id, CancellationToken cancellationToken = default)
     {
         return await GetByIdAsync(id, cancellationToken) is not null;
     }
 
+    /// <summary>
+    /// Gets the number of entities in the cache.
+    /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The number of entities in the cache.</returns>
     public virtual async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _database.OpenAsync(cancellationToken);
