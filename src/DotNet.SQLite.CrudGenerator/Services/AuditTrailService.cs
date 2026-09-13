@@ -8,6 +8,7 @@ using System.Text.Json;
 using DotNet.SQLite.CrudGenerator.Data;
 using DotNet.SQLite.CrudGenerator.Enums;
 using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Constants;
 
 namespace DotNet.SQLite.CrudGenerator.Services;
 
@@ -259,7 +260,7 @@ VALUES
         }
 
         var whereClause = wheres.Count > 0 ? " WHERE " + string.Join(" AND ", wheres) : string.Empty;
-        cmd.CommandText = $"SELECT * FROM AuditLogs{whereClause} ORDER BY Timestamp DESC LIMIT @limit";
+        cmd.CommandText = string.Format(SqlConstants.QueryTemplates.AuditLogsSelectWithWhereAndOrder, whereClause);
         cmd.Parameters.AddWithValue("@limit", filter.Limit);
 
         var results = new List<AuditLog>();
@@ -311,7 +312,7 @@ VALUES
         await _database.OpenAsync(cancellationToken);
 
         using var cmd = _database.Connection.CreateCommand();
-        cmd.CommandText = "DELETE FROM AuditLogs WHERE Timestamp < @cutoff";
+        cmd.CommandText = SqlConstants.QueryTemplates.AuditLogsDeleteOlderThan;
         cmd.Parameters.AddWithValue("@cutoff", olderThan.ToString("O"));
 
         return await cmd.ExecuteNonQueryAsync(cancellationToken);
@@ -411,11 +412,11 @@ VALUES
         var summary = new AuditTrailSummary();
 
         using var totalCmd = _database.Connection.CreateCommand();
-        totalCmd.CommandText = "SELECT COUNT(*) FROM AuditLogs";
+        totalCmd.CommandText = SqlConstants.QueryTemplates.AuditLogsCountAll;
         summary.TotalEntries = Convert.ToInt32(await totalCmd.ExecuteScalarAsync(cancellationToken));
 
         using var byOpCmd = _database.Connection.CreateCommand();
-        byOpCmd.CommandText = "SELECT OperationType, COUNT(*) FROM AuditLogs GROUP BY OperationType";
+        byOpCmd.CommandText = SqlConstants.QueryTemplates.AuditLogsCountByOperation;
         using var byOpReader = await byOpCmd.ExecuteReaderAsync(cancellationToken);
         while (await byOpReader.ReadAsync(cancellationToken))
         {
@@ -424,13 +425,13 @@ VALUES
         }
 
         using var byEtCmd = _database.Connection.CreateCommand();
-        byEtCmd.CommandText = "SELECT EntityType, COUNT(*) FROM AuditLogs GROUP BY EntityType";
+        byEtCmd.CommandText = SqlConstants.QueryTemplates.AuditLogsCountByEntity;
         using var byEtReader = await byEtCmd.ExecuteReaderAsync(cancellationToken);
         while (await byEtReader.ReadAsync(cancellationToken))
             summary.ByEntityType[byEtReader.GetString(0)] = byEtReader.GetInt32(1);
 
         using var rangeCmd = _database.Connection.CreateCommand();
-        rangeCmd.CommandText = "SELECT MIN(Timestamp), MAX(Timestamp) FROM AuditLogs";
+        rangeCmd.CommandText = SqlConstants.QueryTemplates.AuditLogsTimestampRange;
         using var rangeReader = await rangeCmd.ExecuteReaderAsync(cancellationToken);
         if (await rangeReader.ReadAsync(cancellationToken) && !rangeReader.IsDBNull(0))
         {

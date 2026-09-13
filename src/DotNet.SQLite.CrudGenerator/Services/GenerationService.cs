@@ -9,6 +9,7 @@ using System.Text;
 using DotNet.SQLite.CrudGenerator.Attributes;
 using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Constants;
 
 namespace DotNet.SQLite.CrudGenerator.Services;
 
@@ -426,7 +427,7 @@ public sealed class GenerationService
             sb.AppendLine("        await _database.OpenAsync(cancellationToken);");
             sb.AppendLine();
             sb.AppendLine("        using var command = _database.Connection.CreateCommand();");
-            sb.AppendLine($"        command.CommandText = $\"SELECT * FROM {entityType.Name}s WHERE {_softDeleteOptions.ColumnName} = {_softDeleteOptions.ActiveValue}\";");
+            sb.AppendLine($"        command.CommandText = string.Format(SqlConstants.QueryTemplates.SoftDeleteSelectActive, \"{entityType.Name}s\", \"{_softDeleteOptions.ColumnName}\", {_softDeleteOptions.ActiveValue});");
             sb.AppendLine();
             sb.AppendLine("        using var reader = await command.ExecuteReaderAsync(cancellationToken);");
             sb.AppendLine($"        var results = new List<{entityType.Name}>();");
@@ -474,7 +475,7 @@ public sealed class GenerationService
             sb.AppendLine("        await _database.OpenAsync(cancellationToken);");
             sb.AppendLine();
             sb.AppendLine("        using var command = _database.Connection.CreateCommand();");
-            sb.AppendLine($"        command.CommandText = $\"UPDATE {entityType.Name}s SET {_softDeleteOptions.ColumnName} = {_softDeleteOptions.DeletedValue} WHERE Id = @id\";");
+            sb.AppendLine($"        command.CommandText = string.Format(SqlConstants.QueryTemplates.SoftDeleteMarkDeleted, \"{entityType.Name}s\", \"{_softDeleteOptions.ColumnName}\", {_softDeleteOptions.DeletedValue});");
             sb.AppendLine("        command.Parameters.AddWithValue(\"@id\", id!);");
             sb.AppendLine();
             sb.AppendLine("        var affected = await command.ExecuteNonQueryAsync(cancellationToken);");

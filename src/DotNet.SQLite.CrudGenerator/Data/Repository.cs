@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text.Json;
 using DotNet.SQLite.CrudGenerator.Exceptions;
 using DotNet.SQLite.CrudGenerator.Interfaces;
+using DotNet.SQLite.CrudGenerator.Constants;
 using Microsoft.Data.Sqlite;
 
 using Microsoft.Extensions.Logging;
@@ -70,7 +71,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             await _database.OpenAsync(cancellationToken);
 
             using var command = _database.Connection.CreateCommand();
-            command.CommandText = $"SELECT * FROM {_tableName} WHERE {_primaryKeyColumn} = {IdParameterName} LIMIT 1";
+            command.CommandText = string.Format(SqlConstants.QueryTemplates.SelectByIdWithLimit, _tableName, _primaryKeyColumn, IdParameterName);
             command.Parameters.AddWithValue(IdParameterName, id!);
 
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -138,7 +139,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             await _database.OpenAsync(cancellationToken);
 
             using var command = _database.Connection.CreateCommand();
-            command.CommandText = $"SELECT * FROM {_tableName}";
+            command.CommandText = string.Format(SqlConstants.QueryTemplates.SelectAllFromTable, _tableName);
 
             using var reader = await command.ExecuteReaderAsync(cancellationToken);
             var results = new List<T>();
@@ -185,7 +186,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         await _database.OpenAsync(cancellationToken);
 
         using var command = _database.Connection.CreateCommand();
-        command.CommandText = $"SELECT COUNT(*) FROM {_tableName}";
+        command.CommandText = string.Format(SqlConstants.QueryTemplates.CountAllFromTable, _tableName);
 
         var count = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
 
@@ -218,7 +219,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
         var placeholders = string.Join(ColumnSeparator, columns.Select((_, i) => $"{PositionalParameterPrefix}{i}"));
 
         using var command = _database.Connection.CreateCommand();
-        command.CommandText = $"INSERT INTO {_tableName} ({columnNames}) VALUES ({placeholders})";
+        command.CommandText = string.Format(SqlConstants.QueryTemplates.InsertIntoTable, _tableName, columnNames, placeholders);
 
         for (int i = 0; i < values.Count; i++)
         {
@@ -231,7 +232,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
 
             // Retrieve the last inserted row ID
             using var lastIdCommand = _database.Connection.CreateCommand();
-            lastIdCommand.CommandText = "SELECT last_insert_rowid();";
+            lastIdCommand.CommandText = SqlConstants.QueryTemplates.LastInsertRowId;
             var lastId = await lastIdCommand.ExecuteScalarAsync(cancellationToken);
 
             // Set the Id property of the entity
@@ -299,7 +300,7 @@ public abstract class Repository<T, TKey> : IRepository<T, TKey> where T : class
             var placeholders = string.Join(ColumnSeparator, columns.Select((_, i) => $"{PositionalParameterPrefix}{i}"));
 
             var command = _database.Connection.CreateCommand();
-            command.CommandText = $"INSERT INTO {_tableName} ({columnNames}) VALUES ({placeholders}) RETURNING *";
+            command.CommandText = string.Format(SqlConstants.QueryTemplates.InsertIntoTableReturning, _tableName, columnNames, placeholders);
 
             // Add parameters once
             for (int i = 0; i < columns.Count; i++)

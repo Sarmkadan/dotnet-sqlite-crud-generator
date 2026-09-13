@@ -173,7 +173,7 @@ public sealed class QueryBuilderGenerationService
         sb.AppendLine($"    /// <returns>A tuple of (sql, parameters) ready to pass to a data reader.</returns>");
         sb.AppendLine($"    public (string Sql, IReadOnlyDictionary<string, object?> Parameters) Build()");
         sb.AppendLine("    {");
-        sb.AppendLine("        var sql = new StringBuilder($\"SELECT {_select} FROM {TableName}\");");
+        sb.AppendLine("        var sql = new StringBuilder(string.Format(SqlConstants.QueryTemplates.SelectColumnsFromTable, _select, TableName));");
         sb.AppendLine();
         sb.AppendLine("        if (_whereClauses.Count > 0)");
         sb.AppendLine("            sql.Append(\" WHERE \").Append(string.Join(\" AND \", _whereClauses));");

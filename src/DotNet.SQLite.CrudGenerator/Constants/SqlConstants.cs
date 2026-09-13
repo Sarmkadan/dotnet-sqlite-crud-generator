@@ -76,5 +76,27 @@ public static class SqlConstants
         public const string SelectById = "SELECT * FROM {0} WHERE Id = @id";
         public const string CountAll = "SELECT COUNT(*) FROM {0}";
         public const string DeleteById = "DELETE FROM {0} WHERE Id = @id";
+        // AuditTrail service queries
+        public const string AuditLogsDeleteOlderThan = "DELETE FROM AuditLogs WHERE Timestamp < @cutoff";
+        public const string AuditLogsCountAll = "SELECT COUNT(*) FROM AuditLogs";
+        public const string AuditLogsCountByOperation = "SELECT OperationType, COUNT(*) FROM AuditLogs GROUP BY OperationType";
+        public const string AuditLogsCountByEntity = "SELECT EntityType, COUNT(*) FROM AuditLogs GROUP BY EntityType";
+        public const string AuditLogsTimestampRange = "SELECT MIN(Timestamp), MAX(Timestamp) FROM AuditLogs";
+        public const string AuditLogsSelectWithWhereAndOrder = "SELECT * FROM AuditLogs{0} ORDER BY Timestamp DESC LIMIT @limit";
+        // QueryBuilder service
+        public const string SelectFromTable = "SELECT {0} FROM {1}";
+        public const string SelectColumnsFromTable = "SELECT {0} FROM {1}";
+        // Soft delete queries
+        public const string SoftDeleteSelectActive = "SELECT * FROM {0}s WHERE {1} = {2}";
+        public const string SoftDeleteMarkDeleted = "UPDATE {0}s SET {1} = {2} WHERE Id = @id";
+        // Repository base queries
+        public const string SelectByIdWithLimit = "SELECT * FROM {0} WHERE {1} = {2} LIMIT 1";
+        public const string SelectAllFromTable = "SELECT * FROM {0}";
+        public const string CountAllFromTable = "SELECT COUNT(*) FROM {0}";
+        public const string InsertIntoTable = "INSERT INTO {0} ({1}) VALUES ({2})";
+        public const string LastInsertRowId = "SELECT last_insert_rowid();";
+        public const string InsertIntoTableReturning = "INSERT INTO {0} ({1}) VALUES ({2}) RETURNING *";
+        public const string UpdateTableSet = "UPDATE {0} SET {1} WHERE {2} = {3}";
+        public const string DeleteFromTableWhere = "DELETE FROM {0} WHERE {1} = {2}";
     }
 }
