@@ -21,6 +21,7 @@ public sealed class DatabaseConnection : IAsyncDisposable, IDisposable
 
     public DatabaseConnection(string connectionString, ILogger<DatabaseConnection>? logger = null)
     {
+        ArgumentNullException.ThrowIfNull(connectionString);
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty", nameof(connectionString));
 
