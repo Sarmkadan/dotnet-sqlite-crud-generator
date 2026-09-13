@@ -156,6 +156,7 @@ public class UserService
         return await _userRepository.DeleteAsync(userId);
     }
 }
+```
 
 ## Features
 
@@ -208,7 +209,7 @@ public class MigrationDiffServiceTestsExample : IDisposable
 }
 ```
 
-## UserServiceTests
+### UserServiceTests
 
 `UserServiceTests` is a test class that verifies the behavior of **UserService** by using a mocked `IRepository<User, int>`. It contains async test methods that cover the most common service operations: retrieving a user by id (both existing and non‑existent), fetching all users, creating a new user, updating an existing user, and deleting a user.
 
@@ -235,7 +236,7 @@ public class UserServiceTestsExample
 }
 ```
 
-## GenerationServiceTests
+### GenerationServiceTests
 
 `GenerationServiceTests` is a test class that contains unit tests for the `GenerationService`.
 It demonstrates how to instantiate the test class, run a test method, and clean up resources. The example below shows a simple usage pattern that compiles and runs the test methods.
@@ -257,7 +258,7 @@ public class GenerationServiceTestsExample
 }
 ```
 
-## EventBusValidation
+### EventBusValidation
 
 `EventBusValidation` is a static utility class that provides validation helpers for domain events and event bus related types. It offers methods to validate `DomainEvent`, `EventEnvelope`, and `EventBusStatistics` instances, ensuring consistent error handling when event validation fails.
 
@@ -354,7 +355,7 @@ public class EventBusExample
 }
 ```
 
-## EntityChangedEventValidation
+### EntityChangedEventValidation
 
 `EntityChangedEventValidation` is a static utility class that provides validation helpers for entity change events. It offers methods to validate `EntityChangedEvent<T>`, `EntityCreatedEvent<T>`, `EntityUpdatedEvent<T>`, `EntityDeletedEvent<T>`, `BulkEntityChangedEvent<T>`, `ProductRestockedEvent`, and `ProductSoldEvent` instances, ensuring consistent error handling when event validation fails.
 
@@ -491,7 +492,7 @@ public class Product
 }
 ```
 
-## DependencyInjectionJsonExtensions
+### DependencyInjectionJsonExtensions
 
 `DependencyInjectionJsonExtensions` is a static utility class that provides System.Text.Json serialization extensions for dependency injection configuration. It enables converting `DatabaseSettings` and `DotnetSqliteCrudGeneratorOptions` objects to/from JSON format with camelCase property naming and null value handling.
 
@@ -574,7 +575,7 @@ public class DependencyInjectionConfigExample
 }
 ```
 
-## NamingConventionHelperJsonExtensions
+### NamingConventionHelperJsonExtensions
 
 `NamingConventionHelperJsonExtensions` is a static utility class that provides System.Text.Json serialization and deserialization extensions for naming convention data structures. It enables converting `NamingConventionInfo` and `PropertyConventionInfo` objects to/from JSON format with camelCase property naming and null value handling.
 
@@ -645,7 +646,7 @@ public class NamingConventionExample
 }
 ```
 
-## PerformanceMonitorJsonExtensions
+### PerformanceMonitorJsonExtensions
 
 `PerformanceMonitorJsonExtensions` is a static utility class that provides System.Text.Json serialization and deserialization extensions for performance monitoring data structures. It enables converting `PerformanceMonitor`, `OperationMetrics`, `PerformanceReport`, and `MemoryInfo` objects to/from JSON format with camelCase property naming, null value handling, and cycle reference prevention.
 
@@ -764,8 +765,7 @@ public class PerformanceMonitoringExample
 }
 ```
 
-
-## OrderValidation
+### OrderValidation
 
 `OrderValidation` is a static utility class that provides comprehensive validation helpers for the `Order` entity. It offers methods to validate order state, final total calculations, and business rules for shipping and cancellation operations, ensuring consistent error handling throughout the order lifecycle.
 
@@ -911,7 +911,9 @@ public class OrderProcessingExample
         }
     }
 }
-```## CachingIntegrationTests
+```
+
+## CachingIntegrationTests
 
 `CachingIntegrationTests` is a test class that contains integration tests for the `MemoryCacheProvider` caching implementation. It verifies that the cache provider correctly stores, retrieves, expires, and manages items according to the configured eviction policy and TTL settings.
 
@@ -984,11 +986,12 @@ public class CacheProviderExample : IDisposable
 }
 ```
 
-## StringExtensionsTests
+### StringExtensionsTests
 
 `StringExtensionsTests` is a test class that contains unit tests for the `StringExtensions` utility class, verifying various string manipulation and formatting operations such as PascalCase conversion, camelCase conversion, pluralization, truncation, slug generation, and snake_case conversion.
 
 Here's an example demonstrating how to use the `StringExtensions` methods based on the actual test cases:
+
 
 
 ```csharp
@@ -1032,14 +1035,12 @@ public class StringExtensionsExample
 }
 ```
 
-## AuditTrailServiceTests
+### AuditTrailServiceTests
 
 `AuditTrailServiceTests` is a test class that contains unit tests for the `AuditTrailService` class. It verifies that audit trail entries are correctly persisted, queried, and managed in the database. The test class demonstrates various scenarios including recording operations, querying by filters, entity-specific trails, and summary statistics.
 
 
-
 Here's an example of using `AuditTrailServiceTests` to demonstrate audit trail functionality:
-
 
 ```csharp
 using System;
@@ -1099,3 +1100,112 @@ public class AuditTrailExample : IDisposable
     }
 }
 ```
+
+## Bulk Import/Export
+
+The `BulkImportExportEngine<T>` class in `src/DotNet.SQLite.CrudGenerator/BulkTransfer/BulkImportExportEngine.cs` 
+provides high-performance, asynchronous bulk import and export capabilities for SQLite databases. 
+It supports streaming, configurable batching, real-time progress reporting, and optional durable checkpointing.
+
+### Features
+
+- Async bulk import from JSON, CSV, and XML formats
+- Async bulk export to JSON, CSV, and XML formats
+- Configurable batch sizes and timeouts
+- Real-time progress reporting via `IProgress<BulkTransferProgress>`
+- Automatic retry handling for transient SQLite lock errors
+- Optional audit trail integration
+- Checkpointing for long-running operations
+- Support for filtering during export
+- Transformation support during transfer operations
+
+### Usage Example
+
+Here's an example demonstrating how to use the bulk import engine to import products from a JSON file:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.BulkTransfer;
+using DotNet.SQLite.CrudGenerator.Data;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Services;
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+public class BulkImportExample
+{
+    public static async Task Main()
+    {
+        // Setup services (typically done via dependency injection)
+        var connectionString = "Data Source=sample.db;Version=3;";
+        var repository = new SqliteRepository<Product, int>(connectionString);
+        var exportService = new DataExportService();
+        var bulkEngine = new BulkImportExportEngine<Product>(repository, exportService);
+
+        // Import from JSON file
+        await using var stream = File.OpenRead("products.json");
+        var result = await bulkEngine.ImportFromStreamAsync(
+            stream,
+            ImportFormat.Json,
+            progress: new Progress<BulkTransferProgress>(p =>
+            {
+                Console.WriteLine($"Progress: {p.Processed}/{p.Total} entities " +
+                                  $"(Success: {p.Succeeded}, Failed: {p.Failed})");
+            }),
+            CancellationToken.None);
+
+        Console.WriteLine($"Import completed: {result.Succeeded} succeeded, {result.Failed} failed.");
+        Console.WriteLine($"Duration: {result.Duration}");
+    }
+}
+```
+
+And here's an example for exporting orders to a CSV file:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.BulkTransfer;
+using DotNet.SQLite.CrudGenerator.Data;
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Services;
+using System;
+using System.IO;
+using System.Threading.Tasks;
+
+public class BulkExportExample
+{
+    public static async Task Main()
+    {
+        // Setup services
+        var connectionString = "Data Source=sample.db;Version=3;";
+        var repository = new SqliteRepository<Order, int>(connectionString);
+        var exportService = new DataExportService();
+        var bulkEngine = new BulkImportExportEngine<Order>(repository, exportService);
+
+        // Export to CSV file
+        await using var stream = File.Create("orders.csv");
+        var result = await bulkEngine.ExportToStreamAsync(
+            stream,
+            ExportFormat.Csv,
+            progress: new Progress<BulkTransferProgress>(p =>
+            {
+                Console.WriteLine($"Exported {p.Processed} of {p.Total} orders");
+            }),
+            CancellationToken.None);
+
+        Console.WriteLine($"Export completed: {result.TotalExported} orders exported.");
+        Console.WriteLine($"File size: {result.BytesWritten} bytes");
+    }
+}
+```
+
+### Advanced Usage
+
+The engine also supports:
+- Importing from `IAsyncEnumerable<T>` for streaming large datasets
+- Filtered export using predicates
+- Transfer operations (import then export) with optional transformation
+- Checkpointing for resumable operations
+- Audit trail integration when provided with an `AuditTrailService`
+
+For more details on configuration options, see the `BulkTransferOptions` class.
