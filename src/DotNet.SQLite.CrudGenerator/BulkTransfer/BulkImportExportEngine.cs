@@ -56,8 +56,11 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         DataExportService exportService,
         BulkTransferOptions? options = null)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _exportService = exportService ?? throw new ArgumentNullException(nameof(exportService));
+        ArgumentNullException.ThrowIfNull(repository);
+        ArgumentNullException.ThrowIfNull(exportService);
+
+        _repository = repository;
+        _exportService = exportService;
         _options = options ?? BulkTransferOptions.Default;
         _statistics = new BulkTransferStatistics();
     }
@@ -80,7 +83,9 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         BulkTransferOptions? options = null)
         : this(repository, exportService, options)
     {
-        _auditTrailService = auditTrailService ?? throw new ArgumentNullException(nameof(auditTrailService));
+        ArgumentNullException.ThrowIfNull(auditTrailService);
+
+        _auditTrailService = auditTrailService;
         _userId = userId > 0 ? userId : throw new ArgumentException("User ID must be positive.", nameof(userId));
     }
 
@@ -93,7 +98,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
+        ArgumentNullException.ThrowIfNull(source);
 
         using var reader = new StreamReader(
             source,
@@ -114,6 +119,8 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(filePath);
+
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
@@ -133,7 +140,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (entities is null) throw new ArgumentNullException(nameof(entities));
+        ArgumentNullException.ThrowIfNull(entities);
 
         var result = new BulkImportResult { StartedAt = DateTime.UtcNow };
         result._options = _options;
@@ -197,7 +204,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
+        ArgumentNullException.ThrowIfNull(source);
 
         var result = new BulkImportResult { StartedAt = DateTime.UtcNow };
         var sessionId = Guid.NewGuid();
@@ -265,7 +272,7 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (destination is null) throw new ArgumentNullException(nameof(destination));
+        ArgumentNullException.ThrowIfNull(destination);
 
         var result = new BulkExportResult { StartedAt = DateTime.UtcNow, Format = format };
 
@@ -344,6 +351,8 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(filePath);
+
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
@@ -368,8 +377,8 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (predicate is null) throw new ArgumentNullException(nameof(predicate));
-        if (destination is null) throw new ArgumentNullException(nameof(destination));
+        ArgumentNullException.ThrowIfNull(predicate);
+        ArgumentNullException.ThrowIfNull(destination);
 
         var result = new BulkExportResult { StartedAt = DateTime.UtcNow, Format = format };
 
@@ -466,6 +475,9 @@ public sealed class BulkImportExportEngine<T> : IBulkTransferService<T> where T 
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
+
         var importResult = await ImportFromStreamAsync(source, sourceFormat, progress, cancellationToken);
 
         var allEntities = (IEnumerable<T>)await _repository.GetAllAsync(cancellationToken);
