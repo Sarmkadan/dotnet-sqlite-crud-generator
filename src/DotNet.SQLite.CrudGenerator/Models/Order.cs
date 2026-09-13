@@ -149,4 +149,13 @@ public sealed class Order
     /// Checks if the order can be shipped.
     /// </summary>
     public bool CanShip() => Status == EntityStatus.Pending && !string.IsNullOrWhiteSpace(ShippingAddress);
+
+    /// <summary>
+    /// Returns a string representation of the order.
+    /// </summary>
+    /// <returns>A string containing the order's key properties.</returns>
+    public override string ToString()
+    {
+        return $"Order: Id={Id}, OrderNumber={OrderNumber}, UserId={UserId}, Status={Status}, TotalAmount={TotalAmount:F2}, ItemCount={ItemCount}";
+    }
 }
