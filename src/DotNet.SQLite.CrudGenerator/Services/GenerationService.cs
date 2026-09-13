@@ -34,8 +34,7 @@ public sealed class GenerationService
     /// </summary>
     public async Task<string> GenerateRepositoryInterfaceAsync(Type entityType, CancellationToken cancellationToken = default)
     {
-        if (entityType is null)
-            throw new ArgumentNullException(nameof(entityType));
+        ArgumentNullException.ThrowIfNull(entityType);
 
         ValidateEntityType(entityType);
 
@@ -95,8 +94,8 @@ public sealed class GenerationService
     /// </summary>
     public async Task<string> GenerateMigrationAsync(Type entityType, string migrationName, CancellationToken cancellationToken = default)
     {
-        if (entityType is null)
-            throw new ArgumentNullException(nameof(entityType));
+        ArgumentNullException.ThrowIfNull(entityType);
+        ArgumentNullException.ThrowIfNull(migrationName);
 
         ValidateEntityType(entityType);
 
@@ -138,8 +137,7 @@ public sealed class GenerationService
     /// </summary>
     public async Task<string> GenerateGrpcServiceAsync(Type entityType, CancellationToken cancellationToken = default)
     {
-        if (entityType is null)
-            throw new ArgumentNullException(nameof(entityType));
+        ArgumentNullException.ThrowIfNull(entityType);
 
         ValidateEntityType(entityType);
 
@@ -355,8 +353,7 @@ public sealed class GenerationService
     /// </summary>
     public async Task<string> GenerateRepositoryImplementationAsync(Type entityType, CancellationToken cancellationToken = default)
     {
-        if (entityType is null)
-            throw new ArgumentNullException(nameof(entityType));
+        ArgumentNullException.ThrowIfNull(entityType);
 
         ValidateEntityType(entityType);
 
