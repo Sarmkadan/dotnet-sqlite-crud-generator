@@ -307,4 +307,28 @@ public static class StringExtensions
         int end = span.IndexOfAny(' ', '\t', '\n');
         return (end < 0 ? span : span[..end]).ToString();
     }
+
+    /// <summary>
+    /// Ensures the string ends with the specified suffix, appending it if missing.
+    /// </summary>
+    /// <param name="input">The input string.</param>
+    /// <param name="suffix">The suffix to ensure.</param>
+    /// <returns>The original string if it already ends with the suffix; otherwise, the string with the suffix appended.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="input"/> or <paramref name="suffix"/> is null.</exception>
+    public static string EnsureEndsWith(this string input, string suffix)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(suffix);
+
+        if (suffix.Length == 0)
+            return input;
+
+        if (input.Length >= suffix.Length &&
+            input.EndsWith(suffix, StringComparison.Ordinal))
+        {
+            return input;
+        }
+
+        return string.Concat(input, suffix);
+    }
 }
