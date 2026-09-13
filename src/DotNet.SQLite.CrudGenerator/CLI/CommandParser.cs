@@ -27,6 +27,8 @@ public sealed class CommandParser
 
     public CommandParser RegisterCommand<T>(string name) where T : ICommand
     {
+        ArgumentNullException.ThrowIfNull(name);
+
         _commands[name] = typeof(T);
         _logger?.LogDebug("Registered command {CommandName} with type {CommandType}", name, typeof(T));
         return this;
@@ -34,6 +36,8 @@ public sealed class CommandParser
 
     public async Task<int> ParseAndExecuteAsync(string[] args)
     {
+        ArgumentNullException.ThrowIfNull(args);
+
         try
         {
             _logger?.LogDebug("Starting command parse for {CommandName}", args.FirstOrDefault());
