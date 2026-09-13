@@ -28,7 +28,9 @@ public sealed class MemoryCacheProvider : ICacheProvider
 
     public ValueTask<T?> GetAsync<T>(string key) where T : class
     {
-        if (string.IsNullOrEmpty(key))
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (key.Length == 0)
             throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
 
         if (_cache.TryGetValue(key, out var entry))
@@ -51,11 +53,11 @@ public sealed class MemoryCacheProvider : ICacheProvider
 
     public ValueTask SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
     {
-        if (string.IsNullOrEmpty(key))
-            throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
+        ArgumentNullException.ThrowIfNull(key);
+        ArgumentNullException.ThrowIfNull(value);
 
-        if (value is null)
-            throw new ArgumentNullException(nameof(value));
+        if (key.Length == 0)
+            throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
 
         var size = EstimateSize(value);
 
@@ -82,7 +84,9 @@ public sealed class MemoryCacheProvider : ICacheProvider
 
     public ValueTask<bool> RemoveAsync(string key)
     {
-        if (string.IsNullOrEmpty(key))
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (key.Length == 0)
             return ValueTask.FromResult(false);
 
         if (_cache.TryRemove(key, out var entry))
@@ -103,7 +107,9 @@ public sealed class MemoryCacheProvider : ICacheProvider
 
     public ValueTask<bool> ExistsAsync(string key)
     {
-        if (string.IsNullOrEmpty(key))
+        ArgumentNullException.ThrowIfNull(key);
+
+        if (key.Length == 0)
             return ValueTask.FromResult(false);
 
         if (_cache.TryGetValue(key, out var entry))
@@ -121,6 +127,8 @@ public sealed class MemoryCacheProvider : ICacheProvider
 
     public async ValueTask<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class
     {
+        ArgumentNullException.ThrowIfNull(key);
+
         var cached = await GetAsync<T>(key);
         if (cached is not null)
             return cached;
