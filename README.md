@@ -97,6 +97,66 @@ This project is a .NET tool that generates a complete CRUD (Create, Read, Update
 - Database migrations
 - Unit tests
 
+## Repository
+
+`Repository<T, TKey>` is an abstract base class that implements the `IRepository<T, TKey>` interface, providing generic CRUD operations with caching for SQLite databases. It handles common database operations such as retrieving, adding, updating, and deleting entities, while also managing an in-memory cache to improve performance.
+
+The class provides the following key methods:
+- `GetByIdAsync`: Retrieves an entity by its ID.
+- `GetAllAsync`: Retrieves all entities, with caching.
+- `FindAsync`: Finds entities matching a predicate.
+- `CountAsync`: Counts entities, optionally filtered by a predicate.
+- `AddAsync`: Adds a new entity to the database.
+- `AddRangeAsync`: Adds a collection of entities in a single transaction.
+- `UpdateAsync`: Updates an existing entity.
+- `DeleteAsync`: Deletes an entity by ID or by entity reference.
+- `DeleteRangeAsync`: Deletes a collection of entities by IDs.
+- `ExistsAsync`: Checks if an entity with the specified ID exists.
+- `SaveChangesAsync`: Returns the number of entities in the cache (note: this method name is misleading; it does not actually save changes but returns the cache count).
+
+Here's a realistic example demonstrating how to use a concrete repository implementation (e.g., for a `User` entity) in a service class:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Data;
+using DotNet.SQLite.CrudGenerator.Interfaces;
+using DotNet.SQLite.CrudGenerator.Models;
+using System.Threading.Tasks;
+
+public class UserService
+{
+    private readonly IRepository<User, int> _userRepository;
+
+    public UserService(IRepository<User, int> userRepository)
+    {
+        _userRepository = userRepository;
+    }
+
+    public async Task<User?> GetUserByIdAsync(int userId)
+    {
+        return await _userRepository.GetByIdAsync(userId);
+    }
+
+    public async Task<IEnumerable<User>> GetAllUsersAsync()
+    {
+        return await _userRepository.GetAllAsync();
+    }
+
+    public async Task<User> CreateUserAsync(User user)
+    {
+        return await _userRepository.AddAsync(user);
+    }
+
+    public async Task<bool> UpdateUserAsync(User user)
+    {
+        return await _userRepository.UpdateAsync(user);
+    }
+
+    public async Task<bool> DeleteUserAsync(int userId)
+    {
+        return await _userRepository.DeleteAsync(userId);
+    }
+}
+
 ## Features
 
 - Automatic code generation from database schema
