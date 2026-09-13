@@ -404,4 +404,20 @@ public static class DateTimeExtensions
 
         return dateTime >= start && dateTime <= end;
     }
+
+    /// <summary>
+    /// Converts a datetime to Unix timestamp (seconds since January 1, 1970 UTC).
+    /// </summary>
+    /// <param name="dateTime">The date to convert.</param>
+    /// <returns>A Unix timestamp representing the number of seconds since January 1, 1970 UTC.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="dateTime"/> is <see cref="DateTime.MinValue"/> or <see cref="DateTime.MaxValue"/>.</exception>
+    public static long ToUnixTimestamp(this DateTime dateTime)
+    {
+        if (dateTime == DateTime.MinValue || dateTime == DateTime.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException(nameof(dateTime), "DateTime value is out of valid range.");
+        }
+
+        return new DateTimeOffset(dateTime.ToUniversalTime()).ToUnixTimeSeconds();
+    }
 }
