@@ -72,4 +72,14 @@ public static class AppConstants
         public const string EntityDeleted = "Entity deleted successfully.";
         public const string OperationCompleted = "Operation completed successfully.";
     }
+
+    /// <summary>
+    /// File extension constants.
+    /// </summary>
+    public static class FileExtensions
+    {
+        public const string Json = ".json";
+        public const string Csv = ".csv";
+        public const string Xml = ".xml";
+    }
 }

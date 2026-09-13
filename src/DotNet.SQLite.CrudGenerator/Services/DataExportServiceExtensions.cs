@@ -8,6 +8,7 @@
 using System.Globalization;
 using System.Text;
 using DotNet.SQLite.CrudGenerator.Services;
+using DotNet.SQLite.CrudGenerator.Constants;
 
 namespace DotNet.SQLite.CrudGenerator.Services;
 
