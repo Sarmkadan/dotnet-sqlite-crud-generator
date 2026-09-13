@@ -20,7 +20,9 @@ public sealed class ExternalApiClient
 
     public ExternalApiClient(HttpClient httpClient, string baseUrl)
     {
-        if (string.IsNullOrEmpty(baseUrl))
+        ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(baseUrl);
+        if (baseUrl.Length == 0)
             throw new ArgumentException("Base URL cannot be null or empty", nameof(baseUrl));
 
         _baseUrl = baseUrl.TrimEnd('/');
@@ -29,6 +31,7 @@ public sealed class ExternalApiClient
 
     public async Task<T?> GetAsync<T>(string endpoint)
     {
+        ArgumentNullException.ThrowIfNull(endpoint);
         try
         {
             var url = CombineUrl(endpoint);
@@ -42,6 +45,7 @@ public sealed class ExternalApiClient
 
     public async Task<List<T>?> GetCollectionAsync<T>(string endpoint, int page = 1, int pageSize = 50)
     {
+        ArgumentNullException.ThrowIfNull(endpoint);
         try
         {
             var url = CombineUrl(endpoint);
@@ -65,6 +69,8 @@ public sealed class ExternalApiClient
 
     public async Task<T?> CreateAsync<T>(string endpoint, object data)
     {
+        ArgumentNullException.ThrowIfNull(endpoint);
+        ArgumentNullException.ThrowIfNull(data);
         try
         {
             var url = CombineUrl(endpoint);
@@ -86,6 +92,8 @@ public sealed class ExternalApiClient
 
     public async Task<T?> UpdateAsync<T>(string endpoint, object data)
     {
+        ArgumentNullException.ThrowIfNull(endpoint);
+        ArgumentNullException.ThrowIfNull(data);
         try
         {
             var url = CombineUrl(endpoint);
@@ -110,6 +118,7 @@ public sealed class ExternalApiClient
 
     public async Task<bool> DeleteAsync(string endpoint)
     {
+        ArgumentNullException.ThrowIfNull(endpoint);
         try
         {
             var url = CombineUrl(endpoint);
