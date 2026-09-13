@@ -137,4 +137,13 @@ public sealed class Product
         IsActive = false;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Returns a string representation of the product.
+    /// </summary>
+    /// <returns>A string containing the product's key properties.</returns>
+    public override string ToString()
+    {
+        return $"Product: Id={Id}, Name={Name}, SKU={Sku}, Price={Price:F2}, Stock={StockQuantity}";
+    }
 }
