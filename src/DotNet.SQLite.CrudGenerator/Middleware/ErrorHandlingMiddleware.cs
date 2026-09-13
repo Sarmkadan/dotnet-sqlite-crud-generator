@@ -34,6 +34,9 @@ public sealed class ErrorHandlingMiddleware : IPipelineStep
         where TRequest : class
         where TResponse : class
     {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(next);
+
         try
         {
             return await next(request);
