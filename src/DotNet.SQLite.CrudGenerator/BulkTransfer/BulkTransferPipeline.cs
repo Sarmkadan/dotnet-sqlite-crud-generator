@@ -46,7 +46,8 @@ public sealed class BulkTransferPipeline<T> where T : class
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="service"/> is <c>null</c>.</exception>
     public BulkTransferPipeline(IBulkTransferService<T> service)
     {
-        _service = service ?? throw new ArgumentNullException(nameof(service));
+        ArgumentNullException.ThrowIfNull(service);
+        _service = service;
     }
 
     // ── Fluent configuration ──────────────────────────────────────────────────
@@ -58,7 +59,8 @@ public sealed class BulkTransferPipeline<T> where T : class
     /// <returns>The same pipeline instance for method chaining.</returns>
     public BulkTransferPipeline<T> WithOptions(BulkTransferOptions options)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(options);
+        _options = options;
         return this;
     }
 
@@ -70,7 +72,8 @@ public sealed class BulkTransferPipeline<T> where T : class
     /// <returns>The same pipeline instance for method chaining.</returns>
     public BulkTransferPipeline<T> WithTransform(Func<T, T?> transform)
     {
-        _transform = transform ?? throw new ArgumentNullException(nameof(transform));
+        ArgumentNullException.ThrowIfNull(transform);
+        _transform = transform;
         return this;
     }
 
@@ -82,7 +85,8 @@ public sealed class BulkTransferPipeline<T> where T : class
     /// <returns>The same pipeline instance for method chaining.</returns>
     public BulkTransferPipeline<T> WithFilter(Func<T, bool> filter)
     {
-        _filter = filter ?? throw new ArgumentNullException(nameof(filter));
+        ArgumentNullException.ThrowIfNull(filter);
+        _filter = filter;
         return this;
     }
 
@@ -94,7 +98,8 @@ public sealed class BulkTransferPipeline<T> where T : class
     /// <returns>The same pipeline instance for method chaining.</returns>
     public BulkTransferPipeline<T> WithProgress(IProgress<BulkTransferProgress> progress)
     {
-        _progress = progress ?? throw new ArgumentNullException(nameof(progress));
+        ArgumentNullException.ThrowIfNull(progress);
+        _progress = progress;
         return this;
     }
 
@@ -106,7 +111,8 @@ public sealed class BulkTransferPipeline<T> where T : class
     /// <returns>The same pipeline instance for method chaining.</returns>
     public BulkTransferPipeline<T> OnError(Action<BulkTransferError> errorHandler)
     {
-        _errorHandler = errorHandler ?? throw new ArgumentNullException(nameof(errorHandler));
+        ArgumentNullException.ThrowIfNull(errorHandler);
+        _errorHandler = errorHandler;
         return this;
     }
 
@@ -146,6 +152,8 @@ public sealed class BulkTransferPipeline<T> where T : class
         ImportFormat format,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(filePath);
+
         var result = await ExecuteWithRetryAsync(
             () => _service.ImportFromFileAsync(filePath, format, _progress, cancellationToken),
             cancellationToken);
@@ -167,6 +175,8 @@ public sealed class BulkTransferPipeline<T> where T : class
         ImportFormat format,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(source);
+
         var result = await ExecuteWithRetryAsync(
             () => _service.ImportFromStreamAsync(source, format, _progress, cancellationToken),
             cancellationToken);
@@ -186,8 +196,11 @@ public sealed class BulkTransferPipeline<T> where T : class
     public Task<BulkExportResult> ExportToFileAsync(
         string filePath,
         ExportFormat format,
-        CancellationToken cancellationToken = default) =>
-        _service.ExportToFileAsync(filePath, format, _progress, cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        return _service.ExportToFileAsync(filePath, format, _progress, cancellationToken);
+    }
 
     /// <summary>
     /// Exports entities to a writable stream, routing through
@@ -202,10 +215,13 @@ public sealed class BulkTransferPipeline<T> where T : class
     public Task<BulkExportResult> ExportToStreamAsync(
         Stream destination,
         ExportFormat format,
-        CancellationToken cancellationToken = default) =>
-        _filter is not null
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(destination);
+        return _filter is not null
             ? _service.ExportFilteredAsync(_filter, destination, format, _progress, cancellationToken)
             : _service.ExportToStreamAsync(destination, format, _progress, cancellationToken);
+    }
 
     /// <summary>
     /// Pipes data from a source stream to a destination stream, applying the configured
@@ -226,6 +242,9 @@ public sealed class BulkTransferPipeline<T> where T : class
         ExportFormat destinationFormat,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
+
         var result = await _service.TransferAsync(
             source, sourceFormat,
             destination, destinationFormat,
@@ -249,7 +268,11 @@ public sealed class BulkTransferPipeline<T> where T : class
     /// </summary>
     /// <param name="service">Underlying bulk-transfer service.</param>
     /// <returns>A new <see cref="BulkTransferPipeline{T}"/> with default configuration.</returns>
-    public static BulkTransferPipeline<T> Create(IBulkTransferService<T> service) => new(service);
+    public static BulkTransferPipeline<T> Create(IBulkTransferService<T> service)
+    {
+        ArgumentNullException.ThrowIfNull(service);
+        return new(service);
+    }
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
