@@ -28,6 +28,13 @@ public sealed class DataExportService
         _xmlFormatter = new XmlFormatter();
     }
 
+    /// <summary>
+    /// Exports the specified items as a JSON string.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <returns>A JSON string representing the items.</returns>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
     public async Task<string> ExportAsJsonAsync<T>(IEnumerable<T> items) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -35,6 +42,13 @@ public sealed class DataExportService
         return await _jsonFormatter.FormatAsync(items);
     }
 
+    /// <summary>
+    /// Exports the specified items as a CSV string.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <returns>A CSV string representing the items.</returns>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
     public async Task<string> ExportAsCsvAsync<T>(IEnumerable<T> items) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -42,6 +56,13 @@ public sealed class DataExportService
         return await _csvFormatter.FormatAsync(items);
     }
 
+    /// <summary>
+    /// Exports the specified items as an XML string.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <returns>An XML string representing the items.</returns>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
     public async Task<string> ExportAsXmlAsync<T>(IEnumerable<T> items) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -49,6 +70,13 @@ public sealed class DataExportService
         return await _xmlFormatter.FormatAsync(items);
     }
 
+    /// <summary>
+    /// Exports the specified items as a JSON Lines string.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <returns>A JSON Lines string representing the items.</returns>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
     public async Task<string> ExportAsJsonLinesAsync<T>(IEnumerable<T> items) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -56,6 +84,14 @@ public sealed class DataExportService
         return await _jsonFormatter.FormatJsonLinesAsync(items);
     }
 
+    /// <summary>
+    /// Exports the specified items as JSON Lines to a file.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <param name="filePath">The path to the file to write the JSON Lines to.</param>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
+    /// <exception cref="ArgumentException">If filePath is null, empty, or whitespace.</exception>
     public async Task ExportAsJsonLinesToFileAsync<T>(IEnumerable<T> items, string filePath) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -78,6 +114,13 @@ public sealed class DataExportService
         }
     }
 
+    /// <summary>
+    /// Exports the specified items as JSON Lines to a stream.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <param name="stream">The stream to write the JSON Lines to.</param>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
     public async Task ExportAsJsonLinesToStreamAsync<T>(IEnumerable<T> items, Stream stream) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -98,6 +141,13 @@ public sealed class DataExportService
         }
     }
 
+    /// <summary>
+    /// Exports the specified items as a Markdown table string.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <returns>A Markdown table string representing the items.</returns>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
     public async Task<string> ExportAsMarkdownAsync<T>(IEnumerable<T> items) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -105,6 +155,14 @@ public sealed class DataExportService
         return GenerateMarkdownTable(items);
     }
 
+    /// <summary>
+    /// Exports the specified items as a Markdown table to a file.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <param name="filePath">The path to the file to write the Markdown table to.</param>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
+    /// <exception cref="ArgumentException">If filePath is null, empty, or whitespace.</exception>
     public async Task ExportAsMarkdownToFileAsync<T>(IEnumerable<T> items, string filePath) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -153,6 +211,16 @@ public sealed class DataExportService
         return string.Join(Environment.NewLine, header, separator, string.Join(Environment.NewLine, rows));
     }
 
+    /// <summary>
+    /// Exports the specified items to a file in the specified format.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <param name="filePath">The path to the file to write the exported data to.</param>
+    /// <param name="format">The format to export the data in.</param>
+    /// <returns>True if the export was successful; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
+    /// <exception cref="ArgumentException">If filePath is null, empty, or whitespace.</exception>
     public async Task<bool> ExportToFileAsync<T>(IEnumerable<T> items, string filePath, ExportFormat format) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -188,6 +256,14 @@ public sealed class DataExportService
         }
     }
 
+    /// <summary>
+    /// Exports the specified items to a stream in the specified format.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <param name="stream">The stream to write the exported data to.</param>
+    /// <param name="format">The format to export the data in.</param>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
     public async Task ExportToStreamAsync<T>(IEnumerable<T> items, Stream stream, ExportFormat format) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
@@ -215,6 +291,14 @@ public sealed class DataExportService
         }
     }
 
+    /// <summary>
+    /// Generates an export report for the specified items.
+    /// </summary>
+    /// <typeparam name="T">The type of the entities to export.</typeparam>
+    /// <param name="items">The collection of items to export.</param>
+    /// <param name="entityName">The name of the entity type for the report.</param>
+    /// <returns>An ExportReport containing information about the export.</returns>
+    /// <exception cref="ArgumentNullException">If items is null.</exception>
     public ExportReport GenerateExportReport<T>(IEnumerable<T> items, string entityName) where T : class
     {
         ArgumentNullException.ThrowIfNull(items);
