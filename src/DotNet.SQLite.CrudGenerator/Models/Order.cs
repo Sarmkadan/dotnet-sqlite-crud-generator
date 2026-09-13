@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using DotNet.SQLite.CrudGenerator.Enums;
@@ -23,10 +24,19 @@ public sealed class Order
     [JsonPropertyName("userId")]
     public int UserId { get; set; }
 
+    private string _orderNumber = string.Empty;
     [Required(ErrorMessage = "Order number is required")]
     [StringLength(50, ErrorMessage = "Order number must not exceed 50 characters")]
     [JsonPropertyName("orderNumber")]
-    public required string OrderNumber { get; set; }
+    public required string OrderNumber
+    {
+        get => _orderNumber;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _orderNumber = value;
+        }
+    }
 
     [JsonPropertyName("status")]
     public EntityStatus Status { get; set; } = EntityStatus.Pending;
