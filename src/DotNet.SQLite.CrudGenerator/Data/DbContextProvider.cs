@@ -24,7 +24,8 @@ public sealed class DbContextProvider : IUnitOfWork
 
     public DbContextProvider(DatabaseConnection database)
     {
-        _database = database ?? throw new ArgumentNullException(nameof(database));
+        ArgumentNullException.ThrowIfNull(database);
+        _database = database;
     }
 
     public IRepository<User, int> Users => _userRepository ??= new UserRepository(_database);
@@ -91,11 +92,13 @@ public sealed class UserRepository : Repository<User, int>
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(email);
         return (await FindAsync(u => u.Email == email, cancellationToken)).FirstOrDefault();
     }
 
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(username);
         return (await FindAsync(u => u.Username == username, cancellationToken)).FirstOrDefault();
     }
 }
@@ -109,6 +112,7 @@ public sealed class ProductRepository : Repository<Product, int>
 
     public async Task<Product?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(sku);
         return (await FindAsync(p => p.Sku == sku, cancellationToken)).FirstOrDefault();
     }
 
@@ -132,6 +136,7 @@ public sealed class OrderRepository : Repository<Order, int>
 
     public async Task<Order?> GetByOrderNumberAsync(string orderNumber, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(orderNumber);
         return (await FindAsync(o => o.OrderNumber == orderNumber, cancellationToken)).FirstOrDefault();
     }
 
@@ -173,6 +178,7 @@ public sealed class AuditLogRepository : Repository<AuditLog, int>
 
     public async Task<IEnumerable<AuditLog>> GetByEntityAsync(string entityType, int entityId, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(entityType);
         return await FindAsync(a => a.EntityType == entityType && a.EntityId == entityId, cancellationToken);
     }
 
