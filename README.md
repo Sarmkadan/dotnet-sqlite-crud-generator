@@ -194,6 +194,63 @@ Options:
 
 Note: The CLI is defined in `src/DotNet.SQLite.CrudGenerator/Program.cs`.
 
+## Data Export
+
+The `DataExportService` class in `src/DotNet.SQLite.CrudGenerator/Services/DataExportService.cs` exports entity collections to a variety of text formats. It is a thin facade over the formatters in `src/DotNet.SQLite.CrudGenerator/Formatters` and supports streaming output to files and streams.
+
+### Supported Formats
+
+- **CSV** — Comma-separated values, one row per entity with a header row of property names.
+- **JSON** — Pretty-printed JSON array of entities.
+- **XML** — XML document representing the entity collection.
+- **JSON Lines** — One JSON object per line, suitable for streaming large datasets.
+- **Markdown** — A GitHub-flavored Markdown table with a header row, a separator row, and one row per entity. Pipe characters in cell values are escaped.
+
+### Methods
+
+- `ExportAsJsonAsync<T>` / `ExportAsCsvAsync<T>` / `ExportAsXmlAsync<T>` — Return the serialized data as a string.
+- `ExportAsJsonLinesAsync<T>` — Return the data as a JSON Lines string.
+- `ExportAsJsonLinesToFileAsync<T>` / `ExportAsMarkdownToFileAsync<T>` — Write the data to a file, creating the parent directory if needed.
+- `ExportAsJsonLinesToStreamAsync<T>` — Write JSON Lines to a stream.
+- `ExportAsMarkdownAsync<T>` — Return the data as a Markdown table string.
+- `ExportToFileAsync<T>` / `ExportToStreamAsync<T>` — Write the data in a given `ExportFormat` (`Json`, `Csv`, or `Xml`) to a file or stream.
+- `GenerateExportReport<T>` — Produce an `ExportReport` describing the export (entity name, item count, timestamp, and available formats).
+
+### Usage Example
+
+Here's an example demonstrating how to export a collection of `Product` entities as a Markdown table:
+
+```csharp
+using DotNet.SQLite.CrudGenerator.Models;
+using DotNet.SQLite.CrudGenerator.Services;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+public class DataExportExample
+{
+    public static async Task Main()
+    {
+        var products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Widget", Price = 19.99m },
+            new Product { Id = 2, Name = "Gadget", Price = 29.99m }
+        };
+
+        var exportService = new DataExportService();
+
+        string csv = await exportService.ExportAsCsvAsync(products);
+        string json = await exportService.ExportAsJsonAsync(products);
+        string xml = await exportService.ExportAsXmlAsync(products);
+        string markdown = await exportService.ExportAsMarkdownAsync(products);
+
+        Console.WriteLine(markdown);
+
+        await exportService.ExportAsMarkdownToFileAsync(products, "./exports/products.md");
+    }
+}
+```
+
 ## CLI Commands
 
 Command-line arguments are parsed by `CommandParser` in
