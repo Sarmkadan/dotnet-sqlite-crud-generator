@@ -166,6 +166,34 @@ public class UserService
 - Built-in unit tests for generated code
 - SQLite-specific optimizations
 
+## Code Generation
+
+The `GenerationService` class in `src/DotNet.SQLite.CrudGenerator/Services/GenerationService.cs` is responsible for generating CRUD operations, database migrations, and gRPC service definitions from C# model classes.
+
+### Purpose
+
+The service provides methods to generate:
+- Repository interfaces (`IEntityRepository`)
+- Repository implementations (`EntityRepository`)
+- Database migration scripts (SQL)
+- gRPC service definitions (proto files)
+
+It supports both single-column primary keys (conventional `Id` property) and composite primary keys (via `CompositeKeyAttribute`).
+
+### CLI Usage
+
+The generator can be used via the command-line interface (CLI) provided by the application.
+
+Example:
+  dotnet run -- --entity MyApp.Models.Product --output ./Generated --soft-delete
+
+Options:
+  --entity      Required. The full name of the entity type (including namespace) to generate code for.
+  --output      Optional. Output directory for generated files. Defaults to "./Generated".
+  --soft-delete Optional. Enable soft-delete generation (adds IsDeleted column and adjusts queries).
+
+Note: The CLI is defined in `src/DotNet.SQLite.CrudGenerator/Program.cs`.
+
 ## Usage
 
 See [USAGE.md](USAGE.md) for detailed instructions.
