@@ -194,6 +194,31 @@ Options:
 
 Note: The CLI is defined in `src/DotNet.SQLite.CrudGenerator/Program.cs`.
 
+## CLI Commands
+
+Command-line arguments are parsed by `CommandParser` in
+`src/DotNet.SQLite.CrudGenerator/CLI/CommandParser.cs`. The parser registers
+commands via `RegisterCommand<T>(name)`, then `ParseAndExecuteAsync` dispatches
+the first argument to the matching `ICommand` implementation, passing the
+remaining arguments through. Unknown commands trigger a Levenshtein-based
+suggestion and a non-zero exit code. Global flags `-h`/`--help`/`help` print
+usage, and `-v`/`--version`/`version` print the assembly version.
+
+Available commands:
+
+- `generate` — Generate CRUD operations, migrations, and gRPC services.
+- `list` — List all available models for generation.
+- `validate` — Validate model definitions.
+- `diff` — Compare entity models against the live database schema.
+- `migrate` — Execute database migrations.
+- `stats` — Show database statistics.
+
+Example:
+
+  dotnet run generate --model User --output ./Generated
+  dotnet run migrate --direction up
+  dotnet run diff --verbose
+
 ## Usage
 
 See [USAGE.md](USAGE.md) for detailed instructions.
