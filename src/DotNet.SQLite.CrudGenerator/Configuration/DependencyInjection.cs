@@ -43,6 +43,7 @@ public static class DependencyInjection
     /// </example>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, DatabaseSettings settings)
     {
+        ArgumentNullException.ThrowIfNull(services);
         if (settings is null)
             throw new ArgumentNullException(nameof(settings));
 
@@ -59,6 +60,7 @@ public static class DependencyInjection
     /// <param name="options">The application options.</param>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, DotnetSqliteCrudGeneratorOptions options)
     {
+        ArgumentNullException.ThrowIfNull(services);
         if (options is null)
             throw new ArgumentNullException(nameof(options));
 
@@ -73,6 +75,7 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(services);
         if (configuration is null)
             throw new ArgumentNullException(nameof(configuration));
 
@@ -93,6 +96,7 @@ public static class DependencyInjection
     /// <param name="configureOptions">Action to configure the options.</param>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, Action<DotnetSqliteCrudGeneratorOptions> configureOptions)
     {
+        ArgumentNullException.ThrowIfNull(services);
         if (configureOptions is null)
             throw new ArgumentNullException(nameof(configureOptions));
 
@@ -112,6 +116,7 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, string connectionString)
     {
+        ArgumentNullException.ThrowIfNull(services);
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new ArgumentException("Connection string cannot be null or empty", nameof(connectionString));
 
