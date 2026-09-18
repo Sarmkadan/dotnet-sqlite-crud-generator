@@ -11,10 +11,17 @@ namespace DotNet.SQLite.CrudGenerator.Exceptions;
 /// </summary>
 public sealed class GenerationException : DotnetSqliteCrudGeneratorException
 {
-    public GenerationException(string message) : base(message) { }
+    public GenerationException(string message) : base(message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+    }
 
     public GenerationException(string message, Exception innerException)
-        : base(message, innerException) { }
+        : base(message, innerException)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(innerException);
+    }
 
     public string? GenerationType { get; set; }
     public string? SourceEntity { get; set; }
