@@ -24,12 +24,18 @@ public sealed class WebhookHandler
 
     public WebhookHandler(HttpClient httpClient, string? signingSecret = null)
     {
+        ArgumentNullException.ThrowIfNull(httpClient);
+
         _httpExecutor = new HttpRequestExecutor(httpClient, maxRetries: 3, retryDelayMs: 5000);
         _signingSecret = signingSecret ?? Guid.NewGuid().ToString();
     }
 
     public void RegisterEndpoint(string name, Uri url, string[] eventTypes, bool active = true)
     {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(url);
+        ArgumentNullException.ThrowIfNull(eventTypes);
+
         var endpoint = new WebhookEndpoint
         {
             Name = name,
@@ -44,6 +50,8 @@ public sealed class WebhookHandler
 
     public async Task<bool> SendWebhookAsync<T>(string eventType, T payload)
     {
+        ArgumentNullException.ThrowIfNull(eventType);
+
         var activeEndpoints = _endpoints.Values
             .Where(e => e.Active && e.EventTypes.Contains(eventType))
             .ToList();
@@ -102,12 +110,16 @@ public sealed class WebhookHandler
 
     public void DisableEndpoint(string name)
     {
+        ArgumentNullException.ThrowIfNull(name);
+
         if (_endpoints.TryGetValue(name, out var endpoint))
             endpoint.Active = false;
     }
 
     public void EnableEndpoint(string name)
     {
+        ArgumentNullException.ThrowIfNull(name);
+
         if (_endpoints.TryGetValue(name, out var endpoint))
             endpoint.Active = true;
     }
