@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -21,7 +22,16 @@ public sealed class Product
     [Required(ErrorMessage = "Product name is required")]
     [StringLength(255, MinimumLength = 1, ErrorMessage = "Product name must be between 1 and 255 characters")]
     [JsonPropertyName("name")]
-    public required string Name { get; set; }
+    private string _name = default!;
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _name = value;
+        }
+    }
 
     [StringLength(1000, ErrorMessage = "Description must not exceed 1000 characters")]
     [JsonPropertyName("description")]
@@ -30,7 +40,16 @@ public sealed class Product
     [Required(ErrorMessage = "SKU is required")]
     [StringLength(100, ErrorMessage = "SKU must not exceed 100 characters")]
     [JsonPropertyName("sku")]
-    public required string Sku { get; set; }
+    private string _sku = default!;
+    public string Sku
+    {
+        get => _sku;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _sku = value;
+        }
+    }
 
     [Required(ErrorMessage = "Category ID is required")]
     [JsonPropertyName("categoryId")]
