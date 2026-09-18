@@ -18,6 +18,7 @@ namespace DotNet.SQLite.CrudGenerator.Events
     {
         public EntityCreatedEvent(object aggregateId, T entity)
         {
+            ArgumentNullException.ThrowIfNull(entity);
             AggregateId = aggregateId is Guid g ? g : Guid.NewGuid();
             Entity = entity;
             EventName = $"{typeof(T).Name}Created";
@@ -31,6 +32,7 @@ namespace DotNet.SQLite.CrudGenerator.Events
 
         public EntityUpdatedEvent(object aggregateId, T entity, T? oldEntity = null)
         {
+            ArgumentNullException.ThrowIfNull(entity);
             AggregateId = aggregateId is Guid g ? g : Guid.NewGuid();
             Entity = entity;
             OldEntity = oldEntity;
@@ -56,6 +58,8 @@ namespace DotNet.SQLite.CrudGenerator.Events
 
         public BulkEntityChangedEvent(int count, string operation, List<T> entities)
         {
+            ArgumentNullException.ThrowIfNull(operation);
+            ArgumentNullException.ThrowIfNull(entities);
             Count = count;
             Operation = operation;
             Entities = entities;
@@ -110,6 +114,7 @@ namespace DotNet.SQLite.CrudGenerator.Events
 
         public LowStockWarningEvent(int productId, string productName, int currentStock, int thresholdLevel)
         {
+            ArgumentNullException.ThrowIfNull(productName);
             ProductId = productId;
             ProductName = productName;
             CurrentStock = currentStock;
