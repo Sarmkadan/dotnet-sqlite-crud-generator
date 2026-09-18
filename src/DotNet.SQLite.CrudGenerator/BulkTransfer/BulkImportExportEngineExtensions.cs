@@ -36,10 +36,8 @@ public static class BulkImportExportEngineExtensions
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default) where T : class
     {
-        if (engine is null)
-            throw new ArgumentNullException(nameof(engine));
-        if (json is null)
-            throw new ArgumentNullException(nameof(json));
+        ArgumentNullException.ThrowIfNull(engine);
+        ArgumentNullException.ThrowIfNull(json);
 
         await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
         return await engine.ImportFromStreamAsync(stream, ImportFormat.Json, progress, cancellationToken);
@@ -62,8 +60,7 @@ public static class BulkImportExportEngineExtensions
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default) where T : class
     {
-        if (engine is null)
-            throw new ArgumentNullException(nameof(engine));
+        ArgumentNullException.ThrowIfNull(engine);
 
         if (format is not (ExportFormat.Json or ExportFormat.Csv or ExportFormat.Xml))
             throw new ArgumentOutOfRangeException(nameof(format));
@@ -99,10 +96,8 @@ public static class BulkImportExportEngineExtensions
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default) where T : class
     {
-        if (engine is null)
-            throw new ArgumentNullException(nameof(engine));
-        if (predicate is null)
-            throw new ArgumentNullException(nameof(predicate));
+        ArgumentNullException.ThrowIfNull(engine);
+        ArgumentNullException.ThrowIfNull(predicate);
 
         if (format is not (ExportFormat.Json or ExportFormat.Csv or ExportFormat.Xml))
             throw new ArgumentOutOfRangeException(nameof(format));
@@ -137,10 +132,8 @@ public static class BulkImportExportEngineExtensions
         IProgress<BulkTransferProgress>? progress = null,
         CancellationToken cancellationToken = default) where T : class
     {
-        if (sourceEngine is null)
-            throw new ArgumentNullException(nameof(sourceEngine));
-        if (destinationEngine is null)
-            throw new ArgumentNullException(nameof(destinationEngine));
+        ArgumentNullException.ThrowIfNull(sourceEngine);
+        ArgumentNullException.ThrowIfNull(destinationEngine);
 
         await using var stream = new MemoryStream();
 
@@ -161,8 +154,7 @@ public static class BulkImportExportEngineExtensions
     /// <exception cref="ArgumentNullException"><paramref name="engine"/> is <see langword="null"/>.</exception>
     public static BulkTransferStatistics GetStats<T>(this BulkImportExportEngine<T> engine) where T : class
     {
-        if (engine is null)
-            throw new ArgumentNullException(nameof(engine));
+        ArgumentNullException.ThrowIfNull(engine);
 
         return engine.GetStatistics();
     }
