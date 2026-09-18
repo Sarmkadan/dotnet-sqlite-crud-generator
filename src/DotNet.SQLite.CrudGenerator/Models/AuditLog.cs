@@ -22,7 +22,15 @@ public sealed class AuditLog
     [Required(ErrorMessage = "Entity type is required")]
     [StringLength(100, ErrorMessage = "Entity type must not exceed 100 characters")]
     [JsonPropertyName("entityType")]
-    public required string EntityType { get; set; }
+    public required string EntityType
+    {
+        get => field;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            field = value;
+        }
+    }
 
     [Required(ErrorMessage = "Entity ID is required")]
     [JsonPropertyName("entityId")]
@@ -41,7 +49,15 @@ public sealed class AuditLog
 
     [StringLength(1000, ErrorMessage = "New values must not exceed 1000 characters")]
     [JsonPropertyName("newValues")]
-    public string? NewValues { get; set; }
+    public string? NewValues
+    {
+        get => field;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            field = value;
+        }
+    }
 
     [StringLength(500, ErrorMessage = "Change reason must not exceed 500 characters")]
     [JsonPropertyName("changeReason")]
