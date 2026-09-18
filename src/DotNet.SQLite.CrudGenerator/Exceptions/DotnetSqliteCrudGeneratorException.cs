@@ -14,12 +14,19 @@ public abstract class DotnetSqliteCrudGeneratorException : Exception
     /// <summary>
     /// Initializes a new instance of the <see cref="DotnetSqliteCrudGeneratorException"/> class.
     /// </summary>
-    protected DotnetSqliteCrudGeneratorException(string message) : base(message) { }
+    protected DotnetSqliteCrudGeneratorException(string message) : base(message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DotnetSqliteCrudGeneratorException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception.
     /// </summary>
-    protected DotnetSqliteCrudGeneratorException(string message, Exception innerException) : base(message, innerException) { }
+    protected DotnetSqliteCrudGeneratorException(string message, Exception innerException) : base(message, innerException)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(innerException);
+    }
 
     /// <summary>
     /// Gets the type of the exception for categorization purposes.
