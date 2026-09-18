@@ -4,6 +4,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -114,5 +115,23 @@ public sealed class User
     public override string ToString()
     {
         return $"User {Id}: {Username} ({Email}) - {GetFullName()} (Active: {IsActive}, Verified: {EmailVerified})";
+    }
+
+    // Constructors
+    public User() { }
+
+    public User(string username, string email, string passwordHash, string firstName, string lastName, int id = 0)
+    {
+        Id = id;
+        ArgumentNullException.ThrowIfNull(username);
+        ArgumentNullException.ThrowIfNull(email);
+        ArgumentNullException.ThrowIfNull(passwordHash);
+        ArgumentNullException.ThrowIfNull(firstName);
+        ArgumentNullException.ThrowIfNull(lastName);
+        Username = username;
+        Email = email;
+        PasswordHash = passwordHash;
+        FirstName = firstName;
+        LastName = lastName;
     }
 }
