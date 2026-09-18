@@ -11,9 +11,16 @@ namespace DotNet.SQLite.CrudGenerator.Exceptions;
 /// </summary>
 public sealed class ConfigurationException : DotnetSqliteCrudGeneratorException
 {
-    public ConfigurationException(string message) : base(message) { }
+    public ConfigurationException(string message) : base(message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+    }
 
-    public ConfigurationException(string message, Exception innerException) : base(message, innerException) { }
+    public ConfigurationException(string message, Exception innerException) : base(message, innerException)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentNullException.ThrowIfNull(innerException);
+    }
 
     /// <summary>
     /// Creates a configuration exception for missing required configuration.
