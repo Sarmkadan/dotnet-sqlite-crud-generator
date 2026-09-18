@@ -21,6 +21,8 @@ public sealed class ListCommand : ICommand
 
     public async Task<int> ExecuteAsync(string[] args)
     {
+        ArgumentNullException.ThrowIfNull(args);
+
         if (!ParseArguments(args))
             return 1;
 
