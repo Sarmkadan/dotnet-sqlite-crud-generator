@@ -21,6 +21,11 @@ public static class NamingConventionHelper
     private static readonly ConcurrentDictionary<Type, string> _tableNameSingularCache = new();
     private static readonly ConcurrentDictionary<PropertyInfo, string> _columnNameCache = new();
 
+    // Naming convention constants
+    private const string ApiPrefix = "/api/";
+    private const string ServiceSuffix = "Service";
+    private const string MessageSuffix = "Message";
+
     // FrozenDictionary: immutable after construction, 30-40 % faster lookup than Dictionary.
     private static readonly FrozenDictionary<Type, string> _sqlTypeMappings =
         new Dictionary<Type, string>
@@ -121,10 +126,10 @@ public static class NamingConventionHelper
     {
         ArgumentNullException.ThrowIfNull(className);
 
-        if (className.EndsWith("Service"))
+        if (className.EndsWith(ServiceSuffix))
             return className; // Keep as-is for service names
 
-        return className + "Service";
+        return className + ServiceSuffix;
     }
 
     /// <summary>
@@ -134,10 +139,10 @@ public static class NamingConventionHelper
     {
         ArgumentNullException.ThrowIfNull(className);
 
-        if (className.EndsWith("Message"))
+        if (className.EndsWith(MessageSuffix))
             return className;
 
-        return className + "Message";
+        return className + MessageSuffix;
     }
 
     /// <summary>
@@ -150,7 +155,7 @@ public static class NamingConventionHelper
         ArgumentNullException.ThrowIfNull(apiVersion);
 
         var entityName = entityType.Name.Pluralize().ToLower();
-        return $"/api/{apiVersion}/{entityName}";
+        return $"{ApiPrefix}{apiVersion}/{entityName}";
     }
 
     /// <summary>
